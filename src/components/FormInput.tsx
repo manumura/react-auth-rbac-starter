@@ -1,4 +1,3 @@
-import React from 'react';
 import { useFormContext } from 'react-hook-form';
 
 const FormInput = ({
@@ -6,7 +5,13 @@ const FormInput = ({
   name,
   type = 'text',
   placeholder = '',
-  constraints = {}
+  constraints = {},
+}: {
+  label: string;
+  name: string;
+  type?: string;
+  placeholder?: string;
+  constraints?: Record<string, unknown>;
 }) => {
   const {
     register,

@@ -1,27 +1,35 @@
 import React from 'react';
 import ReactDOM from 'react-dom/client';
 import { createBrowserRouter, RouterProvider } from 'react-router-dom';
+import { Providers } from './components/Providers';
 import ErrorPage from './error-page';
 import './index.css';
+import Home, { loader as homeLoader } from './routes';
 import Contact, {
   loader as contactLoader,
   action as favoriteAction,
 } from './routes/contact';
-import EditContact, { action as editAction } from './routes/contact-edit';
 import { action as destroyAction } from './routes/contact-destroy';
-import Home, {loader as homeLoader,} from './routes';
-import Root from './routes/root';
+import EditContact, { action as editAction } from './routes/contact-edit';
+import Layout from './routes/layout';
+import Login, { action as loginAction } from './routes/login';
 
 const router = createBrowserRouter([
   {
     path: '/',
-    element: <Root />,
+    element: <Layout />,
     errorElement: <ErrorPage />,
     children: [
       {
         errorElement: <ErrorPage />,
         children: [
-          { index: true, element: <Home />, loader: homeLoader, },
+          { index: true, element: <Home />, loader: homeLoader },
+          {
+            path: 'login',
+            element: <Login />,
+            errorElement: <Login />,
+            action: loginAction,
+          },
           {
             path: 'contacts/:contactId',
             element: <Contact />,
@@ -51,6 +59,8 @@ const router = createBrowserRouter([
 
 ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>
-    <RouterProvider router={router} />
+    <Providers>
+      <RouterProvider router={router} />;
+    </Providers>
   </React.StrictMode>
 );

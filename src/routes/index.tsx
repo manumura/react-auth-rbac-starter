@@ -1,7 +1,7 @@
 import React from 'react';
 import { Await, defer, useLoaderData } from 'react-router-dom';
 import { info, welcome } from '../lib/api';
-import { InfoResponse } from '../types/custom-types';
+import { InfoResponse, MessageResponse } from '../types/custom-types';
 
 export async function loader() {
   const data = Promise.all([info(), welcome()]);
@@ -27,8 +27,8 @@ export default function Home(): React.ReactElement {
               </p>
             }
           >
-            {([information, message]) => (
-              <HomeSection information={information} message={message} />
+            {([information, welcome]) => (
+              <HomeSection information={information} welcome={welcome} />
             )}
           </Await>
         </React.Suspense>
@@ -39,14 +39,14 @@ export default function Home(): React.ReactElement {
 
 function HomeSection({
   information,
-  message,
+  welcome,
 }: {
   readonly information: InfoResponse;
-  readonly message: string;
+  readonly welcome: MessageResponse;
 }): React.ReactElement {
   return (
     <>
-      <p className='text-3xl font-semibold'>{message || 'Welcome !'}</p>
+      <p className='text-3xl font-semibold'>{welcome?.message || 'Welcome !'}</p>
       <p className='text-2xl font-semibold'>
         {information?.env || 'Env not found'}
       </p>
