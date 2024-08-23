@@ -1,14 +1,14 @@
-import { useNavigate } from "react-router-dom";
+import { useNavigate } from 'react-router-dom';
 
-const LoginButton = ({ id }) => {
-  const navigation = useNavigate();
+const LoginButton = ({ id }: { id: string }) => {
+  const navigate = useNavigate();
 
   const handleLogin = (): void => {
-    // navigation
+    navigate('/login');
   };
 
   const btn = (
-    <button className='btn-outline btn' id={id} onClick={handleLogin}>
+    <button id={id} className='btn-outline btn' onClick={handleLogin}>
       Login
     </button>
   );

@@ -75,19 +75,20 @@ axiosInstance.interceptors.response.use(
 
 ////////////////////////////////////////////////////////////////
 // Public APIs
-export const info = async (): Promise<AxiosResponse<InfoResponse>> => {
-  return axiosPublicInstance.get('/v1/info');
+export const info = async (): Promise<InfoResponse> => {
+  return axiosPublicInstance.get('/v1/info').then((response) => response.data);
 };
 
-export const welcome = async (): Promise<AxiosResponse<MessageResponse>> => {
-  return axiosPublicInstance.get('/v1/index');
+export const welcome = async (): Promise<MessageResponse> => {
+  return axiosPublicInstance.get('/v1/index').then((response) => response.data);
 };
 
 export const login = async (
   email: string,
   password: string,
-): Promise<AxiosResponse<LoginResponse>> => {
-  return axiosPublicInstance.post('/v1/login', { email, password });
+): Promise<LoginResponse> => {
+  return axiosPublicInstance.post('/v1/login', { email, password })
+  .then((response) => response.data);
 };
 
 export const register = async (
@@ -119,14 +120,14 @@ export const getUserFromToken = async (
 
 export const validateRecaptcha = async (
   token: string,
-): Promise<AxiosResponse<boolean>> => {
-  return axiosPublicInstance.post('/v1/recaptcha', { token });
+): Promise<boolean> => {
+  return axiosPublicInstance.post('/v1/recaptcha', { token }).then((response) => response.data);
 };
 
 ////////////////////////////////////////////////////////////////
 // Authenticated-only APIs
-export const logout = async (): Promise<AxiosResponse> => {
-  return axiosInstance.post('/v1/logout');
+export const logout = async (): Promise<void> => {
+  return axiosInstance.post('/v1/logout').then((response) => response.data);
 };
 
 export const getProfile = async (): Promise<AxiosResponse<IUser>> => {
