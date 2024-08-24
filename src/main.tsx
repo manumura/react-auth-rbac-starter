@@ -14,6 +14,7 @@ import EditContact, { action as editAction } from './routes/contact-edit';
 import Layout from './routes/layout';
 import Login, { action as loginAction } from './routes/login';
 import Register, { action as registerAction } from './routes/register';
+import ForgotPassword, { action as forgotPasswordAction } from './routes/forgot-password';
 
 const router = createBrowserRouter([
   {
@@ -36,6 +37,12 @@ const router = createBrowserRouter([
             element: <Register />,
             errorElement: <Register />,
             action: registerAction,
+          },
+          {
+            path: 'forgot-password',
+            element: <ForgotPassword />,
+            errorElement: <ForgotPassword />,
+            action: forgotPasswordAction,
           },
           {
             path: 'contacts/:contactId',
