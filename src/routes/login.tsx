@@ -17,7 +17,8 @@ import { login, validateRecaptcha } from '../lib/api';
 import { getUserFromIdToken } from '../lib/jwt.utils';
 import { saveAuthentication } from '../lib/storage';
 import useUserStore from '../lib/user-store';
-import { IUser, LoginResponse } from '../types/custom-types';
+import { IUser } from '../types/custom-types';
+import { ValidationError } from '../types/custom-errors';
 
 export const action = async ({ request }: { request: Request }) => {
   const formData = await request.formData();
@@ -25,48 +26,57 @@ export const action = async ({ request }: { request: Request }) => {
   const password = formData.get('password') as string;
   const token = formData.get('token') as string;
 
-  if (!token) {
-    throw new Error('Recaptcha token not found');
-  }
-
   try {
+    if (!token) {
+      throw new ValidationError('Recaptcha token not found', {
+        email,
+        password,
+      });
+    }
+
     const isCaptchaValid = await validateRecaptcha(token);
     if (!isCaptchaValid) {
-      throw new Error('Captcha validation failed');
+      throw new ValidationError('Captcha validation failed', {
+        email,
+        password,
+      });
     }
+
+    const response = await login(email, password);
+    if (!response) {
+      throw new ValidationError('Invalid response', { email, password });
+    }
+
+    const { accessToken, refreshToken, idToken } = response;
+    if (!idToken || !accessToken || !refreshToken) {
+      throw new ValidationError('Invalid response', { email, password });
+    }
+
+    saveAuthentication(accessToken, refreshToken, idToken);
+    const user = await getUserFromIdToken(idToken);
+    if (!user) {
+      throw new ValidationError('Invalid user', { email, password });
+    }
+
+    return user;
   } catch (error) {
-    if (error instanceof AxiosError && error.response?.data.message) {
-      throw new Error(error.response.data.message);
+    if (error instanceof ValidationError) {
+      throw error;
     }
-    throw error;
-  }
 
-  let response: LoginResponse;
-  try {
-    response = await login(email, password);
-  } catch (error) {
     if (error instanceof AxiosError && error.response?.data.message) {
-      throw new Error(error.response.data.message);
+      throw new ValidationError(error.response.data.message, {
+        email,
+        password,
+      });
     }
-    throw error;
-  }
 
-  if (!response) {
-    throw new Error('Invalid response');
-  }
+    if (error instanceof Error) {
+      throw new ValidationError(error.message, { email, password });
+    }
 
-  const { accessToken, refreshToken, idToken } = response;
-  if (!idToken || !accessToken || !refreshToken) {
-    throw new Error('Invalid response');
+    throw new ValidationError('Unknown error', { email, password });
   }
-
-  saveAuthentication(accessToken, refreshToken, idToken);
-  const user = await getUserFromIdToken(idToken);
-  if (!user) {
-    throw new Error('Invalid user');
-  }
-
-  return user;
 };
 
 function SubmitButton({
@@ -118,10 +128,9 @@ export default function Login(): React.ReactElement {
       return;
     }
     const token = await executeRecaptcha('onSubmit');
-    const { name, email, password } = getValues();
+    const { email, password } = getValues();
 
     const formData = new FormData();
-    formData.append('name', name);
     formData.append('email', email);
     formData.append('password', password);
     formData.append('token', token);
@@ -130,6 +139,11 @@ export default function Login(): React.ReactElement {
 
   useEffect(() => {
     if (error) {
+      console.log('Error:', error);
+      if (error instanceof ValidationError) {
+        console.log('Validation Error:', error.data);
+      }
+
       toast(error?.message, {
         type: 'error',
         position: 'bottom-right',

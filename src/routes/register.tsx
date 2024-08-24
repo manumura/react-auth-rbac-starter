@@ -15,6 +15,7 @@ import { toast } from 'react-toastify';
 import FormInput from '../components/FormInput';
 import { register, validateRecaptcha } from '../lib/api';
 import { IUser } from '../types/custom-types';
+import { ValidationError } from '../types/custom-errors';
 
 export const action = async ({ request }: { request: Request }) => {
   const formData = await request.formData();
@@ -23,38 +24,38 @@ export const action = async ({ request }: { request: Request }) => {
   const password = formData.get('password') as string;
   const token = formData.get('token') as string;
 
-  if (!token) {
-    throw new Error('Recaptcha token not found');
-  }
-
   try {
+    if (!token) {
+      throw new ValidationError('Recaptcha token not found', { name, email, password });
+    }
     const isCaptchaValid = await validateRecaptcha(token);
     if (!isCaptchaValid) {
-      throw new Error('Captcha validation failed');
+      throw new ValidationError('Captcha validation failed', { name, email, password });
     }
-  } catch (error) {
-    console.error('Captcha validation failed', error);
-    if (error instanceof AxiosError && error.response?.data.message) {
-      throw new Error(error.response.data.message);
-    }
-    throw error;
-  }
 
-  let user: IUser;
-  try {
-    user = await register(email, password, name);
-  } catch (error) {
-    console.error('Captcha validation failed2', error);
-    if (error instanceof AxiosError && error.response?.data.message) {
-      throw new Error(error.response.data.message);
+    const user = await register(email, password, name);
+    if (!user) {
+      throw new ValidationError('Invalid response', { name, email, password });
     }
-    throw error;
-  }
+    return user;
+  } catch (error) {
+    if (error instanceof ValidationError) {
+      throw error;
+    }
 
-  if (!user) {
-    throw new Error('Invalid response');
+    if (error instanceof AxiosError && error.response?.data.message) {
+      throw new ValidationError(error.response.data.message, {
+        email,
+        password,
+      });
+    }
+
+    if (error instanceof Error) {
+      throw new ValidationError(error.message, { email, password });
+    }
+
+    throw new ValidationError('Unknown error', { email, password });
   }
-  return user;
 };
 
 function SubmitButton({
@@ -143,66 +144,6 @@ export default function Register(): React.ReactElement {
     formState: { isValid },
     watch,
   } = methods;
-
-  //   const mutation = useMutation({
-  //     mutationFn: ({
-  //       email,
-  //       password,
-  //       name,
-  //     }: {
-  //       email: string;
-  //       password: string;
-  //       name: string;
-  //     }) => onMutate(email, password, name),
-  //     async onSuccess(user, variables, context) {
-  //       toast(`Registration successful ${user?.name}!`, {
-  //         type: 'success',
-  //         position: 'bottom-right',
-  //       });
-
-  //       router.push('/login');
-  //     },
-  //     onError(error, variables, context) {
-  //       toast(error?.message, {
-  //         type: 'error',
-  //         position: 'bottom-right',
-  //       });
-  //     },
-  //   });
-
-  //   const onMutate = async (email, password, name): Promise<IUser> => {
-  // if (!executeRecaptcha) {
-  //   throw new Error('Recaptcha not loaded');
-  // }
-  // const token = await executeRecaptcha('onSubmit');
-  // const isCaptchaValid = await validateRecaptcha(token);
-  // if (!isCaptchaValid) {
-  //   throw new Error('Captcha validation failed');
-  // }
-
-  // let response: AxiosResponse<IUser>;
-  // try {
-  //   response = await register(email, password, name);
-  // } catch (error) {
-  //   if (error?.response) {
-  //     throw new Error(error.response.data.message);
-  //   }
-  //   throw new Error(error.message);
-  // }
-  // return response.data;
-  //   };
-
-  //   const onSubmit = async (formData): Promise<void> => {
-  //     if (!formData) {
-  //       return;
-  //     }
-
-  //     mutation.mutate({
-  //       email: formData.email,
-  //       password: formData.password,
-  //       name: formData.name,
-  //     });
-  //   };
 
   const nameConstraints = {
     required: { value: true, message: 'Full Name is required' },
