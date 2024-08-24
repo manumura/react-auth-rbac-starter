@@ -111,8 +111,10 @@ export const register = async (
 
 export const forgotPassword = async (
   email: string
-): Promise<AxiosResponse<MessageResponse>> => {
-  return axiosPublicInstance.post('/v1/forgot-password', { email });
+): Promise<MessageResponse> => {
+  return axiosPublicInstance
+    .post('/v1/forgot-password', { email })
+    .then((response) => response.data);
 };
 
 export const resetPassword = async (

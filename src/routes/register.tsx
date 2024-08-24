@@ -26,11 +26,19 @@ export const action = async ({ request }: { request: Request }) => {
 
   try {
     if (!token) {
-      throw new ValidationError('Recaptcha token not found', { name, email, password });
+      throw new ValidationError('Recaptcha token not found', {
+        name,
+        email,
+        password,
+      });
     }
     const isCaptchaValid = await validateRecaptcha(token);
     if (!isCaptchaValid) {
-      throw new ValidationError('Captcha validation failed', { name, email, password });
+      throw new ValidationError('Captcha validation failed', {
+        name,
+        email,
+        password,
+      });
     }
 
     const user = await register(email, password, name);
@@ -61,20 +69,11 @@ export const action = async ({ request }: { request: Request }) => {
 function SubmitButton({
   isValid,
   isLoading,
-  onSubmit,
 }: {
   isValid: boolean;
   isLoading: boolean;
-  onSubmit: (event: React.MouseEvent<HTMLButtonElement, MouseEvent>) => void;
 }): React.ReactElement {
-  const btn = (
-    <button
-      className='btn btn-primary w-full'
-      onClick={(event) => onSubmit(event)}
-    >
-      Register
-    </button>
-  );
+  const btn = <button className='btn btn-primary w-full'>Register</button>;
   const btnDisabled = (
     <button className='btn btn-disabled btn-primary w-full'>Register</button>
   );
@@ -97,12 +96,14 @@ export default function Register(): React.ReactElement {
   const { executeRecaptcha } = useGoogleReCaptcha();
   const isLoading = navigation.state === 'submitting';
 
-  const onSubmit = async (
-    event: React.MouseEvent<HTMLButtonElement, MouseEvent>
-  ) => {
+  const onSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+
     if (!executeRecaptcha) {
-      console.error('Recaptcha not loaded');
-      event.preventDefault();
+      toast('Recaptcha not loaded', {
+        type: 'error',
+        position: 'bottom-right',
+      });
       return;
     }
     const token = await executeRecaptcha('onSubmit');
@@ -175,6 +176,8 @@ export default function Register(): React.ReactElement {
     <section className='h-section w-full py-20 bg-slate-200'>
       <FormProvider {...methods}>
         <Form
+          method='post'
+          onSubmit={(event) => onSubmit(event)}
           id='register-form'
           className='mx-auto w-full max-w-md space-y-5 overflow-hidden rounded-2xl bg-slate-50 p-8 shadow-lg'
         >
@@ -210,11 +213,7 @@ export default function Register(): React.ReactElement {
               Login Here
             </Link>
           </span>
-          <SubmitButton
-            isValid={isValid}
-            isLoading={isLoading}
-            onSubmit={onSubmit}
-          />
+          <SubmitButton isValid={isValid} isLoading={isLoading} />
         </Form>
       </FormProvider>
     </section>
