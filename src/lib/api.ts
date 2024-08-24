@@ -1,7 +1,13 @@
 import axios, { AxiosError, AxiosResponse } from 'axios';
 import { UUID } from 'node:crypto';
 import appConfig from '../config/config';
-import { IGetUsersResponse, InfoResponse, IUser, LoginResponse, MessageResponse } from '../types/custom-types';
+import {
+  IGetUsersResponse,
+  InfoResponse,
+  IUser,
+  LoginResponse,
+  MessageResponse,
+} from '../types/custom-types';
 
 const BASE_URL = appConfig.baseUrl;
 const REFRESH_TOKEN_ENDPOINT = '/v1/refresh-token';
@@ -20,8 +26,8 @@ export const axiosInstance = axios.create({
   headers: {
     'Content-Type': 'application/json',
     'Cache-Control': 'no-cache',
-    'Pragma': 'no-cache',
-    'Expires': '0',
+    Pragma: 'no-cache',
+    Expires: '0',
   },
   withCredentials: true, // for cookies
 });
@@ -55,7 +61,7 @@ axiosInstance.interceptors.response.use(
             Cookie: config.headers.Cookie,
           },
           withCredentials: true, // for cookies
-        },
+        }
       );
 
       // Update cookies
@@ -67,10 +73,11 @@ axiosInstance.interceptors.response.use(
       // retun config;
       return axiosInstance(config);
     } catch (error) {
-      console.error('Axios interceptor error: ', error?.response?.data);
-      return Promise.reject(new Error(error));
+      const err = error as AxiosError;
+      console.error('Axios interceptor error: ', err?.response?.data);
+      return Promise.reject(err);
     }
-  },
+  }
 );
 
 ////////////////////////////////////////////////////////////////
@@ -85,43 +92,46 @@ export const welcome = async (): Promise<MessageResponse> => {
 
 export const login = async (
   email: string,
-  password: string,
+  password: string
 ): Promise<LoginResponse> => {
-  return axiosPublicInstance.post('/v1/login', { email, password })
-  .then((response) => response.data);
+  return axiosPublicInstance
+    .post('/v1/login', { email, password })
+    .then((response) => response.data);
 };
 
 export const register = async (
   email: string,
   password: string,
-  name: string,
-): Promise<AxiosResponse<IUser>> => {
-  return axiosPublicInstance.post('/v1/register', { email, password, name });
+  name: string
+): Promise<IUser> => {
+  return axiosPublicInstance
+    .post('/v1/register', { email, password, name })
+    .then((response) => response.data);
 };
 
 export const forgotPassword = async (
-  email: string,
+  email: string
 ): Promise<AxiosResponse<MessageResponse>> => {
   return axiosPublicInstance.post('/v1/forgot-password', { email });
 };
 
 export const resetPassword = async (
   password: string,
-  token: string,
+  token: string
 ): Promise<AxiosResponse<IUser>> => {
   return axiosPublicInstance.post('/v1/new-password', { password, token });
 };
 
 export const getUserFromToken = async (
-  token: string,
+  token: string
 ): Promise<AxiosResponse<IUser>> => {
   return axiosPublicInstance.get(`/v1/token/${token}`);
 };
 
-export const validateRecaptcha = async (
-  token: string,
-): Promise<boolean> => {
-  return axiosPublicInstance.post('/v1/recaptcha', { token }).then((response) => response.data);
+export const validateRecaptcha = async (token: string): Promise<boolean> => {
+  return axiosPublicInstance
+    .post('/v1/recaptcha', { token })
+    .then((response) => response.data);
 };
 
 ////////////////////////////////////////////////////////////////
@@ -135,7 +145,7 @@ export const getProfile = async (): Promise<AxiosResponse<IUser>> => {
 };
 
 export const updateProfile = async (
-  name: string,
+  name: string
 ): Promise<AxiosResponse<IUser>> => {
   return axiosInstance.put('/v1/profile', {
     name,
@@ -144,7 +154,7 @@ export const updateProfile = async (
 
 export const updatePassword = async (
   oldPassword: string,
-  newPassword: string,
+  newPassword: string
 ): Promise<AxiosResponse<IUser>> => {
   return axiosInstance.put('/v1/profile/password', {
     oldPassword,
@@ -154,7 +164,7 @@ export const updatePassword = async (
 
 export const updateProfileImage = async (
   image: FormData,
-  onUploadProgress: any,
+  onUploadProgress: any
 ): Promise<AxiosResponse<IUser>> => {
   return axiosInstance.put('/v1/profile/image', image, {
     headers: {
@@ -167,7 +177,7 @@ export const updateProfileImage = async (
 export const getUsers = async (
   page: number | undefined,
   pageSize: number | undefined,
-  role: string | undefined,
+  role: string | undefined
 ): Promise<AxiosResponse<IGetUsersResponse>> => {
   const p: string[][] = [];
   if (page) {
@@ -185,7 +195,7 @@ export const getUsers = async (
 };
 
 export const getUserByUuid = async (
-  uuid: UUID,
+  uuid: UUID
 ): Promise<AxiosResponse<IUser>> => {
   return axiosInstance.get(`/v1/users/${uuid}`);
 };
@@ -193,7 +203,7 @@ export const getUserByUuid = async (
 export const createUser = async (
   email: string,
   name: string,
-  role: string,
+  role: string
 ): Promise<AxiosResponse<IUser>> => {
   return axiosInstance.post('/v1/users', { email, name, role });
 };
@@ -203,7 +213,7 @@ export const updateUser = async (
   name: string,
   email: string,
   role: string,
-  password?: string,
+  password?: string
 ): Promise<AxiosResponse<IUser>> => {
   return axiosInstance.put(`/v1/users/${uuid}`, {
     name,
@@ -214,7 +224,7 @@ export const updateUser = async (
 };
 
 export const deleteUser = async (
-  userUuid: UUID,
+  userUuid: UUID
 ): Promise<AxiosResponse<IUser>> => {
   return axiosInstance.delete(`/v1/users/${userUuid}`);
 };

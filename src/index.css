@@ -9,7 +9,7 @@ html {
 }
 
 .h-section {
-  @apply h-[calc(100vh-80px)];
+  @apply h-[calc(100vh-80px)]
 }
 
 @keyframes highlight-row {

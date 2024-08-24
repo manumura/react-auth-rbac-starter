@@ -13,6 +13,7 @@ import { action as destroyAction } from './routes/contact-destroy';
 import EditContact, { action as editAction } from './routes/contact-edit';
 import Layout from './routes/layout';
 import Login, { action as loginAction } from './routes/login';
+import Register, { action as registerAction } from './routes/register';
 
 const router = createBrowserRouter([
   {
@@ -29,6 +30,12 @@ const router = createBrowserRouter([
             element: <Login />,
             errorElement: <Login />,
             action: loginAction,
+          },
+          {
+            path: 'register',
+            element: <Register />,
+            errorElement: <Register />,
+            action: registerAction,
           },
           {
             path: 'contacts/:contactId',
@@ -60,7 +67,7 @@ const router = createBrowserRouter([
 ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>
     <Providers>
-      <RouterProvider router={router} />;
+      <RouterProvider router={router} />
     </Providers>
   </React.StrictMode>
 );
