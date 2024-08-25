@@ -76,7 +76,6 @@ function SubmitButton({
 }
 
 export default function ForgotPassword(): React.ReactElement {
-  const methods = useForm();
   const navigation = useNavigation();
   const navigate = useNavigate();
   const message = useActionData() as string;
@@ -85,6 +84,9 @@ export default function ForgotPassword(): React.ReactElement {
   const { executeRecaptcha } = useGoogleReCaptcha();
   const isLoading = navigation.state === 'submitting';
 
+  const methods = useForm({
+    mode: 'all',
+  });
   const {
     getValues,
     formState: { isValid },

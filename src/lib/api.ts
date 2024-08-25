@@ -120,14 +120,16 @@ export const forgotPassword = async (
 export const resetPassword = async (
   password: string,
   token: string
-): Promise<AxiosResponse<IUser>> => {
-  return axiosPublicInstance.post('/v1/new-password', { password, token });
+): Promise<IUser> => {
+  return axiosPublicInstance
+    .post('/v1/new-password', { password, token })
+    .then((response) => response.data);
 };
 
-export const getUserFromToken = async (
-  token: string
-): Promise<AxiosResponse<IUser>> => {
-  return axiosPublicInstance.get(`/v1/token/${token}`);
+export const getUserFromToken = async (token: string): Promise<IUser> => {
+  return axiosPublicInstance
+    .get(`/v1/token/${token}`)
+    .then((response) => response.data);
 };
 
 export const validateRecaptcha = async (token: string): Promise<boolean> => {
