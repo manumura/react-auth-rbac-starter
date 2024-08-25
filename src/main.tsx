@@ -14,7 +14,13 @@ import EditContact, { action as editAction } from './routes/contact-edit';
 import Layout from './routes/layout';
 import Login, { action as loginAction } from './routes/login';
 import Register, { action as registerAction } from './routes/register';
-import ForgotPassword, { action as forgotPasswordAction } from './routes/forgot-password';
+import ForgotPassword, {
+  action as forgotPasswordAction,
+} from './routes/forgot-password';
+import ResetPassword, {
+  loader as resetPasswordLoader,
+  action as resetPasswordAction,
+} from './routes/reset-password';
 
 const router = createBrowserRouter([
   {
@@ -43,6 +49,14 @@ const router = createBrowserRouter([
             element: <ForgotPassword />,
             errorElement: <ForgotPassword />,
             action: forgotPasswordAction,
+          },
+          {
+            path: 'reset-password',
+            element: <ResetPassword />,
+            // TODO error
+            errorElement: <ErrorPage />,
+            loader: resetPasswordLoader,
+            action: resetPasswordAction,
           },
           {
             path: 'contacts/:contactId',
