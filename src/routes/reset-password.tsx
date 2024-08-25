@@ -21,18 +21,12 @@ export const loader = async ({ request }: { request: Request }) => {
   const searchParams = new URL(request.url).searchParams;
   const token = searchParams.get('token');
   if (!token) {
-    throw new Response('', {
-      status: 404,
-      statusText: 'Invalid token',
-    });
+    return { token: undefined };
   }
 
   const user = await getUserFromToken(token);
   if (!user) {
-    throw new Response('', {
-      status: 404,
-      statusText: 'Invalid token',
-    });
+    return { token: undefined };
   }
 
   return { token };
@@ -144,6 +138,16 @@ export default function ResetPassword(): React.ReactElement {
     formData.append('recaptchaToken', recaptchaToken);
     submit(formData, { method: 'post' });
   };
+
+  useEffect(() => {
+    if (!token) {
+      toast('Invalid token', {
+        type: 'error',
+        position: 'bottom-right',
+      });
+      navigate('/');
+    }
+  }, [token]);
 
   useEffect(() => {
     if (error) {
