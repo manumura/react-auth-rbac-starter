@@ -53,8 +53,7 @@ const router = createBrowserRouter([
           {
             path: 'reset-password',
             element: <ResetPassword />,
-            // TODO error
-            errorElement: <ErrorPage />,
+            errorElement: <ResetPassword />,
             loader: resetPasswordLoader,
             action: resetPasswordAction,
           },
