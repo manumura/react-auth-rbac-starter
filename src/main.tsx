@@ -22,6 +22,7 @@ import ResetPassword, {
   action as resetPasswordAction,
 } from './routes/reset-password';
 
+// TODO protected / public loader
 const router = createBrowserRouter([
   {
     path: '/',
