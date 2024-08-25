@@ -5,6 +5,7 @@ import { FormProvider, useForm } from 'react-hook-form';
 import {
   Form,
   Link,
+  redirect,
   useActionData,
   useLoaderData,
   useNavigate,
@@ -21,12 +22,14 @@ export const loader = async ({ request }: { request: Request }) => {
   const searchParams = new URL(request.url).searchParams;
   const token = searchParams.get('token');
   if (!token) {
-    return { token: undefined };
+    console.error('No token found');
+    return redirectToPath('', request);
   }
 
   const user = await getUserFromToken(token);
   if (!user) {
-    return { token: undefined };
+    console.error('Invalid token');
+    return redirectToPath('/', request);
   }
 
   return { token };
@@ -78,6 +81,14 @@ export const action = async ({ request }: { request: Request }) => {
     throw new ValidationError('Unknown error', { password, token });
   }
 };
+
+function redirectToPath(path: string, request: Request): Response {
+  // Add / if path does not start with /
+  const p = !path.startsWith('/') ? '/' + path : path;
+  const params = new URLSearchParams();
+  params.set('from', new URL(request.url).pathname);
+  return redirect(p + '?' + params.toString());
+}
 
 function SubmitButton({
   isValid,
@@ -138,16 +149,6 @@ export default function ResetPassword(): React.ReactElement {
     formData.append('recaptchaToken', recaptchaToken);
     submit(formData, { method: 'post' });
   };
-
-  useEffect(() => {
-    if (!token) {
-      toast('Invalid token', {
-        type: 'error',
-        position: 'bottom-right',
-      });
-      navigate('/');
-    }
-  }, [token]);
 
   useEffect(() => {
     if (error) {
