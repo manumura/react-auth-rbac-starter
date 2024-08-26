@@ -144,8 +144,8 @@ export const logout = async (): Promise<void> => {
   return axiosInstance.post('/v1/logout').then((response) => response.data);
 };
 
-export const getProfile = async (): Promise<AxiosResponse<IUser>> => {
-  return axiosInstance.get('/v1/profile');
+export const getProfile = async (): Promise<IUser> => {
+  return axiosInstance.get('/v1/profile').then((response) => response.data);
 };
 
 export const updateProfile = async (

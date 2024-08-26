@@ -1,9 +1,8 @@
 import clsx from 'clsx';
-import Image from 'next/image';
 import { useMemo } from 'react';
 import { useDropzone } from 'react-dropzone';
 
-function DropBox({ onDrop, imgSrc = null }) {
+function DropBox({ onDrop, imgSrc = null }: { readonly onDrop: (files: File[]) => void; readonly imgSrc?: string | null }): JSX.Element {
   const {
     getRootProps,
     getInputProps,
@@ -54,7 +53,7 @@ function DropBox({ onDrop, imgSrc = null }) {
   const avatar = avatarImgSrc ? (
     <div className='avatar'>
       <div className='w-24 rounded-full ring ring-primary ring-offset-base-100 ring-offset-2 overflow-hidden relative'>
-        <Image alt='my avatar image' fill={true} src={avatarImgSrc} className='rounded-full' />
+        <img alt='my avatar' src={avatarImgSrc} className='rounded-full' />
       </div>
     </div>
   ) : (

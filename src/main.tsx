@@ -11,18 +11,23 @@ import Contact, {
 } from './routes/contact';
 import { action as destroyAction } from './routes/contact-destroy';
 import EditContact, { action as editAction } from './routes/contact-edit';
-import Layout from './routes/layout';
-import Login, { action as loginAction } from './routes/login';
-import Register, { action as registerAction } from './routes/register';
 import ForgotPassword, {
   action as forgotPasswordAction,
 } from './routes/forgot-password';
+import Layout from './routes/layout';
+import Login, { action as loginAction } from './routes/login';
+import Profile, { loader as profileLoader } from './routes/profile';
+import Register, { action as registerAction } from './routes/register';
 import ResetPassword, {
-  loader as resetPasswordLoader,
   action as resetPasswordAction,
+  loader as resetPasswordLoader,
 } from './routes/reset-password';
+import EditProfile, {
+  action as editProfileAction,
+} from './routes/edit-profile';
 
 // TODO protected / public loader
+// TODO logout form fetcher
 const router = createBrowserRouter([
   {
     path: '/',
@@ -57,6 +62,19 @@ const router = createBrowserRouter([
             errorElement: <ResetPassword />,
             loader: resetPasswordLoader,
             action: resetPasswordAction,
+          },
+          {
+            path: 'profile',
+            element: <Profile />,
+            errorElement: <Profile />,
+            loader: profileLoader,
+          },
+          {
+            path: 'edit-profile',
+            element: <EditProfile />,
+            errorElement: <EditProfile />,
+            loader: profileLoader,
+            action: editProfileAction,
           },
           {
             path: 'contacts/:contactId',
