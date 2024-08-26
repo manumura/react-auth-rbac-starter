@@ -19,20 +19,25 @@ import { getUserFromToken, resetPassword, validateRecaptcha } from '../lib/api';
 import { ValidationError } from '../types/custom-errors';
 
 export const loader = async ({ request }: { request: Request }) => {
-  const searchParams = new URL(request.url).searchParams;
-  const token = searchParams.get('token');
-  if (!token) {
-    console.error('No token found');
-    return redirectToPath('', request);
-  }
+  try {
+    const searchParams = new URL(request.url).searchParams;
+    const token = searchParams.get('token');
+    if (!token) {
+      console.error('No token found');
+      return redirectToPath('', request);
+    }
 
-  const user = await getUserFromToken(token);
-  if (!user) {
-    console.error('Invalid token');
-    return redirectToPath('/', request);
-  }
+    const user = await getUserFromToken(token);
+    if (!user) {
+      console.error('Invalid token');
+      return redirectToPath('/', request);
+    }
 
-  return { token };
+    return { token };
+  } catch (error) {
+    console.error(error);
+    return redirect('/');
+  }
 };
 
 export const action = async ({ request }: { request: Request }) => {

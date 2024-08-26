@@ -4,6 +4,7 @@ export type IUser = {
   email: string;
   role: string;
   isActive: boolean;
+  imageUrl: string;
 };
 
 export type IdTokenPayload = {
