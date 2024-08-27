@@ -1,47 +1,152 @@
-import { AxiosProgressEvent } from 'axios';
-import { useCallback, useState } from 'react';
+import { AxiosError, AxiosProgressEvent } from 'axios';
+import { useCallback, useEffect, useState } from 'react';
 import { FormProvider, useForm } from 'react-hook-form';
 import {
   Form,
-  redirect,
   useActionData,
   useLoaderData,
   useNavigate,
   useNavigation,
   useRouteError,
+  useSubmit,
 } from 'react-router-dom';
+import { toast } from 'react-toastify';
 import DropBox from '../components/DropBox';
 import FormInput from '../components/FormInput';
-import { getProfile } from '../lib/api';
+import { updateProfile, updateProfileImage } from '../lib/api';
+import { ValidationError } from '../types/custom-errors';
 import { IUser } from '../types/custom-types';
 
 export const action = async ({ request }: { request: Request }) => {
   const formData = await request.formData();
   const intent = formData.get('intent');
-  const email = formData.get('email') as string;
+  const name = formData.get('name') as string;
   const password = formData.get('password') as string;
-  const token = formData.get('token') as string;
+  const image = formData.get('image') as Blob;
+
+  console.log('Intent name password image', intent, name, password, image);
 
   if (intent === 'edit-profile') {
     console.log('Edit profile');
-    return redirect('/profile');
+    const { userUpdated, message } = await editProfile(name, image);
+    return { userUpdated, message };
   }
 
   if (intent === 'change-password') {
     console.log('Change password');
-    return redirect('/profile');
+    // return redirect('/profile');
+    return { userUpdated: null, message: '' };
   }
 };
 
+async function editProfile(
+  name: string,
+  image: Blob | null
+): Promise<{ userUpdated: IUser; message: string }> {
+  try {
+    const user = await updateProfile(name);
+    if (!user) {
+      throw new ValidationError('Profile update failed', { name });
+    }
+
+    if (!image) {
+      return { userUpdated: user, message: 'Profile successfully updated!' };
+    }
+
+    // Upload profile image
+    console.log('Uploading image');
+    const formData = new FormData();
+    formData.append('image', image);
+
+    const onUploadProgress = (progressEvent: AxiosProgressEvent): void => {
+      const { loaded, total } = progressEvent;
+      if (total && progressEvent.bytes) {
+        const progress = Math.round((loaded / total) * 100);
+        // setUploadProgress(progress);
+        console.log('Progress:', progress);
+      }
+    };
+
+    const userUpdated = await updateProfileImage(formData, onUploadProgress);
+    if (!user) {
+      throw new ValidationError('Profile update failed', { name });
+    }
+    return { userUpdated, message: 'Profile successfully updated!' };
+  } catch (error) {
+    if (error instanceof ValidationError) {
+      throw error;
+    }
+
+    if (error instanceof AxiosError && error.response?.data.message) {
+      throw new ValidationError(error.response.data.message, {
+        name,
+      });
+    }
+
+    if (error instanceof Error) {
+      throw new ValidationError(error.message, { name });
+    }
+
+    throw new ValidationError('Unknown error', { name });
+  }
+}
+
 export default function EditProfile(): React.ReactElement {
-  const [images, setImages] = useState([] as any[]);
+  const [images, setImages] = useState([] as Blob[]);
   const [uploadProgress, setUploadProgress] = useState(0);
+  const submit = useSubmit();
   const navigation = useNavigation();
   const navigate = useNavigate();
   const { user } = useLoaderData() as { user: IUser };
-  const userUpdated = useActionData() as IUser;
+  const response = useActionData() as { userUpdated: IUser, message: string };
   const error = useRouteError() as Error;
   const isLoading = navigation.state === 'submitting';
+
+  // console.log('userUpdated', userUpdated);
+  console.log('response', response);
+
+  const onEditProfile = async (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    const { intent, name } = getValues();
+
+    if (!name && images.length <= 0) {
+      setEditProfileError('name', { message: 'Please edit at least 1 field' });
+      return;
+    }
+
+    const formData = new FormData();
+    formData.append('intent', intent);
+    formData.append('name', name);
+    if (images.length > 0) {
+      formData.append('image', images[0]);
+    }
+    submit(formData, { method: 'post', encType: 'multipart/form-data' });
+  };
+
+  useEffect(() => {
+    if (error) {
+      console.log('Error:', error);
+      if (error instanceof ValidationError) {
+        console.log('Validation Error:', error.data);
+      }
+
+      toast(error?.message, {
+        type: 'error',
+        position: 'bottom-right',
+      });
+    }
+  }, [error]);
+
+  useEffect(() => {
+    if (response) {
+      const { message } = response;
+      toast(message, {
+        type: 'success',
+        position: 'bottom-right',
+      });
+      navigate('/profile');
+    }
+  }, [response]);
 
   const onDrop = useCallback(
     (acceptedFiles: Blob[]) => {
@@ -65,13 +170,14 @@ export default function EditProfile(): React.ReactElement {
     },
     [images]
   );
-  const onUploadProgress = (progressEvent: AxiosProgressEvent): void => {
-    const { loaded, total } = progressEvent;
-    if (total && progressEvent.bytes) {
-      const progress = Math.round((loaded / total) * 100);
-      setUploadProgress(progress);
-    }
-  };
+
+  // const onUploadProgress = (progressEvent: AxiosProgressEvent): void => {
+  //   const { loaded, total } = progressEvent;
+  //   if (total && progressEvent.bytes) {
+  //     const progress = Math.round((loaded / total) * 100);
+  //     setUploadProgress(progress);
+  //   }
+  // };
 
   const handleCancel = (): void => {
     navigate(-1);
@@ -80,11 +186,14 @@ export default function EditProfile(): React.ReactElement {
   //----------------- Edit Profile -------------------
   const editProfileMethods = useForm({
     defaultValues: {
+      intent: 'edit-profile',
       name: user.name,
     },
+    mode: 'all',
   });
 
   const {
+    getValues,
     formState: { isValid: isEditProfileValid },
     // watch,
     setError: setEditProfileError,
@@ -155,10 +264,12 @@ export default function EditProfile(): React.ReactElement {
   //----------------- Change Password -------------------
   const changePasswordMethods = useForm({
     defaultValues: {
+      intent: 'change-password',
       oldPassword: '',
       newPassword: '',
       newPasswordConfirm: '',
     },
+    mode: 'all',
   });
 
   const {
@@ -297,6 +408,7 @@ export default function EditProfile(): React.ReactElement {
       <FormProvider {...editProfileMethods}>
         <Form
           method='post'
+          onSubmit={(event) => onEditProfile(event)}
           id='edit-profile-form'
           className='mx-auto flex max-w-2xl flex-col items-center overflow-hidden pt-10'
         >
