@@ -150,32 +150,32 @@ export const getProfile = async (): Promise<IUser> => {
 
 export const updateProfile = async (
   name: string
-): Promise<AxiosResponse<IUser>> => {
+): Promise<IUser> => {
   return axiosInstance.put('/v1/profile', {
     name,
-  });
+  }).then((response) => response.data);
 };
 
 export const updatePassword = async (
   oldPassword: string,
   newPassword: string
-): Promise<AxiosResponse<IUser>> => {
+): Promise<IUser> => {
   return axiosInstance.put('/v1/profile/password', {
     oldPassword,
     newPassword,
-  });
+  }).then((response) => response.data);
 };
 
 export const updateProfileImage = async (
   image: FormData,
   onUploadProgress: any
-): Promise<AxiosResponse<IUser>> => {
+): Promise<IUser> => {
   return axiosInstance.put('/v1/profile/image', image, {
     headers: {
       'Content-Type': 'multipart/form-data',
     },
     onUploadProgress,
-  });
+  }).then((response) => response.data);
 };
 
 export const getUsers = async (

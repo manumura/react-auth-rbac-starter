@@ -132,11 +132,6 @@ export default function Login(): React.ReactElement {
 
   useEffect(() => {
     if (error) {
-      console.log('Error:', error);
-      if (error instanceof ValidationError) {
-        console.log('Validation Error:', error.data);
-      }
-
       toast(error?.message, {
         type: 'error',
         position: 'bottom-right',

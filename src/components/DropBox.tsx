@@ -24,7 +24,7 @@ function DropBox({ onDrop, imgSrc = null }: { readonly onDrop: (files: File[]) =
 
   const baseClasses =
     'hero bg-base-100 border-dashed border-4 border-neutral rounded-box border-opacity-50';
-  const getStyle = ({ isDragAccept, isFocused, isDragReject }): string => {
+  const getStyle = ({ isDragAccept, isFocused, isDragReject }: { isDragAccept: boolean, isFocused: boolean, isDragReject: boolean }): string => {
     if (isDragAccept) {
       return clsx(baseClasses, 'border-primary');
     }
