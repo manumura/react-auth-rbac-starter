@@ -3,17 +3,18 @@ import { useCallback, useEffect, useState } from 'react';
 import { FormProvider, useForm } from 'react-hook-form';
 import {
   Form,
+  redirect,
   useActionData,
   useLoaderData,
   useNavigate,
   useNavigation,
-  useRouteError,
-  useSubmit,
+  useSubmit
 } from 'react-router-dom';
 import { toast } from 'react-toastify';
 import DropBox from '../components/DropBox';
 import FormInput from '../components/FormInput';
-import { updateProfile, updateProfileImage } from '../lib/api';
+import { appMessages } from '../config/constant';
+import { updatePassword, updateProfile, updateProfileImage } from '../lib/api';
 import { ValidationError } from '../types/custom-errors';
 import { IUser } from '../types/custom-types';
 
@@ -21,28 +22,59 @@ export const action = async ({ request }: { request: Request }) => {
   const formData = await request.formData();
   const intent = formData.get('intent');
   const name = formData.get('name') as string;
-  const password = formData.get('password') as string;
   const image = formData.get('image') as Blob;
-
-  console.log('Intent name password image', intent, name, password, image);
+  const oldPassword = formData.get('oldPassword') as string;
+  const newPassword = formData.get('newPassword') as string;
 
   if (intent === 'edit-profile') {
-    console.log('Edit profile');
-    const { userUpdated, message } = await editProfile(name, image);
-    return { userUpdated, message };
+    const response = await editProfile(name, image);
+    // if (Object.hasOwn(response, 'error')) {
+    if (response.error) {
+      return { error: response.error, name };
+    }
+    return redirect('/profile?msg=' + appMessages.PROFILE_UPDATE_SUCCESS);
   }
 
   if (intent === 'change-password') {
-    console.log('Change password');
-    // return redirect('/profile');
-    return { userUpdated: null, message: '' };
+    const response = await changePassword(oldPassword, newPassword);
+    if (response.error) {
+      return { error: response.error, newPassword };
+    }
+    return redirect('/profile?msg=' + appMessages.PASSWORD_CHANGE_SUCCESS);
   }
 };
+
+async function changePassword(
+  oldPassword: string,
+  newPassword: string
+): Promise<{ user: IUser | undefined; error: Error | undefined }> {
+  try {
+    const user = await updatePassword(oldPassword, newPassword);
+    if (!user) {
+      throw new ValidationError('Change password failed', {
+        oldPassword,
+        newPassword,
+      });
+    }
+    return { user, error: undefined };
+  } catch (error) {
+    // You cannot `useLoaderData` in an errorElemen
+    console.error(error);
+    let message = 'Unknown error';
+    if (error instanceof AxiosError && error.response?.data.message) {
+      message = error.response.data.message;
+    } else if (error instanceof Error) {
+      message = error.message;
+    }
+
+    return { user: undefined, error: new Error(message) };
+  }
+}
 
 async function editProfile(
   name: string,
   image: Blob | null
-): Promise<{ userUpdated: IUser; message: string }> {
+): Promise<{ user: IUser | undefined; error: Error | undefined }> {
   try {
     const user = await updateProfile(name);
     if (!user) {
@@ -50,7 +82,7 @@ async function editProfile(
     }
 
     if (!image) {
-      return { userUpdated: user, message: 'Profile successfully updated!' };
+      return { user, error: undefined };
     }
 
     // Upload profile image
@@ -63,31 +95,26 @@ async function editProfile(
       if (total && progressEvent.bytes) {
         const progress = Math.round((loaded / total) * 100);
         // setUploadProgress(progress);
-        console.log('Progress:', progress);
+        console.log('Upload progress:', progress);
       }
     };
 
     const userUpdated = await updateProfileImage(formData, onUploadProgress);
-    if (!user) {
+    if (!userUpdated) {
       throw new ValidationError('Profile update failed', { name });
     }
-    return { userUpdated, message: 'Profile successfully updated!' };
+    return { user: userUpdated, error: undefined };
   } catch (error) {
-    if (error instanceof ValidationError) {
-      throw error;
-    }
-
+    // You cannot `useLoaderData` in an errorElemen
+    console.error(error);
+    let message = 'Unknown error';
     if (error instanceof AxiosError && error.response?.data.message) {
-      throw new ValidationError(error.response.data.message, {
-        name,
-      });
+      message = error.response.data.message;
+    } else if (error instanceof Error) {
+      message = error.message;
     }
 
-    if (error instanceof Error) {
-      throw new ValidationError(error.message, { name });
-    }
-
-    throw new ValidationError('Unknown error', { name });
+    return { user: undefined, error: new Error(message) };
   }
 }
 
@@ -98,16 +125,37 @@ export default function EditProfile(): React.ReactElement {
   const navigation = useNavigation();
   const navigate = useNavigate();
   const { user } = useLoaderData() as { user: IUser };
-  const response = useActionData() as { userUpdated: IUser, message: string };
-  const error = useRouteError() as Error;
+  const response = useActionData() as {
+    error: Error | undefined;
+    name: string | undefined;
+    newPassword: string | undefined;
+  };
   const isLoading = navigation.state === 'submitting';
 
-  // console.log('userUpdated', userUpdated);
-  console.log('response', response);
+  const onPasswordChanged = async (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    const { intent, oldPassword, newPassword } = getChangePasswordValues();
+
+    if (!oldPassword || !newPassword) {
+      setChangePasswordError('oldPassword', {
+        message: 'Please enter current and new password',
+      });
+      setChangePasswordError('newPassword', {
+        message: 'Please enter current and new password',
+      });
+      return;
+    }
+
+    const formData = new FormData();
+    formData.append('intent', intent);
+    formData.append('oldPassword', oldPassword);
+    formData.append('newPassword', newPassword);
+    submit(formData, { method: 'post' });
+  };
 
   const onEditProfile = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    const { intent, name } = getValues();
+    const { intent, name } = getEditProfileValues();
 
     if (!name && images.length <= 0) {
       setEditProfileError('name', { message: 'Please edit at least 1 field' });
@@ -124,27 +172,21 @@ export default function EditProfile(): React.ReactElement {
   };
 
   useEffect(() => {
-    if (error) {
-      console.log('Error:', error);
-      if (error instanceof ValidationError) {
-        console.log('Validation Error:', error.data);
-      }
-
-      toast(error?.message, {
-        type: 'error',
-        position: 'bottom-right',
-      });
-    }
-  }, [error]);
-
-  useEffect(() => {
     if (response) {
-      const { message } = response;
-      toast(message, {
-        type: 'success',
-        position: 'bottom-right',
-      });
-      navigate('/profile');
+      if (response.error) {
+        toast(response.error.message, {
+          type: 'error',
+          position: 'bottom-right',
+        });
+
+        if (response.name) {
+          setEditProfileValue('name', response.name);
+        }
+        if (response.newPassword) {
+          setChangePasswordValue('newPassword', response.newPassword);
+          setChangePasswordValue('newPasswordConfirm', response.newPassword);
+        }
+      }
     }
   }, [response]);
 
@@ -193,72 +235,12 @@ export default function EditProfile(): React.ReactElement {
   });
 
   const {
-    getValues,
+    getValues: getEditProfileValues,
+    setValue: setEditProfileValue,
     formState: { isValid: isEditProfileValid },
     // watch,
     setError: setEditProfileError,
   } = editProfileMethods;
-
-  // const mutationProfile = useMutation({
-  //   mutationFn: ({ name }: { name: string }) => onMutateProfile(name),
-  //   async onSuccess(user, variables, context) {
-  //     toast('Profile successfully updated!', {
-  //       type: 'success',
-  //       position: 'bottom-right',
-  //     });
-
-  //     await queryClient.invalidateQueries({ queryKey: ['profile'] });
-  //     router.push('/profile');
-  //   },
-  //   onError(error, variables, context) {
-  //     toast(error?.message, {
-  //       type: 'error',
-  //       position: 'bottom-right',
-  //     });
-  //   },
-  // });
-
-  // const onMutateProfile = async (name): Promise<IUser> => {
-  //   try {
-  //     const response = await updateProfile(name);
-  //     const user = response.data;
-
-  //     if (images.length <= 0) {
-  //       return user;
-  //     }
-
-  //     // Upload profile image
-  //     console.log('Uploading image');
-  //     const formData = new FormData();
-  //     formData.append('image', images[0]);
-
-  //     const uploadResponse = await updateProfileImage(formData, onUploadProgress);
-  //     if (uploadResponse.status !== 200) {
-  //       throw new Error('Profile image upload failed');
-  //     }
-  //     return user;
-  //   } catch (error) {
-  //     if (error instanceof AxiosError && error.response?.data.message) {
-  //       throw new Error(error.response.data.message);
-  //     }
-  //     if (error instanceof Error) {
-  //       throw new Error(error.message);
-  //     }
-  //     throw new Error('Edit user failed');
-  //   }
-  // };
-
-  // const onProfileEdited = async (formData): Promise<void> => {
-  //   if (!formData?.name && images.length <= 0) {
-  //     setEditProfileError('name', { message: 'Please edit at least 1 field' });
-  //     // setError('password', { message: 'Please edit at least 1 field' });
-  //     return;
-  //   }
-
-  //   mutationProfile.mutate({
-  //     name: formData.name,
-  //   });
-  // };
   // ------------------------------------------------
 
   //----------------- Change Password -------------------
@@ -273,67 +255,12 @@ export default function EditProfile(): React.ReactElement {
   });
 
   const {
-    formState: { isValid: isChangePasswordValid, errors },
+    getValues: getChangePasswordValues,
+    setValue: setChangePasswordValue,
+    formState: { isValid: isChangePasswordValid },
     watch,
     setError: setChangePasswordError,
   } = changePasswordMethods;
-
-  // const mutationPassword = useMutation({
-  //   mutationFn: ({
-  //     oldPassword,
-  //     newPassword,
-  //   }: {
-  //     oldPassword: string;
-  //     newPassword: string;
-  //   }) => onMutatePassword(oldPassword, newPassword),
-  //   async onSuccess(user, variables, context) {
-  //     toast(`${user.name} successfully changed password!`, {
-  //       type: 'success',
-  //       position: 'bottom-right',
-  //     });
-
-  //     router.push('/profile');
-  //   },
-  //   onError(error, variables, context) {
-  //     toast(error?.message, {
-  //       type: 'error',
-  //       position: 'bottom-right',
-  //     });
-  //   },
-  // });
-
-  // const onMutatePassword = async (oldPassword, newPassword): Promise<IUser> => {
-  //   try {
-  //     const response = await updatePassword(oldPassword, newPassword);
-  //     const user = response?.data;
-  //     return user;
-  //   } catch (error) {
-  //     if (error instanceof AxiosError && error.response?.data.message) {
-  //       throw new Error(error.response.data.message);
-  //     }
-  //     if (error instanceof Error) {
-  //       throw new Error(error.message);
-  //     }
-  //     throw new Error('Edit password failed');
-  //   }
-  // };
-
-  // const onPasswordChanged = async (formData): Promise<void> => {
-  //   if (!formData?.oldPassword || !formData?.newPassword) {
-  //     setChangePasswordError('oldPassword', {
-  //       message: 'Please enter current and new password',
-  //     });
-  //     setChangePasswordError('newPassword', {
-  //       message: 'Please enter current and new password',
-  //     });
-  //     return;
-  //   }
-
-  //   mutationPassword.mutate({
-  //     oldPassword: formData.oldPassword,
-  //     newPassword: formData.newPassword,
-  //   });
-  // };
   // ------------------------------------------------
 
   const nameConstraints = {
@@ -452,6 +379,7 @@ export default function EditProfile(): React.ReactElement {
       <FormProvider {...changePasswordMethods}>
         <Form
           method='post'
+          onSubmit={(event) => onPasswordChanged(event)}
           id='change-password-form'
           className='mx-auto flex max-w-2xl flex-col items-center overflow-hidden py-5'
         >

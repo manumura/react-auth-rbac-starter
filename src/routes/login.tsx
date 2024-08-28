@@ -9,6 +9,7 @@ import {
   useNavigate,
   useNavigation,
   useRouteError,
+  useSearchParams,
   useSubmit,
 } from 'react-router-dom';
 import { toast } from 'react-toastify';
@@ -17,8 +18,9 @@ import { login, validateRecaptcha } from '../lib/api';
 import { getUserFromIdToken } from '../lib/jwt.utils';
 import { saveAuthentication } from '../lib/storage';
 import useUserStore from '../lib/user-store';
-import { IUser } from '../types/custom-types';
 import { ValidationError } from '../types/custom-errors';
+import { IUser } from '../types/custom-types';
+import { appMessages } from '../config/constant';
 
 export const action = async ({ request }: { request: Request }) => {
   const formData = await request.formData();
@@ -104,11 +106,13 @@ export default function Login(): React.ReactElement {
   const userStore = useUserStore();
   const navigation = useNavigation();
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
   const user = useActionData() as IUser;
   const error = useRouteError() as Error;
   const submit = useSubmit();
   const { executeRecaptcha } = useGoogleReCaptcha();
   const isLoading = navigation.state === 'submitting';
+  const msg = searchParams.get('msg');
 
   const onSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -129,6 +133,16 @@ export default function Login(): React.ReactElement {
     formData.append('token', token);
     submit(formData, { method: 'post' });
   };
+
+  useEffect(() => {
+    if (msg && msg === appMessages.PASSWORD_RESET_SUCCESS) {
+      setSearchParams({});
+      toast('Password successfully updated!', {
+        type: 'success',
+        position: 'bottom-right',
+      });
+    }
+  }, [msg]);
 
   useEffect(() => {
     if (error) {
