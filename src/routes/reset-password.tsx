@@ -8,13 +8,12 @@ import {
   redirect,
   useActionData,
   useLoaderData,
-  useNavigate,
   useNavigation,
-  useRouteError,
   useSubmit,
 } from 'react-router-dom';
 import { toast } from 'react-toastify';
 import FormInput from '../components/FormInput';
+import { appMessages } from '../config/constant';
 import { getUserFromToken, resetPassword, validateRecaptcha } from '../lib/api';
 import { ValidationError } from '../types/custom-errors';
 
@@ -24,13 +23,13 @@ export const loader = async ({ request }: { request: Request }) => {
     const token = searchParams.get('token');
     if (!token) {
       console.error('No token found');
-      return redirectToPath('', request);
+      return redirect('/');
     }
 
     const user = await getUserFromToken(token);
     if (!user) {
       console.error('Invalid token');
-      return redirectToPath('/', request);
+      return redirect('/');
     }
 
     return { token };
@@ -40,60 +39,53 @@ export const loader = async ({ request }: { request: Request }) => {
   }
 };
 
-export const action = async ({ request }: { request: Request }) => {
+export const action = async ({
+  request,
+}: {
+  request: Request;
+}): Promise<
+  | Response
+  | {
+      error: Error | undefined;
+      password: string | undefined;
+    }
+> => {
   const formData = await request.formData();
   const password = formData.get('password') as string;
   const token = formData.get('token') as string;
   const recaptchaToken = formData.get('recaptchaToken') as string;
-  console.log('pasword token recaptchaToken', password, token, recaptchaToken);
 
   try {
     if (!recaptchaToken) {
       throw new ValidationError('Recaptcha token not found', {
         password,
-        token,
       });
     }
     const isCaptchaValid = await validateRecaptcha(recaptchaToken);
     if (!isCaptchaValid) {
       throw new ValidationError('Captcha validation failed', {
         password,
-        token,
       });
     }
 
     const user = await resetPassword(password, token);
     if (!user) {
-      throw new ValidationError('Invalid response', { password, token });
+      throw new ValidationError('Invalid response', { password });
     }
-    return user;
+    return redirect('/login?msg=' + appMessages.PASSWORD_RESET_SUCCESS);
   } catch (error) {
-    if (error instanceof ValidationError) {
-      throw error;
-    }
-
+    // You cannot `useLoaderData` in an errorElemen
+    console.error(error);
+    let message = 'Unknown error';
     if (error instanceof AxiosError && error.response?.data.message) {
-      throw new ValidationError(error.response.data.message, {
-        password,
-        token,
-      });
+      message = error.response.data.message;
+    } else if (error instanceof Error) {
+      message = error.message;
     }
 
-    if (error instanceof Error) {
-      throw new ValidationError(error.message, { password, token });
-    }
-
-    throw new ValidationError('Unknown error', { password, token });
+    return { error: new Error(message), password };
   }
 };
-
-function redirectToPath(path: string, request: Request): Response {
-  // Add / if path does not start with /
-  const p = !path.startsWith('/') ? '/' + path : path;
-  const params = new URLSearchParams();
-  params.set('from', new URL(request.url).pathname);
-  return redirect(p + '?' + params.toString());
-}
 
 function SubmitButton({
   isValid,
@@ -119,9 +111,10 @@ function SubmitButton({
 export default function ResetPassword(): React.ReactElement {
   const { token } = useLoaderData() as { token: string };
   const navigation = useNavigation();
-  const navigate = useNavigate();
-  const user = useActionData() as string;
-  const error = useRouteError() as Error;
+  const response = useActionData() as {
+    error: Error | undefined;
+    password: string | undefined;
+  };
   const submit = useSubmit();
   const { executeRecaptcha } = useGoogleReCaptcha();
   const isLoading = navigation.state === 'submitting';
@@ -131,6 +124,7 @@ export default function ResetPassword(): React.ReactElement {
   });
   const {
     getValues,
+    setValue,
     watch,
     formState: { isValid },
   } = methods;
@@ -156,68 +150,19 @@ export default function ResetPassword(): React.ReactElement {
   };
 
   useEffect(() => {
-    if (error) {
-      toast(error?.message, {
-        type: 'error',
-        position: 'bottom-right',
-      });
+    if (response) {
+      if (response.error) {
+        toast(response.error.message, {
+          type: 'error',
+          position: 'bottom-right',
+        });
+
+        if (response.password) {
+          setValue('password', response.password);
+        }
+      }
     }
-  }, [error]);
-
-  useEffect(() => {
-    if (user) {
-      toast('Password successfully updated!', {
-        type: 'success',
-        position: 'bottom-right',
-      });
-      navigate('/login');
-    }
-  }, [user]);
-
-  // const mutation = useMutation({
-  //   mutationFn: ({ password, token }: { password: string; token: string; }) =>
-  //     onMutate(password, token),
-  //   async onSuccess(user, variables, context) {
-  //     toast('Password successfully updated!', {
-  //       type: 'success',
-  //       position: 'bottom-right',
-  //     });
-
-  //     router.push('/login');
-  //   },
-  //   onError(error, variables, context) {
-  //     toast(error?.message, {
-  //       type: 'error',
-  //       position: 'bottom-right',
-  //     });
-  //   },
-  // });
-
-  // const onMutate = async (password, token): Promise<IUser> => {
-  //   let response: AxiosResponse<IUser>;
-  //   try {
-  //     response = await resetPassword(password, token);
-  //   } catch (error) {
-  //     if (error?.response) {
-  //       throw new Error(error.response.data.message);
-  //     }
-  //     throw new Error(error.message);
-  //   }
-
-  //   if (response.status !== 200) {
-  //     throw new Error('Reset password failed');
-  //   }
-  //   const user = response.data;
-  //   return user;
-  // };
-
-  // const onSubmit = async (formData): Promise<void> => {
-  //   if (!formData) {
-  //     return;
-  //   }
-
-  //   mutation.mutate({ password: formData.password, token });
-  // };
+  }, [response]);
 
   const passwordConstraints = {
     required: { value: true, message: 'Password is required' },

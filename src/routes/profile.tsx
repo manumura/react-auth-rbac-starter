@@ -17,6 +17,7 @@ export const loader = async () => {
   }
 };
 
+// TODO searchParams
 export default function Profile(): React.ReactElement {
   const navigate = useNavigate();
   const { user } = useLoaderData() as { user: IUser };
