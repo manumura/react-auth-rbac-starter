@@ -32,3 +32,9 @@ export type IGetUsersResponse = {
   elements: IUser[];
   totalElements: number;
 };
+
+export type EventMessage = {
+  eventType: string;
+  user: IUser;
+  message: string;
+};

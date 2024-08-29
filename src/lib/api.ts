@@ -148,41 +148,45 @@ export const getProfile = async (): Promise<IUser> => {
   return axiosInstance.get('/v1/profile').then((response) => response.data);
 };
 
-export const updateProfile = async (
-  name: string
-): Promise<IUser> => {
-  return axiosInstance.put('/v1/profile', {
-    name,
-  }).then((response) => response.data);
+export const updateProfile = async (name: string): Promise<IUser> => {
+  return axiosInstance
+    .put('/v1/profile', {
+      name,
+    })
+    .then((response) => response.data);
 };
 
 export const updatePassword = async (
   oldPassword: string,
   newPassword: string
 ): Promise<IUser> => {
-  return axiosInstance.put('/v1/profile/password', {
-    oldPassword,
-    newPassword,
-  }).then((response) => response.data);
+  return axiosInstance
+    .put('/v1/profile/password', {
+      oldPassword,
+      newPassword,
+    })
+    .then((response) => response.data);
 };
 
 export const updateProfileImage = async (
   image: FormData,
   onUploadProgress: any
 ): Promise<IUser> => {
-  return axiosInstance.put('/v1/profile/image', image, {
-    headers: {
-      'Content-Type': 'multipart/form-data',
-    },
-    onUploadProgress,
-  }).then((response) => response.data);
+  return axiosInstance
+    .put('/v1/profile/image', image, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
+      onUploadProgress,
+    })
+    .then((response) => response.data);
 };
 
 export const getUsers = async (
   page: number | undefined,
   pageSize: number | undefined,
   role: string | undefined
-): Promise<AxiosResponse<IGetUsersResponse>> => {
+): Promise<IGetUsersResponse> => {
   const p: string[][] = [];
   if (page) {
     p.push(['page', page.toString()]);
@@ -195,13 +199,17 @@ export const getUsers = async (
   }
 
   const params = new URLSearchParams(p);
-  return axiosInstance.get(`/v1/users?${params}`);
+  return axiosInstance
+    .get(`/v1/users?${params}`)
+    .then((response) => response.data);
 };
 
 export const getUserByUuid = async (
   uuid: UUID
 ): Promise<AxiosResponse<IUser>> => {
-  return axiosInstance.get(`/v1/users/${uuid}`);
+  return axiosInstance
+    .get(`/v1/users/${uuid}`)
+    .then((response) => response.data);
 };
 
 export const createUser = async (
@@ -209,7 +217,9 @@ export const createUser = async (
   name: string,
   role: string
 ): Promise<AxiosResponse<IUser>> => {
-  return axiosInstance.post('/v1/users', { email, name, role });
+  return axiosInstance
+    .post('/v1/users', { email, name, role })
+    .then((response) => response.data);
 };
 
 export const updateUser = async (
@@ -223,12 +233,14 @@ export const updateUser = async (
     name,
     email,
     role,
-    ...(password ? { password } : {}),
+    ...(password ? { password } : {}).then((response) => response.data),
   });
 };
 
 export const deleteUser = async (
   userUuid: UUID
 ): Promise<AxiosResponse<IUser>> => {
-  return axiosInstance.delete(`/v1/users/${userUuid}`);
+  return axiosInstance
+    .delete(`/v1/users/${userUuid}`)
+    .then((response) => response.data);
 };

@@ -11,6 +11,10 @@ import Contact, {
 } from './routes/contact';
 import { action as destroyAction } from './routes/contact-destroy';
 import EditContact, { action as editAction } from './routes/contact-edit';
+import CreateUser, { action as createUserAction } from './routes/create-user';
+import EditProfile, {
+  action as editProfileAction,
+} from './routes/edit-profile';
 import ForgotPassword, {
   action as forgotPasswordAction,
 } from './routes/forgot-password';
@@ -22,13 +26,11 @@ import ResetPassword, {
   action as resetPasswordAction,
   loader as resetPasswordLoader,
 } from './routes/reset-password';
-import EditProfile, {
-  action as editProfileAction,
-} from './routes/edit-profile';
+import Users, { loader as usersLoader } from './routes/users';
 
 // TODO protected / public loader
 // TODO logout form fetcher
-// TODO setValue
+// TODO setValue after error
 // TODO duplicate messages
 const router = createBrowserRouter([
   {
@@ -77,6 +79,18 @@ const router = createBrowserRouter([
             errorElement: <EditProfile />,
             loader: profileLoader,
             action: editProfileAction,
+          },
+          {
+            path: 'users',
+            element: <Users />,
+            errorElement: <Users />,
+            loader: usersLoader,
+          },
+          {
+            path: 'create-user',
+            element: <CreateUser />,
+            errorElement: <CreateUser />,
+            action: createUserAction,
           },
           {
             path: 'contacts/:contactId',

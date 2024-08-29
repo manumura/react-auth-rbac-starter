@@ -2,7 +2,19 @@ import clsx from 'clsx';
 import { useRef } from 'react';
 import useClickAway from 'react-use/lib/useClickAway';
 
-const Modal = ({ title, body, footer, isOpen, onClose }) => {
+const Modal = ({
+  title,
+  body,
+  footer,
+  isOpen,
+  onClose,
+}: {
+  title: JSX.Element;
+  body: JSX.Element;
+  footer: JSX.Element;
+  isOpen: boolean;
+  onClose: () => Promise<void>;
+}) => {
   const ref = useRef(null);
   useClickAway(ref, async () => {
     if (isOpen) {
@@ -12,7 +24,7 @@ const Modal = ({ title, body, footer, isOpen, onClose }) => {
 
   const modalClass = clsx(
     'modal modal-bottom sm:modal-middle',
-    `${isOpen ? 'modal-open' : ''}`,
+    `${isOpen ? 'modal-open' : ''}`
   );
 
   return (
