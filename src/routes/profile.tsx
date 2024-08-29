@@ -1,6 +1,9 @@
-import { redirect, useLoaderData, useNavigate } from 'react-router-dom';
+import { redirect, useLoaderData, useNavigate, useSearchParams } from 'react-router-dom';
 import { getProfile } from '../lib/api';
 import { IUser } from '../types/custom-types';
+import { appMessages } from '../config/constant';
+import { toast } from 'react-toastify';
+import { useEffect } from 'react';
 
 export const loader = async () => {
   try {
@@ -17,10 +20,29 @@ export const loader = async () => {
   }
 };
 
-// TODO searchParams
 export default function Profile(): React.ReactElement {
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
+  const msg = searchParams.get('msg');
   const { user } = useLoaderData() as { user: IUser };
+
+  useEffect(() => {
+    if (msg) {
+      let message = '';
+      if (msg === appMessages.PROFILE_UPDATE_SUCCESS) {
+        message = 'Profile successfully updated!';
+      }
+      if (msg === appMessages.PASSWORD_CHANGE_SUCCESS) {
+        message = `${user.name} successfully changed password!`;
+      }
+
+      setSearchParams({});
+      toast(message, {
+        type: 'success',
+        position: 'bottom-right',
+      });
+    }
+  }, [msg]);
 
   const handleEdit = (): void => {
     navigate('/edit-profile');
