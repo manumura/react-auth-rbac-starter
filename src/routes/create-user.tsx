@@ -1,10 +1,56 @@
-import { FormProvider, useForm } from "react-hook-form";
-import { Form, useActionData, useNavigate, useNavigation, useRouteError, useSubmit } from "react-router-dom";
-import FormInput from "../components/FormInput";
-import FormSelect from "../components/FormSelect";
+import { AxiosError } from 'axios';
+import { useEffect } from 'react';
+import { FormProvider, useForm } from 'react-hook-form';
+import {
+  Form,
+  redirect,
+  useNavigate,
+  useNavigation,
+  useRouteError,
+} from 'react-router-dom';
+import { toast } from 'react-toastify';
+import FormInput from '../components/FormInput';
+import FormSelect from '../components/FormSelect';
+import { appMessageKeys } from '../config/constant';
+import { createUser } from '../lib/api';
+import { ValidationError } from '../types/custom-errors';
 
 export const action = async ({ request }: { request: Request }) => {
-}
+  const formData = await request.formData();
+  const email = formData.get('email') as string;
+  const name = formData.get('name') as string;
+  const role = formData.get('role') as string;
+
+  try {
+    if (!name || !email || !role) {
+      throw new ValidationError('Invalid form data', { email, name, role });
+    }
+
+    const user = await createUser(email, name, role);
+    if (!user) {
+      throw new ValidationError('Invalid user', { email, name, role });
+    }
+    return redirect('/users?msg=' + appMessageKeys.USER_CREATE_SUCCESS);
+  } catch (error) {
+    if (error instanceof ValidationError) {
+      throw error;
+    }
+
+    if (error instanceof AxiosError && error.response?.data.message) {
+      throw new ValidationError(error.response.data.message, {
+        email,
+        name,
+        role,
+      });
+    }
+
+    if (error instanceof Error) {
+      throw new ValidationError(error.message, { email, name, role });
+    }
+
+    throw new ValidationError('Unknown error', { email, name, role });
+  }
+};
 
 function SubmitButton({
   isValid,
@@ -30,9 +76,7 @@ function SubmitButton({
 export default function CreateUser(): React.ReactElement {
   const navigation = useNavigation();
   const navigate = useNavigate();
-  const user = useActionData() as IUser;
   const error = useRouteError() as Error;
-  const submit = useSubmit();
   const isLoading = navigation.state === 'submitting';
 
   const methods = useForm({
@@ -40,9 +84,17 @@ export default function CreateUser(): React.ReactElement {
   });
 
   const {
-    handleSubmit,
     formState: { isValid },
   } = methods;
+
+  useEffect(() => {
+    if (error) {
+      toast(error?.message, {
+        type: 'error',
+        position: 'bottom-right',
+      });
+    }
+  }, [error]);
 
   // const mutation = useMutation({
   //   mutationFn: ({

@@ -13,7 +13,7 @@ import {
 } from 'react-router-dom';
 import { toast } from 'react-toastify';
 import FormInput from '../components/FormInput';
-import { appMessages } from '../config/constant';
+import { appMessageKeys } from '../config/constant';
 import { getUserFromToken, resetPassword, validateRecaptcha } from '../lib/api';
 import { ValidationError } from '../types/custom-errors';
 
@@ -72,7 +72,7 @@ export const action = async ({
     if (!user) {
       throw new ValidationError('Invalid response', { password });
     }
-    return redirect('/login?msg=' + appMessages.PASSWORD_RESET_SUCCESS);
+    return redirect('/login?msg=' + appMessageKeys.PASSWORD_RESET_SUCCESS);
   } catch (error) {
     // You cannot `useLoaderData` in an errorElemen
     console.error(error);

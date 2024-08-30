@@ -13,7 +13,7 @@ import {
 import { toast } from 'react-toastify';
 import DropBox from '../components/DropBox';
 import FormInput from '../components/FormInput';
-import { appMessages } from '../config/constant';
+import { appMessageKeys } from '../config/constant';
 import { updatePassword, updateProfile, updateProfileImage } from '../lib/api';
 import { ValidationError } from '../types/custom-errors';
 import { IUser } from '../types/custom-types';
@@ -32,7 +32,7 @@ export const action = async ({ request }: { request: Request }) => {
     if (response.error) {
       return { error: response.error, name };
     }
-    return redirect('/profile?msg=' + appMessages.PROFILE_UPDATE_SUCCESS);
+    return redirect('/profile?msg=' + appMessageKeys.PROFILE_UPDATE_SUCCESS);
   }
 
   if (intent === 'change-password') {
@@ -40,7 +40,7 @@ export const action = async ({ request }: { request: Request }) => {
     if (response.error) {
       return { error: response.error, newPassword };
     }
-    return redirect('/profile?msg=' + appMessages.PASSWORD_CHANGE_SUCCESS);
+    return redirect('/profile?msg=' + appMessageKeys.PASSWORD_CHANGE_SUCCESS);
   }
 };
 
