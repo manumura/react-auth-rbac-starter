@@ -20,8 +20,7 @@ const DeleteUserModal = ({
     if (!user?.uuid) {
       return;
     }
-
-    console.log('Deleting user:', user);
+    onClose(true);
   };
 
   const btn = (

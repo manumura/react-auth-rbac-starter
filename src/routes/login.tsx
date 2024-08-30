@@ -20,7 +20,7 @@ import { saveAuthentication } from '../lib/storage';
 import useUserStore from '../lib/user-store';
 import { ValidationError } from '../types/custom-errors';
 import { IUser } from '../types/custom-types';
-import { appMessages } from '../config/constant';
+import { appMessageKeys } from '../config/constant';
 
 export const action = async ({ request }: { request: Request }) => {
   const formData = await request.formData();
@@ -135,7 +135,7 @@ export default function Login(): React.ReactElement {
   };
 
   useEffect(() => {
-    if (msg && msg === appMessages.PASSWORD_RESET_SUCCESS) {
+    if (msg && msg === appMessageKeys.PASSWORD_RESET_SUCCESS) {
       setSearchParams({});
       toast('Password successfully updated!', {
         type: 'success',

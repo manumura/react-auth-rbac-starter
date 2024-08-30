@@ -2,7 +2,13 @@ import { EventSourceMessage } from '@microsoft/fetch-event-source';
 import { UUID } from 'crypto';
 import { useEffect, useState } from 'react';
 import { FiDelete, FiEdit, FiPlusCircle } from 'react-icons/fi';
-import { redirect, useLoaderData, useNavigate } from 'react-router-dom';
+import {
+  redirect,
+  useLoaderData,
+  useNavigate,
+  useSearchParams,
+  useSubmit,
+} from 'react-router-dom';
 import { toast } from 'react-toastify';
 import DeleteUserModal from '../components/DeleteUserModal';
 import { Pagination } from '../components/Pagination';
@@ -11,6 +17,13 @@ import { processMessage, shouldProcessMessage, subscribe } from '../lib/sse';
 import { IUser } from '../types/custom-types';
 import useUserStore from '../lib/user-store';
 import { getUsers } from '../lib/api';
+import { appMessages } from '../config/constant';
+
+export const action = async ({ request }: { request: Request }) => {
+  const formData = await request.formData();
+  console.log('Action called', formData);
+  return 'success';
+};
 
 export const loader = async ({ request }: { request: Request }) => {
   try {
@@ -40,8 +53,7 @@ export const loader = async ({ request }: { request: Request }) => {
 export default function Users() {
   const userSore = useUserStore();
   const currentUser = userSore.user;
-  console.log('User store:', currentUser);
-  const { users, totalElements, page, pageSize, role } = useLoaderData() as {
+  const { users, totalElements, page, pageSize } = useLoaderData() as {
     users: IUser[];
     totalElements: number;
     page: number;
@@ -51,9 +63,23 @@ export default function Users() {
   const [selectedUser, setSelectedUser] = useState<IUser | null>(null);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [usersToDisplay, setUsersToDisplay] = useState(users);
+  const submit = useSubmit();
   const navigate = useNavigate();
-
+  const [searchParams, setSearchParams] = useSearchParams();
+  const msg = searchParams.get('msg');
   const userChangeEventAbortController = new AbortController();
+
+  useEffect(() => {
+    if (msg) {
+      const message = appMessages[msg as keyof typeof appMessages];
+
+      setSearchParams({});
+      toast(message, {
+        type: 'success',
+        position: 'bottom-right',
+      });
+    }
+  }, [msg]);
 
   useEffect(() => {
     setUsersToDisplay(users);
@@ -79,11 +105,11 @@ export default function Users() {
     setIsDeleteModalOpen(true);
   };
 
-  const onCloseDeleteModal = async (success: boolean): Promise<void> => {
+  const onCloseDeleteModal = async (confirmed: boolean): Promise<void> => {
     setIsDeleteModalOpen(false);
-    if (success) {
-      // TODO Refresh users
-      window.location.reload();
+    if (confirmed) {
+      console.log('Deleting user:', selectedUser?.uuid);
+      submit({ userUuid: selectedUser?.uuid }, { method: 'delete' });
     }
   };
 
@@ -95,9 +121,9 @@ export default function Users() {
     navigate('/create-user');
   };
 
-  const onMessage = (message: EventSourceMessage) => {
+  const onMessage = (message: EventSourceMessage, currentUser: IUser) => {
     const shouldProcess =
-      userSore.user && shouldProcessMessage(message, userSore.user);
+      currentUser && shouldProcessMessage(message, currentUser);
     if (!shouldProcess) {
       return;
     }
@@ -141,11 +167,17 @@ export default function Users() {
   };
 
   async function subscribeUserChangeEvents() {
+    if (!currentUser) {
+      console.error('Invalid current user');
+      return;
+    }
+
     console.log('Subscribing to user change events');
     subscribe(
       `${appConfig.baseUrl}/api/v1/events/users`,
       userChangeEventAbortController,
-      onMessage
+      onMessage,
+      currentUser
     );
   }
 

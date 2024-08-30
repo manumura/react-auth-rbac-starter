@@ -26,10 +26,11 @@ import ResetPassword, {
   action as resetPasswordAction,
   loader as resetPasswordLoader,
 } from './routes/reset-password';
-import Users, { loader as usersLoader } from './routes/users';
+import Users, { loader as usersLoader, action as deleteUserAction } from './routes/users';
 
 // TODO protected / public loader
 // TODO logout form fetcher
+// TODO validate formdata in action
 // TODO setValue after error
 // TODO duplicate messages
 const router = createBrowserRouter([
@@ -85,6 +86,7 @@ const router = createBrowserRouter([
             element: <Users />,
             errorElement: <Users />,
             loader: usersLoader,
+            action: deleteUserAction,
           },
           {
             path: 'create-user',

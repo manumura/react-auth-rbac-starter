@@ -1,4 +1,4 @@
-import axios, { AxiosError, AxiosResponse } from 'axios';
+import axios, { AxiosError, AxiosProgressEvent, AxiosResponse } from 'axios';
 import { UUID } from 'node:crypto';
 import appConfig from '../config/config';
 import {
@@ -170,7 +170,7 @@ export const updatePassword = async (
 
 export const updateProfileImage = async (
   image: FormData,
-  onUploadProgress: any
+  onUploadProgress: (progressEvent: AxiosProgressEvent) => void
 ): Promise<IUser> => {
   return axiosInstance
     .put('/v1/profile/image', image, {
@@ -206,7 +206,7 @@ export const getUsers = async (
 
 export const getUserByUuid = async (
   uuid: UUID
-): Promise<AxiosResponse<IUser>> => {
+): Promise<IUser>  => {
   return axiosInstance
     .get(`/v1/users/${uuid}`)
     .then((response) => response.data);
@@ -216,7 +216,7 @@ export const createUser = async (
   email: string,
   name: string,
   role: string
-): Promise<AxiosResponse<IUser>> => {
+): Promise<IUser> => {
   return axiosInstance
     .post('/v1/users', { email, name, role })
     .then((response) => response.data);
@@ -228,18 +228,18 @@ export const updateUser = async (
   email: string,
   role: string,
   password?: string
-): Promise<AxiosResponse<IUser>> => {
+): Promise<IUser> => {
   return axiosInstance.put(`/v1/users/${uuid}`, {
     name,
     email,
     role,
-    ...(password ? { password } : {}).then((response) => response.data),
-  });
+    ...(password ? { password } : {}),
+  }).then((response) => response.data);
 };
 
 export const deleteUser = async (
   userUuid: UUID
-): Promise<AxiosResponse<IUser>> => {
+): Promise<IUser> => {
   return axiosInstance
     .delete(`/v1/users/${userUuid}`)
     .then((response) => response.data);

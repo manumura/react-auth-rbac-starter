@@ -12,7 +12,8 @@ import { UUID } from 'crypto';
 export async function subscribe(
   url: string,
   abortController: AbortController,
-  onMessage: (message: EventSourceMessage) => void,
+  onMessage: (message: EventSourceMessage, currentUser: IUser) => void,
+  currentUser: IUser,
 ) {
   const maxRetries = 10;
   let retryCount = 0;
@@ -51,7 +52,7 @@ export async function subscribe(
           throw new FatalError(message.data);
         }
 
-        onMessage(message);
+        onMessage(message, currentUser);
       },
       onclose() {
         // if the server closes the connection unexpectedly, retry:
