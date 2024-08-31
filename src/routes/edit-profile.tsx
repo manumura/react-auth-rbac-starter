@@ -18,7 +18,14 @@ import { updatePassword, updateProfile, updateProfileImage } from '../lib/api';
 import { ValidationError } from '../types/custom-errors';
 import { IUser } from '../types/custom-types';
 
-export const action = async ({ request }: { request: Request }) => {
+export const action = async ({ request }: { request: Request }): Promise<
+| Response
+| {
+    error: Error | undefined;
+    name: string | undefined;
+    newPassword: string | undefined;
+  }
+> => {
   const formData = await request.formData();
   const intent = formData.get('intent');
   const name = formData.get('name') as string;
@@ -30,7 +37,7 @@ export const action = async ({ request }: { request: Request }) => {
     const response = await editProfile(name, image);
     // if (Object.hasOwn(response, 'error')) {
     if (response.error) {
-      return { error: response.error, name };
+      return { error: response.error, name, newPassword };
     }
     return redirect('/profile?msg=' + appMessageKeys.PROFILE_UPDATE_SUCCESS);
   }
@@ -38,10 +45,13 @@ export const action = async ({ request }: { request: Request }) => {
   if (intent === 'change-password') {
     const response = await changePassword(oldPassword, newPassword);
     if (response.error) {
-      return { error: response.error, newPassword };
+      return { error: response.error, name, newPassword };
     }
     return redirect('/profile?msg=' + appMessageKeys.PASSWORD_CHANGE_SUCCESS);
   }
+
+  console.error('Invalid intent', intent);
+  return redirect('/');
 };
 
 async function changePassword(

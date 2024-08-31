@@ -1,9 +1,11 @@
 import { EventSourceMessage } from '@microsoft/fetch-event-source';
+import { AxiosError } from 'axios';
 import { UUID } from 'crypto';
 import { useEffect, useState } from 'react';
 import { FiDelete, FiEdit, FiPlusCircle } from 'react-icons/fi';
 import {
   redirect,
+  useActionData,
   useLoaderData,
   useNavigate,
   useSearchParams,
@@ -13,16 +15,49 @@ import { toast } from 'react-toastify';
 import DeleteUserModal from '../components/DeleteUserModal';
 import { Pagination } from '../components/Pagination';
 import appConfig from '../config/config';
-import { processMessage, shouldProcessMessage, subscribe } from '../lib/sse';
-import { IUser } from '../types/custom-types';
-import useUserStore from '../lib/user-store';
-import { getUsers } from '../lib/api';
 import { appMessages } from '../config/constant';
+import { deleteUser, getUsers } from '../lib/api';
+import { processMessage, shouldProcessMessage, subscribe } from '../lib/sse';
+import useUserStore from '../lib/user-store';
+import { ValidationError } from '../types/custom-errors';
+import { IUser } from '../types/custom-types';
 
-export const action = async ({ request }: { request: Request }) => {
+export const action = async ({
+  request,
+}: {
+  request: Request;
+}): Promise<
+  | Response
+  | {
+      error: Error | undefined;
+      user: IUser | undefined;
+    }
+> => {
   const formData = await request.formData();
-  console.log('Action called', formData);
-  return 'success';
+  const userUuid = formData.get('userUuid') as UUID;
+
+  try {
+    if (!userUuid) {
+      throw new ValidationError('Invalid form data', { userUuid });
+    }
+
+    const user = await deleteUser(userUuid);
+    if (!user) {
+      throw new ValidationError(`Invalid user: ${userUuid}`, { userUuid });
+    }
+    return { user, error: undefined };
+  } catch (error) {
+    // You cannot `useLoaderData` in an errorElemen
+    console.error(error);
+    let message = 'Unknown error';
+    if (error instanceof AxiosError && error.response?.data.message) {
+      message = error.response.data.message;
+    } else if (error instanceof Error) {
+      message = error.message;
+    }
+
+    return { user: undefined, error: new Error(message) };
+  }
 };
 
 export const loader = async ({ request }: { request: Request }) => {
@@ -39,7 +74,7 @@ export const loader = async ({ request }: { request: Request }) => {
       role
     );
     if (!users) {
-      console.error('Invalid users response');
+      console.error('Invalid users');
       return redirect('/');
     }
 
@@ -60,6 +95,11 @@ export default function Users() {
     pageSize: number;
     role: string;
   };
+  const response = useActionData() as {
+    error: Error | undefined;
+    user: IUser | undefined;
+  };
+
   const [selectedUser, setSelectedUser] = useState<IUser | null>(null);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [usersToDisplay, setUsersToDisplay] = useState(users);
@@ -68,6 +108,24 @@ export default function Users() {
   const [searchParams, setSearchParams] = useSearchParams();
   const msg = searchParams.get('msg');
   const userChangeEventAbortController = new AbortController();
+
+  useEffect(() => {
+    if (response) {
+      if (response.error) {
+        toast(response.error.message, {
+          type: 'error',
+          position: 'bottom-right',
+        });
+      }
+
+      if (response.user) {
+        toast(`User deleted successfully ${response.user.email}`, {
+          type: 'success',
+          position: 'bottom-right',
+        });
+      }
+    }
+  }, [response]);
 
   useEffect(() => {
     if (msg) {
@@ -108,7 +166,6 @@ export default function Users() {
   const onCloseDeleteModal = async (confirmed: boolean): Promise<void> => {
     setIsDeleteModalOpen(false);
     if (confirmed) {
-      console.log('Deleting user:', selectedUser?.uuid);
       submit({ userUuid: selectedUser?.uuid }, { method: 'delete' });
     }
   };
