@@ -26,7 +26,11 @@ import ResetPassword, {
   action as resetPasswordAction,
   loader as resetPasswordLoader,
 } from './routes/reset-password';
-import Users, { loader as usersLoader, action as deleteUserAction } from './routes/users';
+import Users, {
+  loader as usersLoader,
+  action as deleteUserAction,
+} from './routes/users';
+import EditUser, { loader as userLoader } from './routes/edit-user';
 
 // TODO protected / public loader
 // TODO logout form fetcher
@@ -94,6 +98,12 @@ const router = createBrowserRouter([
             errorElement: <CreateUser />,
             action: createUserAction,
           },
+          {
+            path: 'users/:userUuid',
+            element: <EditUser />,
+            loader: userLoader,
+          },
+          // TODO delete
           {
             path: 'contacts/:contactId',
             element: <Contact />,
