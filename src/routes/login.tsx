@@ -14,15 +14,17 @@ import {
 } from 'react-router-dom';
 import { toast } from 'react-toastify';
 import FormInput from '../components/FormInput';
+import { appMessages } from '../config/constant';
 import { login, validateRecaptcha } from '../lib/api';
 import { getUserFromIdToken } from '../lib/jwt.utils';
 import { saveAuthentication } from '../lib/storage';
 import useUserStore from '../lib/user-store';
 import { ValidationError } from '../types/custom-errors';
 import { IUser } from '../types/custom-types';
-import { appMessageKeys } from '../config/constant';
 
-export const action = async ({ request }: { request: Request }) => {
+export const action = (currentUser: IUser) => async ({request}: {request: Request}) => {
+  console.log('currentUser ', currentUser );
+// export const action = async ({ request }: { request: Request }) => {
   const formData = await request.formData();
   const email = formData.get('email') as string;
   const password = formData.get('password') as string;
@@ -106,12 +108,12 @@ export default function Login(): React.ReactElement {
   const userStore = useUserStore();
   const navigation = useNavigation();
   const navigate = useNavigate();
-  const [searchParams, setSearchParams] = useSearchParams();
   const user = useActionData() as IUser;
   const error = useRouteError() as Error;
   const submit = useSubmit();
   const { executeRecaptcha } = useGoogleReCaptcha();
   const isLoading = navigation.state === 'submitting';
+  const [searchParams, setSearchParams] = useSearchParams();
   const msg = searchParams.get('msg');
 
   const onSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
@@ -135,9 +137,11 @@ export default function Login(): React.ReactElement {
   };
 
   useEffect(() => {
-    if (msg && msg === appMessageKeys.PASSWORD_RESET_SUCCESS) {
+    if (msg) {
+      const message = appMessages[msg as keyof typeof appMessages];
+
       setSearchParams({});
-      toast('Password successfully updated!', {
+      toast(message, {
         type: 'success',
         position: 'bottom-right',
       });

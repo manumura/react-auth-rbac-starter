@@ -1,7 +1,9 @@
-import React from 'react';
-import { Await, defer, useLoaderData } from 'react-router-dom';
+import React, { useEffect } from 'react';
+import { Await, defer, useLoaderData, useSearchParams } from 'react-router-dom';
 import { info, welcome } from '../lib/api';
 import { InfoResponse, MessageResponse } from '../types/custom-types';
+import { toast } from 'react-toastify';
+import { appMessages } from '../config/constant';
 
 export async function loader() {
   const data = Promise.all([info(), welcome()]);
@@ -12,6 +14,20 @@ export async function loader() {
 
 export default function Home(): React.ReactElement {
   const { data } = useLoaderData() as { data: Promise<[InfoResponse, string]> };
+  const [searchParams, setSearchParams] = useSearchParams();
+  const msg = searchParams.get('msg');
+
+  useEffect(() => {
+    if (msg) {
+      const message = appMessages[msg as keyof typeof appMessages];
+
+      setSearchParams({});
+      toast(message, {
+        type: 'success',
+        position: 'bottom-right',
+      });
+    }
+  }, [msg]);
 
   return (
     <section className='h-section bg-slate-200 pt-20'>
