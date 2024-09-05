@@ -1,14 +1,35 @@
-import { UUID } from 'crypto';
-import { FormProvider, useForm } from 'react-hook-form';
-import { toast } from 'react-toastify';
-import { IUser } from '../types/custom-types';
-import { Form, Params, redirect, useLoaderData, useNavigate, useNavigation } from 'react-router-dom';
-import FormSelect from '../components/FormSelect';
-import FormInput from '../components/FormInput';
-import { getUserByUuid } from '../lib/api';
 import { AxiosError } from 'axios';
+import { UUID } from 'crypto';
+import { useEffect } from 'react';
+import { FormProvider, useForm } from 'react-hook-form';
+import {
+  Form,
+  Params,
+  redirect,
+  useActionData,
+  useLoaderData,
+  useNavigate,
+  useNavigation,
+} from 'react-router-dom';
+import { toast } from 'react-toastify';
+import FormInput from '../components/FormInput';
+import FormSelect from '../components/FormSelect';
+import { appMessageKeys } from '../config/constant';
+import { getUserByUuid, updateUser } from '../lib/api';
+import { IUser } from '../types/custom-types';
 
-export const action = async ({ request }: { request: Request }) => {
+export const action = async ({
+  request,
+  params,
+}: {
+  request: Request;
+  params: Params;
+}): Promise<
+  | Response
+  | {
+      error: Error | undefined;
+    }
+> => {
   const formData = await request.formData();
   const email = formData.get('email') as string;
   const name = formData.get('name') as string;
@@ -16,8 +37,25 @@ export const action = async ({ request }: { request: Request }) => {
   const password = formData.get('password') as string;
   const passwordConfirm = formData.get('passwordConfirm') as string;
 
+  const userUuid = params.userUuid as UUID;
+  if (!userUuid) {
+    return { error: new Error('Invalid user UUID') };
+  }
+
+  if (!email || !name || !role) {
+    return { error: new Error('Invalid form data') };
+  }
+
+  if (password !== passwordConfirm) {
+    return { error: new Error('Passwords do not match') };
+  }
+
   try {
-    console.log('Edit user form submitted');
+    const user = await updateUser(userUuid, name, email, role, password);
+    if (!user) {
+      throw new Error('Update user failed');
+    }
+    return redirect('/users?msg=' + appMessageKeys.USER_UPDATE_SUCCESS);
   } catch (error) {
     // You cannot `useLoaderData` in an errorElemen
     console.error(error);
@@ -28,11 +66,16 @@ export const action = async ({ request }: { request: Request }) => {
       message = error.message;
     }
 
-    return { user: undefined, error: new Error(message) };
+    return { error: new Error(message) };
   }
 };
 
-export const loader = async ({ params }: { request: Request, params: Params }) => {
+export const loader = async ({
+  params,
+}: {
+  request: Request;
+  params: Params;
+}) => {
   try {
     const userUuid = params.userUuid as UUID;
     if (!userUuid) {
@@ -79,6 +122,18 @@ export default function EditUser(): React.ReactElement {
   const isLoading = navigation.state === 'submitting';
   const navigate = useNavigate();
   const { user } = useLoaderData() as { user: IUser };
+  const response = useActionData() as {
+    error: Error | undefined;
+  };
+
+  useEffect(() => {
+    if (response?.error) {
+      toast(response.error.message, {
+        type: 'error',
+        position: 'bottom-right',
+      });
+    }
+  }, [response]);
 
   const methods = useForm({
     defaultValues: {
@@ -93,77 +148,9 @@ export default function EditUser(): React.ReactElement {
 
   const {
     watch,
-    handleSubmit,
-    formState: { isValid, errors },
-    setError,
+    formState: { isValid },
+    // setError,
   } = methods;
-
-  // const mutation = useMutation({
-  //   mutationFn: ({
-  //     uuid,
-  //     name,
-  //     email,
-  //     role,
-  //     password,
-  //   }: {
-  //     uuid: UUID;
-  //     name: string;
-  //     email: string;
-  //     role: string;
-  //     password: string;
-  //   }) => onMutate(uuid, name, email, role, password),
-  //   async onSuccess(userUpdated, variables, context) {
-  //     toast(`User updated successfully ${userUpdated?.name}!`, {
-  //       type: 'success',
-  //       position: 'bottom-right',
-  //     });
-
-  //     await queryClient.invalidateQueries({ queryKey: ['userByUuid', user.uuid] });
-  //     router.back();
-  //   },
-  //   onError(error, variables, context) {
-  //     toast(error?.message, {
-  //       type: 'error',
-  //       position: 'bottom-right',
-  //     });
-  //   },
-  // });
-
-  // const onMutate = async (
-  //   uuid,
-  //   name,
-  //   email,
-  //   role,
-  //   password,
-  // ): Promise<IUser> => {
-  //   try {
-  //     const response = await updateUser(uuid, name, email, role, password);
-  //     const user = response.data;
-  //     return user;
-  //   } catch (error) {
-  //     if (error instanceof AxiosError && error.response?.data.message) {
-  //       throw new Error(error.response.data.message);
-  //     }
-  //     if (error instanceof Error) {
-  //       throw new Error(error.message);
-  //     }
-  //     throw new Error('Edit user failed');
-  //   }
-  // };
-
-  // const onSubmit = async (formData): Promise<void> => {
-  //   if (!formData || !user) {
-  //     return;
-  //   }
-
-  //   mutation.mutate({
-  //     uuid: user.uuid,
-  //     email: formData.email,
-  //     name: formData.name,
-  //     role: formData.role,
-  //     password: formData.password,
-  //   });
-  // };
 
   const onCancel = (): void => {
     navigate(-1);

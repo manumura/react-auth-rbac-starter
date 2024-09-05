@@ -8,23 +8,24 @@ import {
   useLoaderData,
   useNavigate,
   useNavigation,
-  useSubmit
+  useSubmit,
 } from 'react-router-dom';
 import { toast } from 'react-toastify';
 import DropBox from '../components/DropBox';
 import FormInput from '../components/FormInput';
 import { appMessageKeys } from '../config/constant';
 import { updatePassword, updateProfile, updateProfileImage } from '../lib/api';
-import { ValidationError } from '../types/custom-errors';
 import { IUser } from '../types/custom-types';
 
-export const action = async ({ request }: { request: Request }): Promise<
-| Response
-| {
-    error: Error | undefined;
-    name: string | undefined;
-    newPassword: string | undefined;
-  }
+export const action = async ({
+  request,
+}: {
+  request: Request;
+}): Promise<
+  | Response
+  | {
+      error: Error | undefined;
+    }
 > => {
   const formData = await request.formData();
   const intent = formData.get('intent');
@@ -37,7 +38,7 @@ export const action = async ({ request }: { request: Request }): Promise<
     const response = await editProfile(name, image);
     // if (Object.hasOwn(response, 'error')) {
     if (response.error) {
-      return { error: response.error, name, newPassword };
+      return { error: response.error };
     }
     return redirect('/profile?msg=' + appMessageKeys.PROFILE_UPDATE_SUCCESS);
   }
@@ -45,7 +46,7 @@ export const action = async ({ request }: { request: Request }): Promise<
   if (intent === 'change-password') {
     const response = await changePassword(oldPassword, newPassword);
     if (response.error) {
-      return { error: response.error, name, newPassword };
+      return { error: response.error };
     }
     return redirect('/profile?msg=' + appMessageKeys.PASSWORD_CHANGE_SUCCESS);
   }
@@ -61,10 +62,7 @@ async function changePassword(
   try {
     const user = await updatePassword(oldPassword, newPassword);
     if (!user) {
-      throw new ValidationError('Change password failed', {
-        oldPassword,
-        newPassword,
-      });
+      throw new Error('Change password failed');
     }
     return { user, error: undefined };
   } catch (error) {
@@ -88,7 +86,7 @@ async function editProfile(
   try {
     const user = await updateProfile(name);
     if (!user) {
-      throw new ValidationError('Profile update failed', { name });
+      throw new Error('Profile update failed');
     }
 
     if (!image) {
@@ -111,7 +109,7 @@ async function editProfile(
 
     const userUpdated = await updateProfileImage(formData, onUploadProgress);
     if (!userUpdated) {
-      throw new ValidationError('Profile update failed', { name });
+      throw new Error('Profile update failed');
     }
     return { user: userUpdated, error: undefined };
   } catch (error) {
@@ -137,8 +135,6 @@ export default function EditProfile(): React.ReactElement {
   const { user } = useLoaderData() as { user: IUser };
   const response = useActionData() as {
     error: Error | undefined;
-    name: string | undefined;
-    newPassword: string | undefined;
   };
   const isLoading = navigation.state === 'submitting';
 
@@ -182,21 +178,11 @@ export default function EditProfile(): React.ReactElement {
   };
 
   useEffect(() => {
-    if (response) {
-      if (response.error) {
-        toast(response.error.message, {
-          type: 'error',
-          position: 'bottom-right',
-        });
-
-        if (response.name) {
-          setEditProfileValue('name', response.name);
-        }
-        if (response.newPassword) {
-          setChangePasswordValue('newPassword', response.newPassword);
-          setChangePasswordValue('newPasswordConfirm', response.newPassword);
-        }
-      }
+    if (response?.error) {
+      toast(response.error.message, {
+        type: 'error',
+        position: 'bottom-right',
+      });
     }
   }, [response]);
 
@@ -246,7 +232,7 @@ export default function EditProfile(): React.ReactElement {
 
   const {
     getValues: getEditProfileValues,
-    setValue: setEditProfileValue,
+    // setValue: setEditProfileValue,
     formState: { isValid: isEditProfileValid },
     // watch,
     setError: setEditProfileError,
@@ -266,7 +252,7 @@ export default function EditProfile(): React.ReactElement {
 
   const {
     getValues: getChangePasswordValues,
-    setValue: setChangePasswordValue,
+    // setValue: setChangePasswordValue,
     formState: { isValid: isChangePasswordValid },
     watch,
     setError: setChangePasswordError,

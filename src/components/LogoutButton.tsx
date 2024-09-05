@@ -1,49 +1,59 @@
-import { useState } from 'react';
+import { useEffect } from 'react';
+import { useFetcher, useNavigate } from 'react-router-dom';
 import { toast } from 'react-toastify';
+import { appMessageKeys, appMessages } from '../config/constant';
 import { logout } from '../lib/api';
 import { clearAuthentication } from '../lib/storage';
 import useUserStore from '../lib/user-store';
-import { useLocation, useNavigate } from 'react-router-dom';
 
-const LogoutButton = ({id}: {id: string}) => {
+export const action = async () => {
+  try {
+    await logout();
+    return 'success';
+  } catch (error) {
+    return 'failed';
+  }
+};
+
+const LogoutButton = ({ id }: { id: string }) => {
   const navigate = useNavigate();
-  const location = useLocation();
   const userStore = useUserStore();
-  const [isSubmitting, setIsSubmitting] = useState(false);
+  const fetcher = useFetcher();
 
-  const handleLogout = async (): Promise<void> => {
-    setIsSubmitting(true);
-    try {
-      await logout();
+  const isLoading = fetcher.state === 'submitting';
+  const success = fetcher.data === 'success';
+  const failed = fetcher.data === 'failed';
 
+  useEffect(() => {
+    if (success) {
       userStore.setUser(null);
       clearAuthentication();
-      setIsSubmitting(false);
-
-      toast('Logout successfull', {
-        type: 'success',
-        position: 'bottom-right',
-      });
-      if (location?.pathname === '/') {
-        navigate(0); // refresh the page
-      }
+      toast(
+        appMessages[appMessageKeys.LOGOUT_SUCCESS as keyof typeof appMessages],
+        {
+          type: 'success',
+          position: 'bottom-right',
+        }
+      );
       navigate('/');
-    } catch (error) {
-      console.error(error);
+    }
+  }, [success]);
+
+  useEffect(() => {
+    if (failed) {
       toast('Logout failed', {
         type: 'error',
         position: 'bottom-right',
       });
-      return;
-    } finally {
-      setIsSubmitting(false);
     }
-  };
+  }, [failed]);
 
   const btn = (
-    <button id={id} className='btn-outline btn' onClick={handleLogout}>
-      Logout
-    </button>
+    <fetcher.Form method='post' action='/logout' className='m-0 p-0'>
+      <button id={id} type='submit' className='btn-outline btn'>
+        Logout
+      </button>
+    </fetcher.Form>
   );
   const btnLoading = (
     <button id={id} className='btn-outline btn'>
@@ -52,7 +62,7 @@ const LogoutButton = ({id}: {id: string}) => {
     </button>
   );
 
-  return isSubmitting ? btnLoading : btn;
+  return isLoading ? btnLoading : btn;
 };
 
 export default LogoutButton;
