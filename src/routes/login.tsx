@@ -5,12 +5,13 @@ import { FormProvider, useForm } from 'react-hook-form';
 import {
   Form,
   Link,
+  redirect,
   useActionData,
   useNavigate,
   useNavigation,
   useRouteError,
   useSearchParams,
-  useSubmit,
+  useSubmit
 } from 'react-router-dom';
 import { toast } from 'react-toastify';
 import FormInput from '../components/FormInput';
@@ -21,10 +22,26 @@ import { saveAuthentication } from '../lib/storage';
 import useUserStore from '../lib/user-store';
 import { ValidationError } from '../types/custom-errors';
 import { IUser } from '../types/custom-types';
+import { getCurrentUserFromStorage } from '../lib/utils';
 
-export const action = (currentUser: IUser) => async ({request}: {request: Request}) => {
-  console.log('currentUser ', currentUser );
-// export const action = async ({ request }: { request: Request }) => {
+export const loader = async () => {
+  try {
+    const currentUser = await getCurrentUserFromStorage();
+    if (currentUser) {
+      console.error('User already logged in');
+      return redirect('/');
+    }
+
+    return { currentUser };
+  } catch (error) {
+    console.error(error);
+    return redirect('/');
+  }
+};
+
+// export const action = (currentUser: IUser | null) => async ({request}: {request: Request}) => {
+  // console.log('currentUser ', currentUser );
+export const action = async ({ request }: { request: Request }) => {
   const formData = await request.formData();
   const email = formData.get('email') as string;
   const password = formData.get('password') as string;
@@ -165,6 +182,7 @@ export default function Login(): React.ReactElement {
         type: 'success',
         position: 'bottom-right',
       });
+      console.log('Login user', user);
       navigate('/');
     }
   }, [user]);

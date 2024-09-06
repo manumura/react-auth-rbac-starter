@@ -21,6 +21,7 @@ import { processMessage, shouldProcessMessage, subscribe } from '../lib/sse';
 import useUserStore from '../lib/user-store';
 import { ValidationError } from '../types/custom-errors';
 import { IUser } from '../types/custom-types';
+import { getCurrentUserFromStorage, isAdmin } from '../lib/utils';
 
 export const action = async ({
   request,
@@ -62,6 +63,12 @@ export const action = async ({
 
 export const loader = async ({ request }: { request: Request }) => {
   try {
+    const currentUser = await getCurrentUserFromStorage();
+    if (!currentUser || !isAdmin(currentUser)) {
+      console.error('No logged in ADMIN user');
+      return redirect('/');
+    }
+
     const url = new URL(request.url);
     const searchParams = url.searchParams;
     const page = Number(searchParams.get('page')) || 1;
