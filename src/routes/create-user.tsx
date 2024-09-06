@@ -14,6 +14,22 @@ import FormSelect from '../components/FormSelect';
 import { appMessageKeys } from '../config/constant';
 import { createUser } from '../lib/api';
 import { ValidationError } from '../types/custom-errors';
+import { getCurrentUserFromStorage, isAdmin } from '../lib/utils';
+
+export const loader = async () => {
+  try {
+    const currentUser = await getCurrentUserFromStorage();
+    if (!currentUser || !isAdmin(currentUser)) {
+      console.error('No logged in ADMIN user');
+      return redirect('/');
+    }
+
+    return { currentUser };
+  } catch (error) {
+    console.error(error);
+    return redirect('/');
+  }
+};
 
 export const action = async ({ request }: { request: Request }) => {
   const formData = await request.formData();
