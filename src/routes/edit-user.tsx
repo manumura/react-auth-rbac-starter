@@ -19,6 +19,38 @@ import { getUserByUuid, updateUser } from '../lib/api';
 import { getCurrentUserFromStorage, isAdmin } from '../lib/utils';
 import { IUser } from '../types/custom-types';
 
+export const loader = async ({
+  params,
+}: {
+  request: Request;
+  params: Params;
+}) => {
+  try {
+    const currentUser = await getCurrentUserFromStorage();
+    if (!currentUser || !isAdmin(currentUser)) {
+      console.error('No logged in ADMIN user');
+      return redirect('/');
+    }
+
+    const userUuid = params.userUuid as UUID;
+    if (!userUuid) {
+      console.error('No user UUID found');
+      return redirect('/');
+    }
+
+    const user = await getUserByUuid(userUuid);
+    if (!user) {
+      console.error('Invalid user UUID');
+      return redirect('/');
+    }
+
+    return { user };
+  } catch (error) {
+    console.error(error);
+    return redirect('/');
+  }
+};
+
 export const action = async ({
   request,
   params,
@@ -68,38 +100,6 @@ export const action = async ({
     }
 
     return { error: new Error(message) };
-  }
-};
-
-export const loader = async ({
-  params,
-}: {
-  request: Request;
-  params: Params;
-}) => {
-  try {
-    const currentUser = await getCurrentUserFromStorage();
-    if (!currentUser || !isAdmin(currentUser)) {
-      console.error('No logged in ADMIN user');
-      return redirect('/');
-    }
-
-    const userUuid = params.userUuid as UUID;
-    if (!userUuid) {
-      console.error('No user UUID found');
-      return redirect('/');
-    }
-
-    const user = await getUserByUuid(userUuid);
-    if (!user) {
-      console.error('Invalid user UUID');
-      return redirect('/');
-    }
-
-    return { user };
-  } catch (error) {
-    console.error(error);
-    return redirect('/');
   }
 };
 

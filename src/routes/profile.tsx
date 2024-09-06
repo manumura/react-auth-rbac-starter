@@ -30,16 +30,21 @@ export default function Profile(): React.ReactElement {
   const { user } = useLoaderData() as { user: IUser };
   const [searchParams, setSearchParams] = useSearchParams();
   const msg = searchParams.get('msg');
+  const time = searchParams.get('t');
 
   useEffect(() => {
     if (msg) {
+      const toastId = `${msg}-${time}`;
       const message = appMessages[msg as keyof typeof appMessages];
-
       setSearchParams({});
-      toast(message, {
-        type: 'success',
-        position: 'bottom-right',
-      });
+
+      if (!toast.isActive(toastId)) {
+        toast(message, {
+          type: 'success',
+          position: 'bottom-right',
+          toastId,
+        });
+      }
     }
   }, [msg]);
 

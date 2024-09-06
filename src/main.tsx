@@ -30,7 +30,7 @@ import Users, {
   loader as usersLoader,
 } from './routes/users';
 
-// TODO validate formdata in action + set value when error
+// TODO refactor navbar loader
 // TODO duplicate messages
 const router = createBrowserRouter([
   {

@@ -1,3 +1,5 @@
+import { AxiosError } from 'axios';
+import { useEffect } from 'react';
 import { useGoogleReCaptcha } from 'react-google-recaptcha-v3';
 import { FormProvider, useForm } from 'react-hook-form';
 import {
@@ -6,22 +8,30 @@ import {
   useActionData,
   useNavigate,
   useNavigation,
-  useRouteError,
   useSubmit,
 } from 'react-router-dom';
-import FormInput from '../components/FormInput';
-import { ValidationError } from '../types/custom-errors';
-import { forgotPassword, validateRecaptcha } from '../lib/api';
-import { AxiosError } from 'axios';
-import { useEffect } from 'react';
 import { toast } from 'react-toastify';
+import FormInput from '../components/FormInput';
+import { forgotPassword, validateRecaptcha } from '../lib/api';
+import { ValidationError } from '../types/custom-errors';
 
-export const action = async ({ request }: { request: Request }) => {
+export const action = async ({
+  request,
+}: {
+  request: Request;
+}): Promise<{
+  message: string | undefined;
+  error: Error | undefined;
+}> => {
   const formData = await request.formData();
   const email = formData.get('email') as string;
   const token = formData.get('token') as string;
 
   try {
+    if (!email) {
+      throw new ValidationError('Invalid form data', { email });
+    }
+
     if (!token) {
       throw new ValidationError('Recaptcha token not found', { email });
     }
@@ -34,23 +44,18 @@ export const action = async ({ request }: { request: Request }) => {
     if (!response.message) {
       throw new ValidationError('Invalid response', { email });
     }
-    return response.message;
+    return { message: response.message, error: undefined };
   } catch (error) {
-    if (error instanceof ValidationError) {
-      throw error;
-    }
-
+    // You cannot `useLoaderData` in an errorElemen
+    console.error(error);
+    let message = 'Unknown error';
     if (error instanceof AxiosError && error.response?.data.message) {
-      throw new ValidationError(error.response.data.message, {
-        email,
-      });
+      message = error.response.data.message;
+    } else if (error instanceof Error) {
+      message = error.message;
     }
 
-    if (error instanceof Error) {
-      throw new ValidationError(error.message, { email });
-    }
-
-    throw new ValidationError('Unknown error', { email });
+    return { message: undefined, error: new Error(message) };
   }
 };
 
@@ -78,8 +83,10 @@ function SubmitButton({
 export default function ForgotPassword(): React.ReactElement {
   const navigation = useNavigation();
   const navigate = useNavigate();
-  const message = useActionData() as string;
-  const error = useRouteError() as Error;
+  const response = useActionData() as {
+    message: string | undefined;
+    error: Error | undefined;
+  };
   const submit = useSubmit();
   const { executeRecaptcha } = useGoogleReCaptcha();
   const isLoading = navigation.state === 'submitting';
@@ -112,23 +119,23 @@ export default function ForgotPassword(): React.ReactElement {
   };
 
   useEffect(() => {
-    if (error) {
-      toast(error?.message, {
-        type: 'error',
-        position: 'bottom-right',
-      });
-    }
-  }, [error]);
+    if (response) {
+      if (response?.error) {
+        toast(response.error?.message, {
+          type: 'error',
+          position: 'bottom-right',
+        });
+      }
 
-  useEffect(() => {
-    if (message) {
-      toast('Please follow the link sent to your email', {
-        type: 'success',
-        position: 'bottom-right',
-      });
-      navigate('/login');
+      if (response?.message) {
+        toast('Please follow the link sent to your email', {
+          type: 'success',
+          position: 'bottom-right',
+        });
+        navigate('/login');
+      }
     }
-  }, [message]);
+  }, [response]);
 
   const emailConstraints = {
     required: { value: true, message: 'Email is required' },
