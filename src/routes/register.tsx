@@ -8,16 +8,21 @@ import {
   useActionData,
   useNavigate,
   useNavigation,
-  useRouteError,
-  useSubmit,
+  useSubmit
 } from 'react-router-dom';
 import { toast } from 'react-toastify';
 import FormInput from '../components/FormInput';
 import { register, validateRecaptcha } from '../lib/api';
-import { IUser } from '../types/custom-types';
 import { ValidationError } from '../types/custom-errors';
+import { IUser } from '../types/custom-types';
 
-export const action = async ({ request }: { request: Request }) => {
+export const action = async ({ request }: { request: Request })
+: Promise<
+| {
+    user: IUser | undefined;
+    error: Error | undefined;
+  }
+> => {
   const formData = await request.formData();
   const name = formData.get('name') as string;
   const email = formData.get('email') as string;
@@ -25,6 +30,10 @@ export const action = async ({ request }: { request: Request }) => {
   const token = formData.get('token') as string;
 
   try {
+    if (!email || !password || !name) {
+      throw new ValidationError('Invalid form data', { name, email, password });
+    }
+
     if (!token) {
       throw new ValidationError('Recaptcha token not found', {
         name,
@@ -45,24 +54,18 @@ export const action = async ({ request }: { request: Request }) => {
     if (!user) {
       throw new ValidationError('Invalid response', { name, email, password });
     }
-    return user;
+    return { user, error: undefined };
   } catch (error) {
-    if (error instanceof ValidationError) {
-      throw error;
-    }
-
+    // You cannot `useLoaderData` in an errorElemen
+    console.error(error);
+    let message = 'Unknown error';
     if (error instanceof AxiosError && error.response?.data.message) {
-      throw new ValidationError(error.response.data.message, {
-        email,
-        password,
-      });
+      message = error.response.data.message;
+    } else if (error instanceof Error) {
+      message = error.message;
     }
 
-    if (error instanceof Error) {
-      throw new ValidationError(error.message, { email, password });
-    }
-
-    throw new ValidationError('Unknown error', { email, password });
+    return { user: undefined, error: new Error(message) };
   }
 };
 
@@ -90,8 +93,10 @@ function SubmitButton({
 export default function Register(): React.ReactElement {
   const navigation = useNavigation();
   const navigate = useNavigate();
-  const user = useActionData() as IUser;
-  const error = useRouteError() as Error;
+  const response = useActionData() as {
+    user: IUser | undefined;
+    error: Error | undefined;
+  };
   const submit = useSubmit();
   const { executeRecaptcha } = useGoogleReCaptcha();
   const isLoading = navigation.state === 'submitting';
@@ -118,23 +123,24 @@ export default function Register(): React.ReactElement {
   };
 
   useEffect(() => {
-    if (error) {
-      toast(error?.message, {
-        type: 'error',
-        position: 'bottom-right',
-      });
-    }
-  }, [error]);
+    if (response) {
+      if (response?.error) {
+        toast(response.error?.message, {
+          type: 'error',
+          position: 'bottom-right',
+        });
+      }
 
-  useEffect(() => {
-    if (user) {
-      toast(`Registration successful ${user?.name}!`, {
-        type: 'success',
-        position: 'bottom-right',
-      });
-      navigate('/login');
+      if (response?.user) {
+        toast(`Registration successful ${response?.user?.name}!`, {
+          type: 'success',
+          position: 'bottom-right',
+        });
+        navigate('/login');
+      }
     }
-  }, [user]);
+    
+  }, [response]);
 
   const methods = useForm({
     mode: 'all',

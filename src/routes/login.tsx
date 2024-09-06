@@ -9,7 +9,6 @@ import {
   useActionData,
   useNavigate,
   useNavigation,
-  useRouteError,
   useSearchParams,
   useSubmit
 } from 'react-router-dom';
@@ -20,12 +19,16 @@ import { login, validateRecaptcha } from '../lib/api';
 import { getUserFromIdToken } from '../lib/jwt.utils';
 import { saveAuthentication } from '../lib/storage';
 import useUserStore from '../lib/user-store';
+import { getCurrentUserFromStorage } from '../lib/utils';
 import { ValidationError } from '../types/custom-errors';
 import { IUser } from '../types/custom-types';
-import { getCurrentUserFromStorage } from '../lib/utils';
 
 export const loader = async () => {
   try {
+    // TODO Getting non-reactive fresh state
+    const u = useUserStore.getState().user;
+    console.log('u ', u);
+
     const currentUser = await getCurrentUserFromStorage();
     if (currentUser) {
       console.error('User already logged in');
@@ -41,13 +44,23 @@ export const loader = async () => {
 
 // export const action = (currentUser: IUser | null) => async ({request}: {request: Request}) => {
   // console.log('currentUser ', currentUser );
-export const action = async ({ request }: { request: Request }) => {
+export const action = async ({ request }: { request: Request })
+: Promise<
+  | {
+      user: IUser | undefined;
+      error: Error | undefined;
+    }
+> => {
   const formData = await request.formData();
   const email = formData.get('email') as string;
   const password = formData.get('password') as string;
   const token = formData.get('token') as string;
 
   try {
+    if (!email || !password) {
+      throw new ValidationError('Invalid form data', { email, password });
+    }
+
     if (!token) {
       throw new ValidationError('Recaptcha token not found', {
         email,
@@ -79,24 +92,18 @@ export const action = async ({ request }: { request: Request }) => {
       throw new ValidationError('Invalid user', { email, password });
     }
 
-    return user;
+    return { user, error: undefined };
   } catch (error) {
-    if (error instanceof ValidationError) {
-      throw error;
-    }
-
+    // You cannot `useLoaderData` in an errorElemen
+    console.error(error);
+    let message = 'Unknown error';
     if (error instanceof AxiosError && error.response?.data.message) {
-      throw new ValidationError(error.response.data.message, {
-        email,
-        password,
-      });
+      message = error.response.data.message;
+    } else if (error instanceof Error) {
+      message = error.message;
     }
 
-    if (error instanceof Error) {
-      throw new ValidationError(error.message, { email, password });
-    }
-
-    throw new ValidationError('Unknown error', { email, password });
+    return { user: undefined, error: new Error(message) };
   }
 };
 
@@ -125,8 +132,10 @@ export default function Login(): React.ReactElement {
   const userStore = useUserStore();
   const navigation = useNavigation();
   const navigate = useNavigate();
-  const user = useActionData() as IUser;
-  const error = useRouteError() as Error;
+  const response = useActionData() as {
+    user: IUser | undefined;
+    error: Error | undefined;
+  };
   const submit = useSubmit();
   const { executeRecaptcha } = useGoogleReCaptcha();
   const isLoading = navigation.state === 'submitting';
@@ -166,26 +175,26 @@ export default function Login(): React.ReactElement {
   }, [msg]);
 
   useEffect(() => {
-    if (error) {
-      toast(error?.message, {
-        type: 'error',
-        position: 'bottom-right',
-      });
-    }
-  }, [error]);
+    if (response) {
+      if (response?.error) {
+        toast(response.error?.message, {
+          type: 'error',
+          position: 'bottom-right',
+        });
+      }
 
-  useEffect(() => {
-    if (user) {
-      userStore.setUser(user);
-
-      toast(`Welcome ${user?.name}!`, {
-        type: 'success',
-        position: 'bottom-right',
-      });
-      console.log('Login user', user);
-      navigate('/');
+      if (response?.user) {
+        userStore.setUser(response?.user);
+  
+        toast(`Welcome ${response?.user?.name}!`, {
+          type: 'success',
+          position: 'bottom-right',
+        });
+        navigate('/');
+      }
     }
-  }, [user]);
+    
+  }, [response]);
 
   const methods = useForm({
     mode: 'all',

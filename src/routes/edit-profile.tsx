@@ -33,6 +33,7 @@ export const action = async ({
   const image = formData.get('image') as Blob;
   const oldPassword = formData.get('oldPassword') as string;
   const newPassword = formData.get('newPassword') as string;
+  const time = new Date().getTime();
 
   if (intent === 'edit-profile') {
     const response = await editProfile(name, image);
@@ -40,7 +41,7 @@ export const action = async ({
     if (response.error) {
       return { error: response.error };
     }
-    return redirect('/profile?msg=' + appMessageKeys.PROFILE_UPDATE_SUCCESS);
+    return redirect('/profile?msg=' + appMessageKeys.PROFILE_UPDATE_SUCCESS + '&t=' + time);
   }
 
   if (intent === 'change-password') {
@@ -48,7 +49,7 @@ export const action = async ({
     if (response.error) {
       return { error: response.error };
     }
-    return redirect('/profile?msg=' + appMessageKeys.PASSWORD_CHANGE_SUCCESS);
+    return redirect('/profile?msg=' + appMessageKeys.PASSWORD_CHANGE_SUCCESS + '&t=' + time);
   }
 
   console.error('Invalid intent', intent);
@@ -60,6 +61,10 @@ async function changePassword(
   newPassword: string
 ): Promise<{ user: IUser | undefined; error: Error | undefined }> {
   try {
+    if (!oldPassword || !newPassword) {
+      throw new Error('Invalid form data');
+    }
+
     const user = await updatePassword(oldPassword, newPassword);
     if (!user) {
       throw new Error('Change password failed');
@@ -84,6 +89,10 @@ async function editProfile(
   image: Blob | null
 ): Promise<{ user: IUser | undefined; error: Error | undefined }> {
   try {
+    if (!name) {
+      throw new Error('Invalid form data');
+    }
+
     const user = await updateProfile(name);
     if (!user) {
       throw new Error('Profile update failed');

@@ -63,6 +63,10 @@ export const action = async ({
 
 export const loader = async ({ request }: { request: Request }) => {
   try {
+    // Getting non-reactive fresh state
+    const u = useUserStore.getState().user;
+    console.log('u ', u);
+
     const currentUser = await getCurrentUserFromStorage();
     if (!currentUser || !isAdmin(currentUser)) {
       console.error('No logged in ADMIN user');
