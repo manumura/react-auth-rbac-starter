@@ -88,7 +88,9 @@ export const action = async ({
     if (!user) {
       throw new Error('Update user failed');
     }
-    return redirect('/users?msg=' + appMessageKeys.USER_UPDATE_SUCCESS);
+
+    const time = new Date().getTime();
+    return redirect('/users?msg=' + appMessageKeys.USER_UPDATE_SUCCESS + '&t=' + time);
   } catch (error) {
     // You cannot `useLoaderData` in an errorElemen
     console.error(error);

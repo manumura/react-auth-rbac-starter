@@ -1,5 +1,3 @@
-console.log('process.env.VITE_BASE_URL', import.meta.env.VITE_BASE_URL);
-
 const appConfig: {
   defaultRowsPerPage: number;
   baseUrl: string;

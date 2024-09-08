@@ -3,7 +3,8 @@ import { Await, defer, useLoaderData, useSearchParams } from 'react-router-dom';
 import { info, welcome } from '../lib/api';
 import { InfoResponse, MessageResponse } from '../types/custom-types';
 import { toast } from 'react-toastify';
-import { appMessages } from '../config/constant';
+import { appMessageKeys, appMessages } from '../config/constant';
+import useUserStore from '../lib/user-store';
 
 export async function loader() {
   const data = Promise.all([info(), welcome()]);
@@ -13,19 +14,28 @@ export async function loader() {
 }
 
 export default function Home(): React.ReactElement {
+  const user = useUserStore().user;
   const { data } = useLoaderData() as { data: Promise<[InfoResponse, string]> };
   const [searchParams, setSearchParams] = useSearchParams();
   const msg = searchParams.get('msg');
+  const time = searchParams.get('t');
 
   useEffect(() => {
     if (msg) {
-      const message = appMessages[msg as keyof typeof appMessages];
-
+      const toastId = `${msg}-${time}`;
+      let message = appMessages[msg as keyof typeof appMessages];
+      if (msg === appMessageKeys.LOGIN_SUCCESS) {
+        message += ` ${user?.name}`;
+      }
       setSearchParams({});
-      toast(message, {
-        type: 'success',
-        position: 'bottom-right',
-      });
+      
+      if (!toast.isActive(toastId)) {
+        toast(message, {
+          type: 'success',
+          position: 'bottom-right',
+          toastId,
+        });
+      }
     }
   }, [msg]);
 

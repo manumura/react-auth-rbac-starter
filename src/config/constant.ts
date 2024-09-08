@@ -13,7 +13,9 @@ export const appMessageKeys = {
     PASSWORD_CHANGE_SUCCESS: 'passwordChangeSuccess', // 'Password successfully updated!'
     USER_CREATE_SUCCESS: 'userCreateSuccess', // 'User successfully created!'
     USER_UPDATE_SUCCESS: 'userUpdateSuccess', // 'User successfully updated!'
+    LOGIN_SUCCESS: 'loginSuccess', // 'Login successfull'
     LOGOUT_SUCCESS: 'logoutSuccess', // 'Logout successfull'
+    REGISTER_SUCCESS: 'registerSuccess', // 'Registration successfull'
 };
 
 export const appMessages = {
@@ -22,5 +24,7 @@ export const appMessages = {
     'passwordChangeSuccess': 'Password successfully updated!',
     'userCreateSuccess': 'User successfully created!',
     'userUpdateSuccess': 'User successfully updated!',
+    'loginSuccess': 'Welcome',
     'logoutSuccess': 'Logout successfull',
+    'registerSuccess': 'Registration successfull',
 };

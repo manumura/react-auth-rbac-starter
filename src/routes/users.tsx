@@ -21,7 +21,43 @@ import { processMessage, shouldProcessMessage, subscribe } from '../lib/sse';
 import useUserStore from '../lib/user-store';
 import { ValidationError } from '../types/custom-errors';
 import { IUser } from '../types/custom-types';
-import { getCurrentUserFromStorage, isAdmin } from '../lib/utils';
+import { getCurrentUserFromStorage, isAdmin, sleep } from '../lib/utils';
+
+export const loader = async ({ request }: { request: Request }) => {
+  try {
+    // TODO remove test
+    await sleep(1000);
+    const u = useUserStore.getState().user;
+    console.log('u ', u);
+
+    const currentUser = await getCurrentUserFromStorage();
+    if (!currentUser || !isAdmin(currentUser)) {
+      console.error('No logged in ADMIN user');
+      return redirect('/');
+    }
+
+    const url = new URL(request.url);
+    const searchParams = url.searchParams;
+    const page = Number(searchParams.get('page')) || 1;
+    const pageSize = appConfig.defaultRowsPerPage;
+    // TODO filter by role
+    const role = undefined;
+    const { elements: users, totalElements } = await getUsers(
+      page,
+      pageSize,
+      role
+    );
+    if (!users) {
+      console.error('Invalid users');
+      return redirect('/');
+    }
+
+    return { users, totalElements, page, pageSize, role };
+  } catch (error) {
+    console.error(error);
+    return redirect('/');
+  }
+};
 
 export const action = async ({
   request,
@@ -61,41 +97,6 @@ export const action = async ({
   }
 };
 
-export const loader = async ({ request }: { request: Request }) => {
-  try {
-    // Getting non-reactive fresh state
-    const u = useUserStore.getState().user;
-    console.log('u ', u);
-
-    const currentUser = await getCurrentUserFromStorage();
-    if (!currentUser || !isAdmin(currentUser)) {
-      console.error('No logged in ADMIN user');
-      return redirect('/');
-    }
-
-    const url = new URL(request.url);
-    const searchParams = url.searchParams;
-    const page = Number(searchParams.get('page')) || 1;
-    const pageSize = appConfig.defaultRowsPerPage;
-    // TODO filter by role
-    const role = undefined;
-    const { elements: users, totalElements } = await getUsers(
-      page,
-      pageSize,
-      role
-    );
-    if (!users) {
-      console.error('Invalid users');
-      return redirect('/');
-    }
-
-    return { users, totalElements, page, pageSize, role };
-  } catch (error) {
-    console.error(error);
-    return redirect('/');
-  }
-};
-
 export default function Users() {
   const userSore = useUserStore();
   const currentUser = userSore.user;
@@ -110,7 +111,7 @@ export default function Users() {
     error: Error | undefined;
     user: IUser | undefined;
   };
-
+  const userChangeEventAbortController = new AbortController();
   const [selectedUser, setSelectedUser] = useState<IUser | null>(null);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [usersToDisplay, setUsersToDisplay] = useState(users);
@@ -118,7 +119,7 @@ export default function Users() {
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
   const msg = searchParams.get('msg');
-  const userChangeEventAbortController = new AbortController();
+  const time = searchParams.get('t');
 
   useEffect(() => {
     if (response) {
@@ -140,13 +141,17 @@ export default function Users() {
 
   useEffect(() => {
     if (msg) {
+      const toastId = `${msg}-${time}`;
       const message = appMessages[msg as keyof typeof appMessages];
-
       setSearchParams({});
-      toast(message, {
-        type: 'success',
-        position: 'bottom-right',
-      });
+
+      if (!toast.isActive(toastId)) {
+        toast(message, {
+          type: 'success',
+          position: 'bottom-right',
+          toastId,
+        });
+      }
     }
   }, [msg]);
 

@@ -6,7 +6,7 @@ import { Providers } from './components/Providers';
 import ErrorPage from './error-page';
 import './index.css';
 import Home, { loader as homeLoader } from './routes';
-import CreateUser, { loader as createUserLoader, action as createUserAction } from './routes/create-user';
+import CreateUser, { action as createUserAction, loader as createUserLoader } from './routes/create-user';
 import EditProfile, {
   action as editProfileAction,
 } from './routes/edit-profile';
@@ -17,8 +17,8 @@ import EditUser, {
 import ForgotPassword, {
   action as forgotPasswordAction,
 } from './routes/forgot-password';
-import Layout from './routes/layout';
-import Login, { loader as loginLoader, action as loginAction } from './routes/login';
+import Layout, { loader as rootLoader } from './routes/layout';
+import Login, { action as loginAction, loader as loginLoader } from './routes/login';
 import Profile, { loader as profileLoader } from './routes/profile';
 import Register, { action as registerAction } from './routes/register';
 import ResetPassword, {
@@ -29,14 +29,17 @@ import Users, {
   action as deleteUserAction,
   loader as usersLoader,
 } from './routes/users';
+import LoadingOverlay from './components/LoadingOverlay';
 
-// TODO refactor navbar loader
-// TODO duplicate messages
+// TODO verify email
+// TODO social login
 const router = createBrowserRouter([
   {
     path: '/',
+    id: 'root',
     element: <Layout />,
     errorElement: <ErrorPage />,
+    loader: rootLoader,
     children: [
       {
         errorElement: <ErrorPage />,
@@ -118,7 +121,7 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>
     <Providers>
       {/* <App /> */}
-      <RouterProvider router={router} />
+      <RouterProvider router={router} fallbackElement={<LoadingOverlay label='Loading...' />}/>
     </Providers>
   </React.StrictMode>
 );
