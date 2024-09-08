@@ -1,9 +1,7 @@
 import React, { useEffect, useState } from 'react';
-import { Link } from 'react-router-dom';
-import useUserStore from '../lib/user-store';
-import { getCurrentUserFromStorage, isAdmin } from '../lib/utils';
+import { Link, useRouteLoaderData } from 'react-router-dom';
+import { isAdmin } from '../lib/utils';
 import { IUser } from '../types/custom-types';
-import LoadingOverlay from './LoadingOverlay';
 import LoginButton from './LoginButton';
 import LogoutButton from './LogoutButton';
 
@@ -42,8 +40,7 @@ function getNavItems(user: IUser | null | undefined): React.JSX.Element[] {
 }
 
 export default function Navbar(): React.ReactElement {
-  const userStore = useUserStore();
-  const [loading, setLoading] = useState(true);
+  const currentUser = useRouteLoaderData('root') as IUser | null | undefined;
   const [navItems, setNavItems] = useState<React.JSX.Element[]>([]);
 
   const closeDrawer = (): void => {
@@ -54,32 +51,9 @@ export default function Navbar(): React.ReactElement {
   };
 
   useEffect(() => {
-    // Initialize navItems on load
-    getCurrentUserFromStorage().then((currentUser) => {
-      console.log('Navbar current user', currentUser);
-      userStore.setUser(currentUser);
-      setNavItems(getNavItems(currentUser));
-      setLoading(false);
-    });
-
-    // Re-render navItems when user changes
-    const unsubscribe = useUserStore.subscribe((userState) => {
-      console.log('Navbar user updated', userState.user);
-      setNavItems(getNavItems(userState.user));
-    });
-
-    return () => {
-      unsubscribe();
-    };
-  }, []);
-
-  if (loading) {
-    return (
-      <div>
-        <LoadingOverlay label='Loading...' />
-      </div>
-    );
-  }
+    console.log('Navbar current user', currentUser);
+    setNavItems(getNavItems(currentUser));
+  }, [currentUser]);
 
   const navItemsList = navItems.map((item: React.JSX.Element) => {
     return <li key={item.props.id}>{item}</li>;

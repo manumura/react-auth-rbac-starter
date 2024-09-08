@@ -198,7 +198,7 @@ export default function EditProfile(): React.ReactElement {
   const onDrop = useCallback(
     (acceptedFiles: Blob[]) => {
       acceptedFiles.map((file: Blob, index: number) => {
-        console.log('index', index);
+        console.log('File index', index);
         const reader = new FileReader();
 
         reader.onabort = (): void => console.log('file reading was aborted');

@@ -5,23 +5,26 @@ import { FormProvider, useForm } from 'react-hook-form';
 import {
   Form,
   Link,
+  redirect,
   useActionData,
-  useNavigate,
   useNavigation,
-  useSubmit
+  useSubmit,
 } from 'react-router-dom';
 import { toast } from 'react-toastify';
 import FormInput from '../components/FormInput';
+import { appMessageKeys } from '../config/constant';
 import { register, validateRecaptcha } from '../lib/api';
 import { ValidationError } from '../types/custom-errors';
-import { IUser } from '../types/custom-types';
 
-export const action = async ({ request }: { request: Request })
-: Promise<
-| {
-    user: IUser | undefined;
-    error: Error | undefined;
-  }
+export const action = async ({
+  request,
+}: {
+  request: Request;
+}): Promise<
+  | Response
+  | {
+      error: Error | undefined;
+    }
 > => {
   const formData = await request.formData();
   const name = formData.get('name') as string;
@@ -54,7 +57,11 @@ export const action = async ({ request }: { request: Request })
     if (!user) {
       throw new ValidationError('Invalid response', { name, email, password });
     }
-    return { user, error: undefined };
+
+    const time = new Date().getTime();
+    return redirect(
+      '/login?msg=' + appMessageKeys.REGISTER_SUCCESS + '&t=' + time
+    );
   } catch (error) {
     // You cannot `useLoaderData` in an errorElemen
     console.error(error);
@@ -65,7 +72,7 @@ export const action = async ({ request }: { request: Request })
       message = error.message;
     }
 
-    return { user: undefined, error: new Error(message) };
+    return { error: new Error(message) };
   }
 };
 
@@ -92,14 +99,21 @@ function SubmitButton({
 
 export default function Register(): React.ReactElement {
   const navigation = useNavigation();
-  const navigate = useNavigate();
   const response = useActionData() as {
-    user: IUser | undefined;
     error: Error | undefined;
   };
   const submit = useSubmit();
   const { executeRecaptcha } = useGoogleReCaptcha();
   const isLoading = navigation.state === 'submitting';
+
+  useEffect(() => {
+    if (response?.error) {
+      toast(response.error?.message, {
+        type: 'error',
+        position: 'bottom-right',
+      });
+    }
+  }, [response]);
 
   const onSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -121,26 +135,6 @@ export default function Register(): React.ReactElement {
     formData.append('token', token);
     submit(formData, { method: 'post' });
   };
-
-  useEffect(() => {
-    if (response) {
-      if (response?.error) {
-        toast(response.error?.message, {
-          type: 'error',
-          position: 'bottom-right',
-        });
-      }
-
-      if (response?.user) {
-        toast(`Registration successful ${response?.user?.name}!`, {
-          type: 'success',
-          position: 'bottom-right',
-        });
-        navigate('/login');
-      }
-    }
-    
-  }, [response]);
 
   const methods = useForm({
     mode: 'all',

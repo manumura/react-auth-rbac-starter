@@ -7,25 +7,23 @@ import {
   Link,
   redirect,
   useActionData,
-  useNavigate,
   useNavigation,
   useSearchParams,
-  useSubmit
+  useSubmit,
 } from 'react-router-dom';
 import { toast } from 'react-toastify';
 import FormInput from '../components/FormInput';
-import { appMessages } from '../config/constant';
+import { appMessageKeys, appMessages } from '../config/constant';
 import { login, validateRecaptcha } from '../lib/api';
 import { getUserFromIdToken } from '../lib/jwt.utils';
 import { saveAuthentication } from '../lib/storage';
 import useUserStore from '../lib/user-store';
 import { getCurrentUserFromStorage } from '../lib/utils';
 import { ValidationError } from '../types/custom-errors';
-import { IUser } from '../types/custom-types';
 
 export const loader = async () => {
   try {
-    // TODO Getting non-reactive fresh state
+    // TODO remove test
     const u = useUserStore.getState().user;
     console.log('u ', u);
 
@@ -43,11 +41,13 @@ export const loader = async () => {
 };
 
 // export const action = (currentUser: IUser | null) => async ({request}: {request: Request}) => {
-  // console.log('currentUser ', currentUser );
-export const action = async ({ request }: { request: Request })
-: Promise<
+export const action = async ({
+  request,
+}: {
+  request: Request;
+}): Promise<
+  | Response
   | {
-      user: IUser | undefined;
       error: Error | undefined;
     }
 > => {
@@ -92,7 +92,9 @@ export const action = async ({ request }: { request: Request })
       throw new ValidationError('Invalid user', { email, password });
     }
 
-    return { user, error: undefined };
+    useUserStore.getState().setUser(user);
+    const time = new Date().getTime();
+    return redirect('/?msg=' + appMessageKeys.LOGIN_SUCCESS + '&t=' + time);
   } catch (error) {
     // You cannot `useLoaderData` in an errorElemen
     console.error(error);
@@ -103,7 +105,7 @@ export const action = async ({ request }: { request: Request })
       message = error.message;
     }
 
-    return { user: undefined, error: new Error(message) };
+    return { error: new Error(message) };
   }
 };
 
@@ -129,11 +131,8 @@ function SubmitButton({
 }
 
 export default function Login(): React.ReactElement {
-  const userStore = useUserStore();
   const navigation = useNavigation();
-  const navigate = useNavigate();
   const response = useActionData() as {
-    user: IUser | undefined;
     error: Error | undefined;
   };
   const submit = useSubmit();
@@ -141,6 +140,42 @@ export default function Login(): React.ReactElement {
   const isLoading = navigation.state === 'submitting';
   const [searchParams, setSearchParams] = useSearchParams();
   const msg = searchParams.get('msg');
+  const time = searchParams.get('t');
+
+  useEffect(() => {
+    if (msg) {
+      const toastId = `${msg}-${time}`;
+      const message = appMessages[msg as keyof typeof appMessages];
+      setSearchParams({});
+
+      if (!toast.isActive(toastId)) {
+        toast(message, {
+          type: 'success',
+          position: 'bottom-right',
+          toastId,
+        });
+      }
+    }
+  }, [msg]);
+
+  useEffect(() => {
+    if (response?.error) {
+      toast(response.error?.message, {
+        type: 'error',
+        position: 'bottom-right',
+      });
+    }
+
+    // if (response?.user) {
+    //   // userStore.setUser(response?.user);
+
+    //   toast(`Welcome ${response?.user?.name}!`, {
+    //     type: 'success',
+    //     position: 'bottom-right',
+    //   });
+    //   navigate('/');
+    // }
+  }, [response]);
 
   const onSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -161,40 +196,6 @@ export default function Login(): React.ReactElement {
     formData.append('token', token);
     submit(formData, { method: 'post' });
   };
-
-  useEffect(() => {
-    if (msg) {
-      const message = appMessages[msg as keyof typeof appMessages];
-
-      setSearchParams({});
-      toast(message, {
-        type: 'success',
-        position: 'bottom-right',
-      });
-    }
-  }, [msg]);
-
-  useEffect(() => {
-    if (response) {
-      if (response?.error) {
-        toast(response.error?.message, {
-          type: 'error',
-          position: 'bottom-right',
-        });
-      }
-
-      if (response?.user) {
-        userStore.setUser(response?.user);
-  
-        toast(`Welcome ${response?.user?.name}!`, {
-          type: 'success',
-          position: 'bottom-right',
-        });
-        navigate('/');
-      }
-    }
-    
-  }, [response]);
 
   const methods = useForm({
     mode: 'all',
