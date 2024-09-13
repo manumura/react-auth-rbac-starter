@@ -8,6 +8,7 @@ const appConfig: {
   defaultProto: string;
   reCaptchaKey: string;
   idTokenPublicKeyAsBase64: string;
+  googleClientId: string;
   domain: string;
   nodeEnv: string;
 } = {
@@ -20,6 +21,7 @@ const appConfig: {
   defaultProto: import.meta.env.NODE_ENV === 'production' ? 'https' : 'http',
   reCaptchaKey: import.meta.env.VITE_RECAPTCHA_SITE_KEY ?? '',
   idTokenPublicKeyAsBase64: import.meta.env.VITE_ID_TOKEN_PUBLIC_KEY_AS_BASE64 as string,
+  googleClientId: import.meta.env.VITE_GOOGLE_CLIENT_ID as string,
   domain: import.meta.env.DOMAIN ?? '',
   nodeEnv: import.meta.env.NODE_ENV ?? '',
 };

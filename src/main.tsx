@@ -1,12 +1,16 @@
 import React from 'react';
 import ReactDOM from 'react-dom/client';
 import { createBrowserRouter, RouterProvider } from 'react-router-dom';
+import LoadingOverlay from './components/LoadingOverlay';
 import { action as logoutAction } from './components/LogoutButton';
 import { Providers } from './components/Providers';
 import ErrorPage from './error-page';
 import './index.css';
 import Home, { loader as homeLoader } from './routes';
-import CreateUser, { action as createUserAction, loader as createUserLoader } from './routes/create-user';
+import CreateUser, {
+  action as createUserAction,
+  loader as createUserLoader,
+} from './routes/create-user';
 import EditProfile, {
   action as editProfileAction,
 } from './routes/edit-profile';
@@ -17,8 +21,12 @@ import EditUser, {
 import ForgotPassword, {
   action as forgotPasswordAction,
 } from './routes/forgot-password';
+import { action as googleLoginAction } from './components/GoogleLoginButton';
 import Layout, { loader as rootLoader } from './routes/layout';
-import Login, { action as loginAction, loader as loginLoader } from './routes/login';
+import Login, {
+  action as loginAction,
+  loader as loginLoader,
+} from './routes/login';
 import Profile, { loader as profileLoader } from './routes/profile';
 import Register, { action as registerAction } from './routes/register';
 import ResetPassword, {
@@ -29,7 +37,6 @@ import Users, {
   action as deleteUserAction,
   loader as usersLoader,
 } from './routes/users';
-import LoadingOverlay from './components/LoadingOverlay';
 
 // TODO verify email
 // TODO social login
@@ -111,6 +118,11 @@ const router = createBrowserRouter([
     ],
   },
   {
+    path: '/oauth/google',
+    errorElement: <ErrorPage />,
+    action: googleLoginAction,
+  },
+  {
     path: '/logout',
     errorElement: <ErrorPage />,
     action: logoutAction,
@@ -120,8 +132,10 @@ const router = createBrowserRouter([
 ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>
     <Providers>
-      {/* <App /> */}
-      <RouterProvider router={router} fallbackElement={<LoadingOverlay label='Loading...' />}/>
+      <RouterProvider
+        router={router}
+        fallbackElement={<LoadingOverlay label='Loading...' />}
+      />
     </Providers>
   </React.StrictMode>
 );

@@ -1,3 +1,4 @@
+import { googleLogout } from '@react-oauth/google';
 import { useEffect } from 'react';
 import { redirect, useFetcher } from 'react-router-dom';
 import { toast } from 'react-toastify';
@@ -11,8 +12,10 @@ export const action = async () => {
     await logout();
     useUserStore.getState().setUser(null);
     clearAuthentication();
+    googleLogout();
 
-    return redirect('/?msg=' + appMessageKeys.LOGOUT_SUCCESS);
+    const time = new Date().getTime();
+    return redirect('/?msg=' + appMessageKeys.LOGOUT_SUCCESS + '&t=' + time);
   } catch (error) {
     return 'failed';
   }

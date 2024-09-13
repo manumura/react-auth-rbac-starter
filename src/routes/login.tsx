@@ -13,6 +13,7 @@ import {
 } from 'react-router-dom';
 import { toast } from 'react-toastify';
 import FormInput from '../components/FormInput';
+import GoogleLoginButton from '../components/GoogleLoginButton';
 import { appMessageKeys, appMessages } from '../config/constant';
 import { login, validateRecaptcha } from '../lib/api';
 import { getUserFromIdToken } from '../lib/jwt.utils';
@@ -86,14 +87,15 @@ export const action = async ({
       throw new ValidationError('Invalid response', { email, password });
     }
 
-    saveAuthentication(accessToken, refreshToken, idToken);
     const user = await getUserFromIdToken(idToken);
     if (!user) {
       throw new ValidationError('Invalid user', { email, password });
     }
 
+    saveAuthentication(accessToken, refreshToken, idToken);
     useUserStore.getState().setUser(user);
     const time = new Date().getTime();
+    
     return redirect('/?msg=' + appMessageKeys.LOGIN_SUCCESS + '&t=' + time);
   } catch (error) {
     // You cannot `useLoaderData` in an errorElemen
@@ -165,16 +167,6 @@ export default function Login(): React.ReactElement {
         position: 'bottom-right',
       });
     }
-
-    // if (response?.user) {
-    //   // userStore.setUser(response?.user);
-
-    //   toast(`Welcome ${response?.user?.name}!`, {
-    //     type: 'success',
-    //     position: 'bottom-right',
-    //   });
-    //   navigate('/');
-    // }
   }, [response]);
 
   const onSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
@@ -250,6 +242,9 @@ export default function Login(): React.ReactElement {
               Sign Up Here
             </Link>
           </span>
+
+          <div className='divider'>OR</div>
+          <GoogleLoginButton />
         </Form>
       </FormProvider>
     </section>
