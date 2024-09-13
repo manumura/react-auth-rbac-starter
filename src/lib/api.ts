@@ -99,6 +99,14 @@ export const login = async (
     .then((response) => response.data);
 };
 
+export const googleLogin = async (
+  token: string,
+): Promise<LoginResponse> => {
+  return axiosPublicInstance
+    .post('/v1/oauth2/google', { token })
+    .then((response) => response.data);
+};
+
 export const register = async (
   email: string,
   password: string,

@@ -19,17 +19,12 @@ import { appMessages } from '../config/constant';
 import { deleteUser, getUsers } from '../lib/api';
 import { processMessage, shouldProcessMessage, subscribe } from '../lib/sse';
 import useUserStore from '../lib/user-store';
+import { getCurrentUserFromStorage, isAdmin } from '../lib/utils';
 import { ValidationError } from '../types/custom-errors';
 import { IUser } from '../types/custom-types';
-import { getCurrentUserFromStorage, isAdmin, sleep } from '../lib/utils';
 
 export const loader = async ({ request }: { request: Request }) => {
   try {
-    // TODO remove test
-    await sleep(1000);
-    const u = useUserStore.getState().user;
-    console.log('u ', u);
-
     const currentUser = await getCurrentUserFromStorage();
     if (!currentUser || !isAdmin(currentUser)) {
       console.error('No logged in ADMIN user');
