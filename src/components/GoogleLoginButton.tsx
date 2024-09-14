@@ -1,13 +1,12 @@
+import { CredentialResponse, GoogleLogin } from '@react-oauth/google';
+import { useEffect } from 'react';
 import { redirect, useFetcher } from 'react-router-dom';
+import { toast } from 'react-toastify';
+import { appMessageKeys } from '../config/constant';
 import { googleLogin } from '../lib/api';
 import { getUserFromIdToken } from '../lib/jwt.utils';
 import { saveAuthentication } from '../lib/storage';
 import { IUser } from '../types/custom-types';
-import { appMessageKeys } from '../config/constant';
-import { sleep } from '../lib/utils';
-import { CredentialResponse, GoogleLogin } from '@react-oauth/google';
-import { toast } from 'react-toastify';
-import { useEffect } from 'react';
 import LoadingSpinner from './LoadingSpinner';
 
 export const action = async ({
@@ -22,8 +21,6 @@ export const action = async ({
 > => {
   const formData = await request.formData();
   const token = formData.get('token') as string;
-  // TODO remove test
-  await sleep(2000);
 
   if (!token) {
     return { error: new Error('Invalid token') };
@@ -74,7 +71,7 @@ export default function GoogleLoginButton(): React.ReactElement {
 
   useEffect(() => {
     if (error) {
-      toast('Logout failed', {
+      toast('Login failed', {
         type: 'error',
         position: 'bottom-right',
       });
@@ -104,9 +101,7 @@ export default function GoogleLoginButton(): React.ReactElement {
   };
 
   return isSubmitting ? (
-    <div className='flex justify-center w-full'>
-      <LoadingSpinner label='Loading' isHorizontal={true} />
-    </div>
+    <LoadingSpinner label='Loading' isHorizontal={true} />
   ) : (
     <GoogleLogin
       theme='filled_blue'

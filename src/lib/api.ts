@@ -8,6 +8,7 @@ import {
   LoginResponse,
   MessageResponse,
 } from '../types/custom-types';
+import { ProfileSuccessResponse } from '@greatsumini/react-facebook-login';
 
 const BASE_URL = appConfig.baseUrl;
 const REFRESH_TOKEN_ENDPOINT = '/v1/refresh-token';
@@ -104,6 +105,14 @@ export const googleLogin = async (
 ): Promise<LoginResponse> => {
   return axiosPublicInstance
     .post('/v1/oauth2/google', { token })
+    .then((response) => response.data);
+};
+
+export const facebookLogin = async (
+  profile: ProfileSuccessResponse,
+): Promise<LoginResponse> => {
+  return axiosPublicInstance
+    .post('/v1/oauth2/facebook', profile)
     .then((response) => response.data);
 };
 

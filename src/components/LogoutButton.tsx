@@ -6,6 +6,7 @@ import { appMessageKeys } from '../config/constant';
 import { logout } from '../lib/api';
 import { clearAuthentication } from '../lib/storage';
 import useUserStore from '../lib/user-store';
+import { FacebookLoginClient } from '@greatsumini/react-facebook-login';
 
 export const action = async () => {
   try {
@@ -13,6 +14,9 @@ export const action = async () => {
     useUserStore.getState().setUser(null);
     clearAuthentication();
     googleLogout();
+    FacebookLoginClient.logout(() => {
+      console.log('Facebook logout completed!');
+    });
 
     const time = new Date().getTime();
     return redirect('/?msg=' + appMessageKeys.LOGOUT_SUCCESS + '&t=' + time);
