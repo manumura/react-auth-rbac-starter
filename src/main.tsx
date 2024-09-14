@@ -37,9 +37,9 @@ import Users, {
   action as deleteUserAction,
   loader as usersLoader,
 } from './routes/users';
+import { action as facebookLoginAction } from './components/FacebookLoginButton';
 
 // TODO verify email
-// TODO social login
 const router = createBrowserRouter([
   {
     path: '/',
@@ -121,6 +121,11 @@ const router = createBrowserRouter([
     path: '/oauth/google',
     errorElement: <ErrorPage />,
     action: googleLoginAction,
+  },
+  {
+    path: '/oauth/facebook',
+    errorElement: <ErrorPage />,
+    action: facebookLoginAction,
   },
   {
     path: '/logout',

@@ -21,13 +21,10 @@ import { saveAuthentication } from '../lib/storage';
 import useUserStore from '../lib/user-store';
 import { getCurrentUserFromStorage } from '../lib/utils';
 import { ValidationError } from '../types/custom-errors';
+import FacebookLoginButton from '../components/FacebookLoginButton';
 
 export const loader = async () => {
   try {
-    // TODO remove test
-    const u = useUserStore.getState().user;
-    console.log('u ', u);
-
     const currentUser = await getCurrentUserFromStorage();
     if (currentUser) {
       console.error('User already logged in');
@@ -245,6 +242,7 @@ export default function Login(): React.ReactElement {
 
           <div className='divider'>OR</div>
           <GoogleLoginButton />
+          <FacebookLoginButton />
         </Form>
       </FormProvider>
     </section>
