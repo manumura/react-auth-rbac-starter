@@ -39,7 +39,6 @@ import Users, {
 } from './routes/users';
 import { action as facebookLoginAction } from './components/FacebookLoginButton';
 
-// TODO verify email
 const router = createBrowserRouter([
   {
     path: '/',

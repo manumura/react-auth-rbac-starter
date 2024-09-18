@@ -7,13 +7,13 @@ import { useEffect } from 'react';
 import { FaFacebook } from 'react-icons/fa';
 import { redirect, useFetcher } from 'react-router-dom';
 import { toast } from 'react-toastify';
+import appConfig from '../config/config';
 import { appMessageKeys } from '../config/constant';
 import { facebookLogin } from '../lib/api';
 import { getUserFromIdToken } from '../lib/jwt.utils';
 import { saveAuthentication } from '../lib/storage';
-import { IUser } from '../types/custom-types';
+import { IAuthenticatedUser } from '../types/custom-types';
 import LoadingSpinner from './LoadingSpinner';
-import appConfig from '../config/config';
 
 export const action = async ({
   request,
@@ -43,7 +43,7 @@ export const action = async ({
 
 const getUser = async (
   profile: ProfileSuccessResponse
-): Promise<IUser | null> => {
+): Promise<IAuthenticatedUser | null> => {
   if (!profile) {
     return null;
   }

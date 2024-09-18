@@ -3,17 +3,20 @@ import {
   EventStreamContentType,
   fetchEventSource,
 } from '@microsoft/fetch-event-source';
-import { FatalError, RetriableError } from '../types/custom-errors';
-import { getSavedUserEvents, saveUserEvents } from './storage';
-import { appConstant } from '../config/constant';
-import { EventMessage, IUser } from '../types/custom-types';
 import { UUID } from 'crypto';
+import { appConstant } from '../config/constant';
+import { FatalError, RetriableError } from '../types/custom-errors';
+import { EventMessage, IAuthenticatedUser } from '../types/custom-types';
+import { getSavedUserEvents, saveUserEvents } from './storage';
 
 export async function subscribe(
   url: string,
   abortController: AbortController,
-  onMessage: (message: EventSourceMessage, currentUser: IUser) => void,
-  currentUser: IUser,
+  onMessage: (
+    message: EventSourceMessage,
+    currentUser: IAuthenticatedUser
+  ) => void,
+  currentUser: IAuthenticatedUser
 ) {
   const maxRetries = 10;
   let retryCount = 0;
@@ -79,7 +82,10 @@ export async function subscribe(
   }
 }
 
-export const shouldProcessMessage = (message: EventSourceMessage, currentUser: IUser): boolean => {
+export const shouldProcessMessage = (
+  message: EventSourceMessage,
+  currentUser: IAuthenticatedUser
+): boolean => {
   if (!message.event || !message.data || !message.id) {
     // console.log('Invalid message:', message);
     return false;

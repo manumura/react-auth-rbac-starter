@@ -157,7 +157,7 @@ export const validateRecaptcha = async (token: string): Promise<boolean> => {
 
 ////////////////////////////////////////////////////////////////
 // Authenticated-only APIs
-export const logout = async (): Promise<void> => {
+export const logout = async (): Promise<IUser> => {
   return axiosInstance.post('/v1/logout').then((response) => response.data);
 };
 

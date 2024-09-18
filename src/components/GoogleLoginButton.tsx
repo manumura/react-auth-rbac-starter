@@ -6,7 +6,7 @@ import { appMessageKeys } from '../config/constant';
 import { googleLogin } from '../lib/api';
 import { getUserFromIdToken } from '../lib/jwt.utils';
 import { saveAuthentication } from '../lib/storage';
-import { IUser } from '../types/custom-types';
+import { IAuthenticatedUser } from '../types/custom-types';
 import LoadingSpinner from './LoadingSpinner';
 
 export const action = async ({
@@ -35,7 +35,7 @@ export const action = async ({
   return redirect('/?msg=' + appMessageKeys.LOGIN_SUCCESS + '&t=' + time);
 };
 
-const getUser = async (token: string): Promise<IUser | null> => {
+const getUser = async (token: string): Promise<IAuthenticatedUser | null> => {
   if (!token) {
     return null;
   }
