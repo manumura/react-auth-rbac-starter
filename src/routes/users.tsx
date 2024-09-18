@@ -21,7 +21,7 @@ import { processMessage, shouldProcessMessage, subscribe } from '../lib/sse';
 import useUserStore from '../lib/user-store';
 import { getCurrentUserFromStorage, isAdmin } from '../lib/utils';
 import { ValidationError } from '../types/custom-errors';
-import { IUser } from '../types/custom-types';
+import { IAuthenticatedUser, IUser } from '../types/custom-types';
 
 export const loader = async ({ request }: { request: Request }) => {
   try {
@@ -189,7 +189,7 @@ export default function Users() {
     navigate('/create-user');
   };
 
-  const onMessage = (message: EventSourceMessage, currentUser: IUser) => {
+  const onMessage = (message: EventSourceMessage, currentUser: IAuthenticatedUser) => {
     const shouldProcess =
       currentUser && shouldProcessMessage(message, currentUser);
     if (!shouldProcess) {

@@ -1,4 +1,6 @@
 import { useEffect } from 'react';
+import { FaFacebook } from 'react-icons/fa';
+import { FcGoogle } from 'react-icons/fc';
 import {
   redirect,
   useLoaderData,
@@ -8,7 +10,8 @@ import {
 import { toast } from 'react-toastify';
 import { appMessages } from '../config/constant';
 import { getProfile } from '../lib/api';
-import { IUser } from '../types/custom-types';
+import { IOauthProvider, IUser } from '../types/custom-types';
+import { OauthProvider } from '../types/provider.model';
 
 export const loader = async () => {
   try {
@@ -68,6 +71,25 @@ export default function Profile(): React.ReactElement {
     </div>
   );
 
+  const providers = user.providers?.map((oauthProvider: IOauthProvider) => {
+    let icon;
+    if (oauthProvider.provider === OauthProvider.Facebook) {
+      icon = <FaFacebook className='text-2xl' />;
+    } else if (oauthProvider.provider === OauthProvider.Google) {
+      icon = <FcGoogle className='text-2xl' />;
+    }
+
+    return (
+      <>
+        <div className='text-right'>Provider:</div>
+        <div className='col-span-4 flex items-center'>
+          {icon && <div className='pr-2'>{icon}</div>}
+          <div>{oauthProvider.email}</div>
+        </div>
+      </>
+    );
+  });
+
   return (
     <section className='h-section bg-slate-200'>
       <div className='flex flex-col items-center pt-10'>
@@ -87,8 +109,13 @@ export default function Profile(): React.ReactElement {
               <div className='col-span-4'>
                 <h2>{user.name}</h2>
               </div>
-              <div className='text-right'>Email:</div>
-              <div className='col-span-4'>{user.email}</div>
+              {user?.email && (
+                <>
+                  <div className='text-right'>Email:</div>
+                  <div className='col-span-4'>{user.email}</div>
+                </>
+              )}
+              {providers?.length > 0 && providers}
               <div className='text-right'>
                 <h3>Role:</h3>
               </div>

@@ -1,3 +1,9 @@
+export type IAuthenticatedUser = {
+  uuid: UUID;
+  name: string;
+  role: string;
+};
+
 export type IUser = {
   uuid: UUID;
   name: string;
@@ -5,6 +11,13 @@ export type IUser = {
   role: string;
   isActive: boolean;
   imageUrl: string;
+  providers: IOauthProvider[];
+};
+
+export type IOauthProvider = {
+  externalUserId: string;
+  provider: OauthProvider;
+  email?: string | null;
 };
 
 export type IdTokenPayload = {
