@@ -41,7 +41,9 @@ export const action = async ({
     if (response.error) {
       return { error: response.error };
     }
-    return redirect('/profile?msg=' + appMessageKeys.PROFILE_UPDATE_SUCCESS + '&t=' + time);
+    return redirect(
+      '/profile?msg=' + appMessageKeys.PROFILE_UPDATE_SUCCESS + '&t=' + time
+    );
   }
 
   if (intent === 'change-password') {
@@ -49,7 +51,9 @@ export const action = async ({
     if (response.error) {
       return { error: response.error };
     }
-    return redirect('/profile?msg=' + appMessageKeys.PASSWORD_CHANGE_SUCCESS + '&t=' + time);
+    return redirect(
+      '/profile?msg=' + appMessageKeys.PASSWORD_CHANGE_SUCCESS + '&t=' + time
+    );
   }
 
   console.error('Invalid intent', intent);
@@ -335,6 +339,8 @@ export default function EditProfile(): React.ReactElement {
     '--value': uploadProgress,
   } as React.CSSProperties;
 
+  const shouldShowChangePasswordForm = user.providers?.length <= 0;
+
   return (
     <section className='min-h-screen bg-slate-200'>
       <FormProvider {...editProfileMethods}>
@@ -381,54 +387,56 @@ export default function EditProfile(): React.ReactElement {
         </Form>
       </FormProvider>
 
-      <FormProvider {...changePasswordMethods}>
-        <Form
-          method='post'
-          onSubmit={(event) => onPasswordChanged(event)}
-          id='change-password-form'
-          className='mx-auto flex max-w-2xl flex-col items-center overflow-hidden py-5'
-        >
-          <div className='card w-3/4 bg-slate-50 shadow-xl'>
-            <div className='card-body'>
-              <div className='card-title'>
-                <h1>Change my Password</h1>
-              </div>
-              <FormInput
-                label='Current Password'
-                name='oldPassword'
-                type='password'
-                constraints={passwordConstraints}
-              />
-              <FormInput
-                label='New Password'
-                name='newPassword'
-                type='password'
-                constraints={passwordConstraints}
-              />
-              <FormInput
-                label='Confirm New Password'
-                name='newPasswordConfirm'
-                type='password'
-                constraints={passwordConfirmConstraints}
-              />
-              <div className='card-actions justify-end'>
-                <div>{changePasswordButton}</div>
-                <div>
-                  <button
-                    type='button'
-                    className={`btn btn-outline btn-accent ${
-                      isLoading ? 'btn-disabled' : ''
-                    }`}
-                    onClick={handleCancel}
-                  >
-                    Cancel
-                  </button>
+      {shouldShowChangePasswordForm && (
+        <FormProvider {...changePasswordMethods}>
+          <Form
+            method='post'
+            onSubmit={(event) => onPasswordChanged(event)}
+            id='change-password-form'
+            className='mx-auto flex max-w-2xl flex-col items-center overflow-hidden py-5'
+          >
+            <div className='card w-3/4 bg-slate-50 shadow-xl'>
+              <div className='card-body'>
+                <div className='card-title'>
+                  <h1>Change my Password</h1>
+                </div>
+                <FormInput
+                  label='Current Password'
+                  name='oldPassword'
+                  type='password'
+                  constraints={passwordConstraints}
+                />
+                <FormInput
+                  label='New Password'
+                  name='newPassword'
+                  type='password'
+                  constraints={passwordConstraints}
+                />
+                <FormInput
+                  label='Confirm New Password'
+                  name='newPasswordConfirm'
+                  type='password'
+                  constraints={passwordConfirmConstraints}
+                />
+                <div className='card-actions justify-end'>
+                  <div>{changePasswordButton}</div>
+                  <div>
+                    <button
+                      type='button'
+                      className={`btn btn-outline btn-accent ${
+                        isLoading ? 'btn-disabled' : ''
+                      }`}
+                      onClick={handleCancel}
+                    >
+                      Cancel
+                    </button>
+                  </div>
                 </div>
               </div>
             </div>
-          </div>
-        </Form>
-      </FormProvider>
+          </Form>
+        </FormProvider>
+      )}
     </section>
   );
 }

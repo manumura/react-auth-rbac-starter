@@ -9,6 +9,8 @@ import {
   MessageResponse,
 } from '../types/custom-types';
 import { ProfileSuccessResponse } from '@greatsumini/react-facebook-login';
+import { clearAuthentication } from './storage';
+import useUserStore from './user-store';
 
 const BASE_URL = appConfig.baseUrl;
 const REFRESH_TOKEN_ENDPOINT = '/v1/refresh-token';
@@ -75,7 +77,11 @@ axiosInstance.interceptors.response.use(
       return axiosInstance(config);
     } catch (error) {
       const err = error as AxiosError;
-      console.error('Axios interceptor error: ', err?.response?.data);
+      console.error('Axios interceptor unexpected error: ', err?.response?.data);
+      if (err?.status === 401) {
+        useUserStore.getState().setUser(null);
+        clearAuthentication();
+      }
       return Promise.reject(err);
     }
   }

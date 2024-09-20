@@ -21,7 +21,14 @@ import { processMessage, shouldProcessMessage, subscribe } from '../lib/sse';
 import useUserStore from '../lib/user-store';
 import { getCurrentUserFromStorage, isAdmin } from '../lib/utils';
 import { ValidationError } from '../types/custom-errors';
-import { IAuthenticatedUser, IUser } from '../types/custom-types';
+import {
+  IAuthenticatedUser,
+  IOauthProvider,
+  IUser,
+} from '../types/custom-types';
+import { OauthProvider } from '../types/provider.model';
+import { FaFacebook } from 'react-icons/fa';
+import { FcGoogle } from 'react-icons/fc';
 
 export const loader = async ({ request }: { request: Request }) => {
   try {
@@ -189,7 +196,10 @@ export default function Users() {
     navigate('/create-user');
   };
 
-  const onMessage = (message: EventSourceMessage, currentUser: IAuthenticatedUser) => {
+  const onMessage = (
+    message: EventSourceMessage,
+    currentUser: IAuthenticatedUser
+  ) => {
     const shouldProcess =
       currentUser && shouldProcessMessage(message, currentUser);
     if (!shouldProcess) {
@@ -258,32 +268,52 @@ export default function Users() {
     </tr>
   );
 
-  const userRows = usersToDisplay?.map((user: IUser) => (
-    <tr key={user.uuid} id={`user-${user.uuid}`}>
-      <th>{user.uuid}</th>
-      <td>{user.name}</td>
-      <td>{user.email}</td>
-      <td>{user.role}</td>
-      <td>
-        <div className='flex justify-end space-x-1'>
-          <button
-            className='btn btn-primary btn-sm gap-2'
-            onClick={(): void => onEditUser(user.uuid)}
-          >
-            <FiEdit />
-            Edit
-          </button>
-          <button
-            className='btn btn-accent btn-sm gap-2'
-            onClick={(): void => openDeleteModal(user)}
-          >
-            <FiDelete />
-            Delete
-          </button>
+  const userRows = usersToDisplay?.map((user: IUser) => {
+    const providers = user.providers?.map((oauthProvider: IOauthProvider) => {
+      let icon;
+      if (oauthProvider.provider === OauthProvider.Facebook) {
+        icon = <FaFacebook className='text-2xl' />;
+      } else if (oauthProvider.provider === OauthProvider.Google) {
+        icon = <FcGoogle className='text-2xl' />;
+      }
+
+      return (
+        <div className='flex items-center' key={oauthProvider.externalUserId}>
+          {icon && <div className='pr-2'>{icon}</div>}
+          <div>{oauthProvider.email}</div>
         </div>
-      </td>
-    </tr>
-  ));
+      );
+    });
+
+    const email = user.email ? <div>{user.email}</div> : providers;
+
+    return (
+      <tr key={user.uuid} id={`user-${user.uuid}`}>
+        <th>{user.uuid}</th>
+        <td>{user.name}</td>
+        <td>{email}</td>
+        <td>{user.role}</td>
+        <td>
+          <div className='flex justify-end space-x-1'>
+            <button
+              className='btn btn-primary btn-sm gap-2'
+              onClick={(): void => onEditUser(user.uuid)}
+            >
+              <FiEdit />
+              Edit
+            </button>
+            <button
+              className='btn btn-accent btn-sm gap-2'
+              onClick={(): void => openDeleteModal(user)}
+            >
+              <FiDelete />
+              Delete
+            </button>
+          </div>
+        </td>
+      </tr>
+    );
+  });
 
   const usersTable = (
     <div className='flex flex-col items-center'>

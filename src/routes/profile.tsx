@@ -81,10 +81,10 @@ export default function Profile(): React.ReactElement {
 
     return (
       <>
-        <div className='text-right'>Provider:</div>
-        <div className='col-span-4 flex items-center'>
+        <div className='text-right'>Authentication Provider:</div>
+        <div className='col-span-4 flex items-center' key={oauthProvider.externalUserId}>
           {icon && <div className='pr-2'>{icon}</div>}
-          <div>{oauthProvider.email}</div>
+          <div>{oauthProvider.email} (ID {oauthProvider.externalUserId})</div>
         </div>
       </>
     );
