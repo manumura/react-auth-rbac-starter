@@ -1,5 +1,5 @@
 import { redirect } from "react-router-dom";
-import { IUser } from "../types/custom-types";
+import { IAuthenticatedUser, IUser } from "../types/custom-types";
 import { getUserFromIdToken } from "./jwt.utils";
 import { getSavedIdToken } from "./storage";
 
@@ -11,7 +11,7 @@ export const isAdmin = (user: IUser): boolean => {
   return user && user.role === 'ADMIN';
 };
 
-export const getCurrentUserFromStorage = async (): Promise<IUser | null> => {
+export const getCurrentUserFromStorage = async (): Promise<IAuthenticatedUser | null> => {
   const idToken = getSavedIdToken();
   const currentUser = idToken ? await getUserFromIdToken(idToken) : null;
   return currentUser;
@@ -23,4 +23,24 @@ export function redirectToPathFrom(path: string, request: Request): Response {
   const params = new URLSearchParams();
   params.set('from', new URL(request.url).pathname);
   return redirect(p + '?' + params.toString());
+}
+
+export function validatePassword(password: string): boolean {
+  const regexList = [
+    { regex: /.{8,}/ }, // min 8 letters,
+    { regex: /\d/ }, // numbers from 0 - 9
+    { regex: /[a-z]/ }, // letters from a - z (lowercase)
+    { regex: /[A-Z]/ }, // letters from A-Z (uppercase),
+    { regex: /[^A-Za-z0-9]/ }, // special characters
+  ];
+
+  let isValid = true;
+  for (const r of regexList) {
+    isValid = r.regex.test(password);
+    if (!isValid) {
+      break;
+    }
+  }
+
+  return isValid;
 }
