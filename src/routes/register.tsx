@@ -14,6 +14,7 @@ import { toast } from 'react-toastify';
 import FormInput from '../components/FormInput';
 import { appMessageKeys } from '../config/constant';
 import { register, validateRecaptcha } from '../lib/api';
+import { validatePassword } from '../lib/utils';
 import { ValidationError } from '../types/custom-errors';
 
 export const action = async ({
@@ -51,6 +52,18 @@ export const action = async ({
         email,
         password,
       });
+    }
+
+    const isPasswordValid = validatePassword(password);
+    if (!isPasswordValid) {
+      throw new ValidationError(
+        'Password must be at least 8 characters long, and contain at least 1 number, 1 uppercase letter, 1 lowercase letter, and 1 special character',
+        {
+          name,
+          email,
+          password,
+        }
+      );
     }
 
     const user = await register(email, password, name);
@@ -162,6 +175,11 @@ export default function Register(): React.ReactElement {
       value: 8,
       message: 'Password is min 8 characters',
     },
+    validate: (value: string): string | undefined => {
+      if (!validatePassword(value)) {
+        return 'Password must be at least 8 characters long, and contain at least 1 number, 1 uppercase letter, 1 lowercase letter, and 1 special character';
+      }
+    }
   };
   const passwordConfirmConstraints = {
     required: { value: true, message: 'Confirm Password is required' },
