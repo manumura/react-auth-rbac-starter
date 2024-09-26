@@ -176,10 +176,33 @@ export default function Register(): React.ReactElement {
       message: 'Password is min 8 characters',
     },
     validate: (value: string): string | undefined => {
-      if (!validatePassword(value)) {
-        return 'Password must be at least 8 characters long, and contain at least 1 number, 1 uppercase letter, 1 lowercase letter, and 1 special character';
+      const message = validatePassword(value);
+      if (message) {
+        return message; // 'Password must be at least 8 characters long, and contain at least 1 number, 1 uppercase letter, 1 lowercase letter, and 1 special character';
       }
     }
+    // validate: {
+    //   isMinLength: (value: string): string | undefined => {
+    //     const rule = passwordRules.isMinLength;
+    //     return rule.regex.test(value) ? undefined : rule.message;
+    //   },
+    //   hasNumber: (value: string): string | undefined => {
+    //     const rule = passwordRules.hasNumber;
+    //     return rule.regex.test(value) ? undefined : rule.message;
+    //   },
+    //   hasUppercaseCharacter: (value: string): string | undefined => {
+    //     const rule = passwordRules.hasUppercaseCharacter;
+    //     return rule.regex.test(value) ? undefined : rule.message;
+    //   },
+    //   hasLowercaseCharacter: (value: string): string | undefined => {
+    //     const rule = passwordRules.hasLowercaseCharacter;
+    //     return rule.regex.test(value) ? undefined : rule.message;
+    //   },
+    //   hasSpecialCharacter: (value: string): string | undefined => {
+    //     const rule = passwordRules.hasSpecialCharacter;
+    //     return rule.regex.test(value) ? undefined : rule.message;
+    //   },
+    // },
   };
   const passwordConfirmConstraints = {
     required: { value: true, message: 'Confirm Password is required' },
