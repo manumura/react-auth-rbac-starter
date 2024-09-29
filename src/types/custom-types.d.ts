@@ -35,6 +35,7 @@ export type InfoResponse = {
   env: string;
   userAgent: string;
   ip: string;
+  hostname: string;
 };
 
 export type MessageResponse = {

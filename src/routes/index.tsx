@@ -82,6 +82,9 @@ function HomeSection({
       <p className='text-2xl font-semibold'>
         {information?.ip || 'IP not found'}
       </p>
+      <p className='text-2xl font-semibold'>
+        {information?.hostname || 'Hostname not found'}
+      </p>
     </>
   );
 }

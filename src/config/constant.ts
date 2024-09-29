@@ -8,14 +8,14 @@ export const appConstant = {
 };
 
 export const appMessageKeys = {
-    PASSWORD_RESET_SUCCESS: 'passwordResetSuccess', // 'Password successfully reset! Please login with your new password.'
-    PROFILE_UPDATE_SUCCESS: 'profileUpdateSuccess', // 'Profile successfully updated!'
-    PASSWORD_CHANGE_SUCCESS: 'passwordChangeSuccess', // 'Password successfully updated!'
-    USER_CREATE_SUCCESS: 'userCreateSuccess', // 'User successfully created!'
-    USER_UPDATE_SUCCESS: 'userUpdateSuccess', // 'User successfully updated!'
-    LOGIN_SUCCESS: 'loginSuccess', // 'Login successfull'
-    LOGOUT_SUCCESS: 'logoutSuccess', // 'Logout successfull'
-    REGISTER_SUCCESS: 'registerSuccess', // 'Registration successfull'
+    PASSWORD_RESET_SUCCESS: 'passwordResetSuccess',
+    PROFILE_UPDATE_SUCCESS: 'profileUpdateSuccess',
+    PASSWORD_CHANGE_SUCCESS: 'passwordChangeSuccess',
+    USER_CREATE_SUCCESS: 'userCreateSuccess',
+    USER_UPDATE_SUCCESS: 'userUpdateSuccess',
+    LOGIN_SUCCESS: 'loginSuccess',
+    LOGOUT_SUCCESS: 'logoutSuccess',
+    REGISTER_SUCCESS: 'registerSuccess',
 };
 
 export const appMessages = {
@@ -25,6 +25,7 @@ export const appMessages = {
     'userCreateSuccess': 'User successfully created!',
     'userUpdateSuccess': 'User successfully updated!',
     'loginSuccess': 'Welcome',
-    'logoutSuccess': 'Logout successfull',
-    'registerSuccess': 'Registration successfull',
+    'loginFailedEmailNotVerified': 'Please verify your email before logging in.',
+    'logoutSuccess': 'Logout successful',
+    'registerSuccess': 'Registration successful! Please follow the link sent to your email to verify your account.',
 };

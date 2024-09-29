@@ -1,6 +1,8 @@
 import React from 'react';
 import ReactDOM from 'react-dom/client';
 import { createBrowserRouter, RouterProvider } from 'react-router-dom';
+import { action as facebookLoginAction } from './components/FacebookLoginButton';
+import { action as googleLoginAction } from './components/GoogleLoginButton';
 import LoadingOverlay from './components/LoadingOverlay';
 import { action as logoutAction } from './components/LogoutButton';
 import { Providers } from './components/Providers';
@@ -21,7 +23,6 @@ import EditUser, {
 import ForgotPassword, {
   action as forgotPasswordAction,
 } from './routes/forgot-password';
-import { action as googleLoginAction } from './components/GoogleLoginButton';
 import Layout, { loader as rootLoader } from './routes/layout';
 import Login, {
   action as loginAction,
@@ -37,7 +38,7 @@ import Users, {
   action as deleteUserAction,
   loader as usersLoader,
 } from './routes/users';
-import { action as facebookLoginAction } from './components/FacebookLoginButton';
+import VerifyEmail, { loader as verifyEmailLoader } from './routes/verify-email';
 
 const router = createBrowserRouter([
   {
@@ -78,6 +79,12 @@ const router = createBrowserRouter([
             errorElement: <ResetPassword />,
             loader: resetPasswordLoader,
             action: resetPasswordAction,
+          },
+          {
+            path: 'verify-email',
+            element: <VerifyEmail />,
+            errorElement: <VerifyEmail />,
+            loader: verifyEmailLoader,
           },
           {
             path: 'profile',

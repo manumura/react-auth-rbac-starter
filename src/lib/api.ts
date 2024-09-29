@@ -77,7 +77,10 @@ axiosInstance.interceptors.response.use(
       return axiosInstance(config);
     } catch (error) {
       const err = error as AxiosError;
-      console.error('Axios interceptor unexpected error: ', err?.response?.data);
+      console.error(
+        'Axios interceptor unexpected error: ',
+        err?.response?.data
+      );
       if (err?.status === 401) {
         useUserStore.getState().setUser(null);
         clearAuthentication();
@@ -106,16 +109,14 @@ export const login = async (
     .then((response) => response.data);
 };
 
-export const googleLogin = async (
-  token: string,
-): Promise<LoginResponse> => {
+export const googleLogin = async (token: string): Promise<LoginResponse> => {
   return axiosPublicInstance
     .post('/v1/oauth2/google', { token })
     .then((response) => response.data);
 };
 
 export const facebookLogin = async (
-  profile: ProfileSuccessResponse,
+  profile: ProfileSuccessResponse
 ): Promise<LoginResponse> => {
   return axiosPublicInstance
     .post('/v1/oauth2/facebook', profile)
@@ -152,6 +153,12 @@ export const resetPassword = async (
 export const getUserFromToken = async (token: string): Promise<IUser> => {
   return axiosPublicInstance
     .get(`/v1/token/${token}`)
+    .then((response) => response.data);
+};
+
+export const verifyEmail = async (token: string): Promise<IUser> => {
+  return axiosPublicInstance
+    .post('/v1/verify-email', { token })
     .then((response) => response.data);
 };
 
@@ -227,9 +234,7 @@ export const getUsers = async (
     .then((response) => response.data);
 };
 
-export const getUserByUuid = async (
-  uuid: UUID
-): Promise<IUser>  => {
+export const getUserByUuid = async (uuid: UUID): Promise<IUser> => {
   return axiosInstance
     .get(`/v1/users/${uuid}`)
     .then((response) => response.data);
@@ -252,17 +257,17 @@ export const updateUser = async (
   role: string,
   password?: string
 ): Promise<IUser> => {
-  return axiosInstance.put(`/v1/users/${uuid}`, {
-    name,
-    email,
-    role,
-    ...(password ? { password } : {}),
-  }).then((response) => response.data);
+  return axiosInstance
+    .put(`/v1/users/${uuid}`, {
+      name,
+      email,
+      role,
+      ...(password ? { password } : {}),
+    })
+    .then((response) => response.data);
 };
 
-export const deleteUser = async (
-  userUuid: UUID
-): Promise<IUser> => {
+export const deleteUser = async (userUuid: UUID): Promise<IUser> => {
   return axiosInstance
     .delete(`/v1/users/${userUuid}`)
     .then((response) => response.data);

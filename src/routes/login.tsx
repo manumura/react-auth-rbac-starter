@@ -38,7 +38,6 @@ export const loader = async () => {
   }
 };
 
-// export const action = (currentUser: IUser | null) => async ({request}: {request: Request}) => {
 export const action = async ({
   request,
 }: {
@@ -98,8 +97,9 @@ export const action = async ({
     // You cannot `useLoaderData` in an errorElemen
     console.error(error);
     let message = 'Unknown error';
-    if (error instanceof AxiosError && error.response?.data.message) {
-      message = error.response.data.message;
+    if (error instanceof AxiosError && error.response?.data) {
+      const err = error.response.data.error;
+      message = err === 'email_not_verified' ? appMessages.loginFailedEmailNotVerified : error.response.data.message;
     } else if (error instanceof Error) {
       message = error.message;
     }

@@ -54,7 +54,7 @@ export const action = async ({
       });
     }
 
-    const isPasswordValid = validatePassword(password);
+    const { isValid: isPasswordValid, message } = validatePassword(password);
     if (!isPasswordValid) {
       throw new ValidationError(
         'Password must be at least 8 characters long, and contain at least 1 number, 1 uppercase letter, 1 lowercase letter, and 1 special character',
@@ -176,11 +176,11 @@ export default function Register(): React.ReactElement {
       message: 'Password is min 8 characters',
     },
     validate: (value: string): string | undefined => {
-      const message = validatePassword(value);
+      const { isValid, message } = validatePassword(value);
       if (message) {
         return message; // 'Password must be at least 8 characters long, and contain at least 1 number, 1 uppercase letter, 1 lowercase letter, and 1 special character';
       }
-    }
+    },
     // validate: {
     //   isMinLength: (value: string): string | undefined => {
     //     const rule = passwordRules.isMinLength;
