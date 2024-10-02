@@ -1,7 +1,8 @@
 import { AxiosError } from 'axios';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useGoogleReCaptcha } from 'react-google-recaptcha-v3';
 import { FormProvider, useForm } from 'react-hook-form';
+import { IoEyeOffSharp, IoEyeSharp } from 'react-icons/io5';
 import {
   Form,
   Link,
@@ -12,16 +13,16 @@ import {
   useSubmit,
 } from 'react-router-dom';
 import { toast } from 'react-toastify';
+import FacebookLoginButton from '../components/FacebookLoginButton';
 import FormInput from '../components/FormInput';
 import GoogleLoginButton from '../components/GoogleLoginButton';
-import { appMessageKeys, appMessages } from '../config/constant';
+import { appConstant, appMessageKeys, appMessages } from '../config/constant';
 import { login, validateRecaptcha } from '../lib/api';
 import { getUserFromIdToken } from '../lib/jwt.utils';
 import { saveAuthentication } from '../lib/storage';
 import useUserStore from '../lib/user-store';
 import { getCurrentUserFromStorage } from '../lib/utils';
 import { ValidationError } from '../types/custom-errors';
-import FacebookLoginButton from '../components/FacebookLoginButton';
 
 export const loader = async () => {
   try {
@@ -91,7 +92,7 @@ export const action = async ({
     saveAuthentication(accessToken, refreshToken, idToken);
     useUserStore.getState().setUser(user);
     const time = new Date().getTime();
-    
+
     return redirect('/?msg=' + appMessageKeys.LOGIN_SUCCESS + '&t=' + time);
   } catch (error) {
     // You cannot `useLoaderData` in an errorElemen
@@ -99,7 +100,10 @@ export const action = async ({
     let message = 'Unknown error';
     if (error instanceof AxiosError && error.response?.data) {
       const err = error.response.data.error;
-      message = err === 'email_not_verified' ? appMessages.loginFailedEmailNotVerified : error.response.data.message;
+      message =
+        err === 'email_not_verified'
+          ? appMessages.loginFailedEmailNotVerified
+          : error.response.data.message;
     } else if (error instanceof Error) {
       message = error.message;
     }
@@ -140,6 +144,20 @@ export default function Login(): React.ReactElement {
   const [searchParams, setSearchParams] = useSearchParams();
   const msg = searchParams.get('msg');
   const time = searchParams.get('t');
+
+  const iconEye = <IoEyeSharp size={24} className='cursor-pointer' />;
+  const iconEyeOff = <IoEyeOffSharp size={24} className='cursor-pointer' />;
+  const [type, setType] = useState('password');
+  const [icon, setIcon] = useState(iconEyeOff);
+  const onPasswordToggle = () => {
+    if (type === 'password') {
+      setIcon(iconEye);
+      setType('text');
+    } else {
+      setIcon(iconEyeOff);
+      setType('password');
+    }
+  };
 
   useEffect(() => {
     if (msg) {
@@ -196,6 +214,10 @@ export default function Login(): React.ReactElement {
 
   const emailConstraints = {
     required: { value: true, message: 'Email is required' },
+    pattern: {
+      value: appConstant.EMAIL_VALIDATION_REGEX,
+      message: 'Email is invalid',
+    },
   };
   const passwordConstraints = {
     required: { value: true, message: 'Password is required' },
@@ -222,10 +244,11 @@ export default function Login(): React.ReactElement {
           <FormInput
             label='Password'
             name='password'
-            type='password'
+            type={type}
             constraints={passwordConstraints}
+            iconEnd={icon}
+            onClickIconEnd={onPasswordToggle}
           />
-
           <div className='text-right'>
             <Link to='/forgot-password' className='text-secondary'>
               Forgot Password?
