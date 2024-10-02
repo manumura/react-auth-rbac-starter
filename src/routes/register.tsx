@@ -1,5 +1,5 @@
 import { AxiosError } from 'axios';
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useGoogleReCaptcha } from 'react-google-recaptcha-v3';
 import { FormProvider, useForm } from 'react-hook-form';
 import {
@@ -12,10 +12,11 @@ import {
 } from 'react-router-dom';
 import { toast } from 'react-toastify';
 import FormInput from '../components/FormInput';
-import { appMessageKeys } from '../config/constant';
+import { appConstant, appMessageKeys } from '../config/constant';
 import { register, validateRecaptcha } from '../lib/api';
 import { validatePassword } from '../lib/utils';
 import { ValidationError } from '../types/custom-errors';
+import { IoEyeOffSharp, IoEyeSharp } from 'react-icons/io5';
 
 export const action = async ({
   request,
@@ -57,7 +58,7 @@ export const action = async ({
     const { isValid: isPasswordValid, message } = validatePassword(password);
     if (!isPasswordValid) {
       throw new ValidationError(
-        'Password must be at least 8 characters long, and contain at least 1 number, 1 uppercase letter, 1 lowercase letter, and 1 special character',
+        message || 'Password is invalid.',
         {
           name,
           email,
@@ -119,6 +120,31 @@ export default function Register(): React.ReactElement {
   const { executeRecaptcha } = useGoogleReCaptcha();
   const isLoading = navigation.state === 'submitting';
 
+  const iconEye = <IoEyeSharp size={24} className='cursor-pointer' />;
+  const iconEyeOff = <IoEyeOffSharp size={24} className='cursor-pointer' />;
+  const [type, setType] = useState('password');
+  const [icon, setIcon] = useState(iconEyeOff);
+  const onPasswordToggle = () => {
+    if (type === 'password') {
+      setIcon(iconEye);
+      setType('text');
+    } else {
+      setIcon(iconEyeOff);
+      setType('password');
+    }
+  };
+  const [typeConfirm, setTypeConfirm] = useState('password');
+  const [iconConfirm, setIconConfirm] = useState(iconEyeOff);
+  const onPasswordConfirmToggle = () => {
+    if (typeConfirm === 'password') {
+      setIconConfirm(iconEye);
+      setTypeConfirm('text');
+    } else {
+      setIconConfirm(iconEyeOff);
+      setTypeConfirm('password');
+    }
+  };
+
   useEffect(() => {
     if (response?.error) {
       toast(response.error?.message, {
@@ -168,6 +194,10 @@ export default function Register(): React.ReactElement {
   };
   const emailConstraints = {
     required: { value: true, message: 'Email is required' },
+    pattern: {
+      value: appConstant.EMAIL_VALIDATION_REGEX,
+      message: 'Email is invalid',
+    },
   };
   const passwordConstraints = {
     required: { value: true, message: 'Password is required' },
@@ -177,32 +207,10 @@ export default function Register(): React.ReactElement {
     },
     validate: (value: string): string | undefined => {
       const { isValid, message } = validatePassword(value);
-      if (message) {
-        return message;
+      if (!isValid) {
+        return message || 'Password is invalid';
       }
     },
-    // validate: {
-    //   isMinLength: (value: string): string | undefined => {
-    //     const rule = passwordRules.isMinLength;
-    //     return rule.regex.test(value) ? undefined : rule.message;
-    //   },
-    //   hasNumber: (value: string): string | undefined => {
-    //     const rule = passwordRules.hasNumber;
-    //     return rule.regex.test(value) ? undefined : rule.message;
-    //   },
-    //   hasUppercaseCharacter: (value: string): string | undefined => {
-    //     const rule = passwordRules.hasUppercaseCharacter;
-    //     return rule.regex.test(value) ? undefined : rule.message;
-    //   },
-    //   hasLowercaseCharacter: (value: string): string | undefined => {
-    //     const rule = passwordRules.hasLowercaseCharacter;
-    //     return rule.regex.test(value) ? undefined : rule.message;
-    //   },
-    //   hasSpecialCharacter: (value: string): string | undefined => {
-    //     const rule = passwordRules.hasSpecialCharacter;
-    //     return rule.regex.test(value) ? undefined : rule.message;
-    //   },
-    // },
   };
   const passwordConfirmConstraints = {
     required: { value: true, message: 'Confirm Password is required' },
@@ -239,14 +247,18 @@ export default function Register(): React.ReactElement {
           <FormInput
             label='Password'
             name='password'
-            type='password'
+            type={type}
             constraints={passwordConstraints}
+            iconEnd={icon}
+            onClickIconEnd={onPasswordToggle}
           />
           <FormInput
             label='Confirm Password'
             name='passwordConfirm'
-            type='password'
+            type={typeConfirm}
             constraints={passwordConfirmConstraints}
+            iconEnd={iconConfirm}
+            onClickIconEnd={onPasswordConfirmToggle}
           />
           <span className='block'>
             Already have an account?{' '}

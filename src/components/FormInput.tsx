@@ -6,12 +6,16 @@ const FormInput = ({
   type = 'text',
   placeholder = '',
   constraints = {},
+  iconEnd = null,
+  onClickIconEnd = () => {},
 }: {
   label: string;
   name: string;
   type?: string;
   placeholder?: string;
   constraints?: Record<string, unknown>;
+  iconEnd?: JSX.Element | null;
+  onClickIconEnd?: (() => void) | undefined;
 }) => {
   const {
     register,
@@ -19,18 +23,26 @@ const FormInput = ({
   } = useFormContext();
 
   return (
-    <div className=''>
-      <label htmlFor={name} className='block text-ct-blue-600 mb-3'>
+    <div>
+      <label htmlFor={name} className='flex text-ct-blue-600 mb-3'>
         {label}
       </label>
-      <input
-        type={type}
-        placeholder={placeholder}
-        className='block w-full rounded-2xl appearance-none focus:outline-none py-2 px-4'
-        {...register(name, constraints)}
-      />
+      <div className='flex'>
+        <input
+          type={type}
+          placeholder={placeholder}
+          className='w-full rounded-2xl appearance-none focus:outline-none py-2 px-4'
+          {...register(name, constraints)}
+        />
+        {iconEnd && (
+          <span className='flex items-center' onClick={onClickIconEnd}>
+            <span className='-ml-10 absolute'>{iconEnd}</span>
+          </span>
+        )}
+      </div>
+
       {errors[name] && (
-        <span className='text-red-600 text-xs pt-1 block'>
+        <span className='text-red-600 text-xs pt-1'>
           {errors[name]?.message as string}
         </span>
       )}

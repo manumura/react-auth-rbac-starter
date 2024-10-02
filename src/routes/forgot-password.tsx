@@ -14,6 +14,7 @@ import { toast } from 'react-toastify';
 import FormInput from '../components/FormInput';
 import { forgotPassword, validateRecaptcha } from '../lib/api';
 import { ValidationError } from '../types/custom-errors';
+import { appConstant } from '../config/constant';
 
 export const action = async ({
   request,
@@ -139,6 +140,10 @@ export default function ForgotPassword(): React.ReactElement {
 
   const emailConstraints = {
     required: { value: true, message: 'Email is required' },
+    pattern: {
+      value: appConstant.EMAIL_VALIDATION_REGEX,
+      message: 'Email is invalid',
+    },
   };
 
   return (
