@@ -8,15 +8,19 @@ import { clearAuthentication } from '../lib/storage';
 import useUserStore from '../lib/user-store';
 import { FacebookLoginClient } from '@greatsumini/react-facebook-login';
 
+export async function handleLogout() {
+  await logout();
+  useUserStore.getState().setUser(null);
+  clearAuthentication();
+  googleLogout();
+  FacebookLoginClient.logout(() => {
+    console.log('Facebook logout completed!');
+  });
+}
+
 export const action = async () => {
   try {
-    await logout();
-    useUserStore.getState().setUser(null);
-    clearAuthentication();
-    googleLogout();
-    FacebookLoginClient.logout(() => {
-      console.log('Facebook logout completed!');
-    });
+    await handleLogout();
 
     const time = new Date().getTime();
     return redirect('/?msg=' + appMessageKeys.LOGOUT_SUCCESS + '&t=' + time);
