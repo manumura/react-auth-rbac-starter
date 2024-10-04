@@ -14,8 +14,16 @@ import { toast } from 'react-toastify';
 import DropBox from '../components/DropBox';
 import FormInput from '../components/FormInput';
 import { appMessageKeys } from '../config/constant';
-import { updatePassword, updateProfile, updateProfileImage } from '../lib/api';
+import {
+  deleteProfile,
+  updatePassword,
+  updateProfile,
+  updateProfileImage,
+} from '../lib/api';
+import { sleep } from '../lib/utils';
 import { IUser } from '../types/custom-types';
+import DeleteProfileModal from '../components/DeleteProfileModal';
+import { handleLogout } from '../components/LogoutButton';
 
 export const action = async ({
   request,
@@ -29,119 +37,125 @@ export const action = async ({
 > => {
   const formData = await request.formData();
   const intent = formData.get('intent');
-  const name = formData.get('name') as string;
-  const image = formData.get('image') as Blob;
-  const oldPassword = formData.get('oldPassword') as string;
-  const newPassword = formData.get('newPassword') as string;
   const time = new Date().getTime();
 
-  if (intent === 'edit-profile') {
-    const response = await editProfile(name, image);
-    // if (Object.hasOwn(response, 'error')) {
-    if (response.error) {
-      return { error: response.error };
+  try {
+    if (intent === 'edit-profile') {
+      const name = formData.get('name') as string;
+      const image = formData.get('image') as Blob;
+      const user = await editProfile(name, image);
+      // if (Object.hasOwn(response, 'error')) {
+      if (!user) {
+        throw new Error('Profile update failed');
+      }
+      return redirect(
+        '/profile?msg=' + appMessageKeys.PROFILE_UPDATE_SUCCESS + '&t=' + time
+      );
     }
-    return redirect(
-      '/profile?msg=' + appMessageKeys.PROFILE_UPDATE_SUCCESS + '&t=' + time
-    );
-  }
 
-  if (intent === 'change-password') {
-    const response = await changePassword(oldPassword, newPassword);
-    if (response.error) {
-      return { error: response.error };
+    if (intent === 'delete-profile') {
+      const user = await removeProfile();
+      if (!user) {
+        throw new Error('Profile delete failed');
+      }
+      await handleLogout();
+      return redirect(
+        '/?msg=' + appMessageKeys.PROFILE_DELETE_SUCCESS + '&t=' + time
+      );
     }
-    return redirect(
-      '/profile?msg=' + appMessageKeys.PASSWORD_CHANGE_SUCCESS + '&t=' + time
-    );
-  }
 
-  console.error('Invalid intent', intent);
-  return redirect('/');
+    if (intent === 'change-password') {
+      const oldPassword = formData.get('oldPassword') as string;
+      const newPassword = formData.get('newPassword') as string;
+      const user = await changePassword(oldPassword, newPassword);
+      if (!user) {
+        throw new Error('Change password failed');
+      }
+      return redirect(
+        '/profile?msg=' + appMessageKeys.PASSWORD_CHANGE_SUCCESS + '&t=' + time
+      );
+    }
+
+    console.error('Invalid intent', intent);
+    return redirect('/');
+  } catch (error) {
+    // You cannot `useLoaderData` in an errorElemen
+    console.error(error);
+    let message = 'Unknown error';
+    if (error instanceof AxiosError && error.response?.data) {
+      message = error.response.data.message;
+    } else if (error instanceof Error) {
+      message = error.message;
+    }
+
+    return { error: new Error(message) };
+  }
 };
 
 async function changePassword(
   oldPassword: string,
   newPassword: string
-): Promise<{ user: IUser | undefined; error: Error | undefined }> {
-  try {
-    if (!oldPassword || !newPassword) {
-      throw new Error('Invalid form data');
-    }
-
-    const user = await updatePassword(oldPassword, newPassword);
-    if (!user) {
-      throw new Error('Change password failed');
-    }
-    return { user, error: undefined };
-  } catch (error) {
-    // You cannot `useLoaderData` in an errorElemen
-    console.error(error);
-    let message = 'Unknown error';
-    if (error instanceof AxiosError && error.response?.data.message) {
-      message = error.response.data.message;
-    } else if (error instanceof Error) {
-      message = error.message;
-    }
-
-    return { user: undefined, error: new Error(message) };
+): Promise<IUser> {
+  if (!oldPassword || !newPassword) {
+    throw new Error('Invalid form data');
   }
+
+  const user = await updatePassword(oldPassword, newPassword);
+  if (!user) {
+    throw new Error('Change password failed');
+  }
+  return user;
 }
 
-async function editProfile(
-  name: string,
-  image: Blob | null
-): Promise<{ user: IUser | undefined; error: Error | undefined }> {
-  try {
-    if (!name) {
-      throw new Error('Invalid form data');
-    }
-
-    const user = await updateProfile(name);
-    if (!user) {
-      throw new Error('Profile update failed');
-    }
-
-    if (!image) {
-      return { user, error: undefined };
-    }
-
-    // Upload profile image
-    console.log('Uploading image');
-    const formData = new FormData();
-    formData.append('image', image);
-
-    const onUploadProgress = (progressEvent: AxiosProgressEvent): void => {
-      const { loaded, total } = progressEvent;
-      if (total && progressEvent.bytes) {
-        const progress = Math.round((loaded / total) * 100);
-        // setUploadProgress(progress);
-        console.log('Upload progress:', progress);
-      }
-    };
-
-    const userUpdated = await updateProfileImage(formData, onUploadProgress);
-    if (!userUpdated) {
-      throw new Error('Profile update failed');
-    }
-    return { user: userUpdated, error: undefined };
-  } catch (error) {
-    // You cannot `useLoaderData` in an errorElemen
-    console.error(error);
-    let message = 'Unknown error';
-    if (error instanceof AxiosError && error.response?.data.message) {
-      message = error.response.data.message;
-    } else if (error instanceof Error) {
-      message = error.message;
-    }
-
-    return { user: undefined, error: new Error(message) };
+async function editProfile(name: string, image: Blob | null): Promise<IUser> {
+  if (!name) {
+    throw new Error('Invalid form data');
   }
+
+  const user = await updateProfile(name);
+  if (!user) {
+    throw new Error('Profile update failed');
+  }
+
+  if (!image) {
+    return user;
+  }
+
+  // Upload profile image
+  console.log('Uploading image');
+  const formData = new FormData();
+  formData.append('image', image);
+
+  const onUploadProgress = (progressEvent: AxiosProgressEvent): void => {
+    const { loaded, total } = progressEvent;
+    if (total && progressEvent.bytes) {
+      const progress = Math.round((loaded / total) * 100);
+      // setUploadProgress(progress);
+      console.log('Upload progress:', progress);
+    }
+  };
+
+  const userUpdated = await updateProfileImage(formData, onUploadProgress);
+  if (!userUpdated) {
+    throw new Error('Profile update failed');
+  }
+  return user;
 }
 
+async function removeProfile(): Promise<IUser> {
+  const user = await deleteProfile();
+  if (!user) {
+    throw new Error('Change password failed');
+  }
+  return user;
+}
+
+// TODO change password validation
 export default function EditProfile(): React.ReactElement {
   const [images, setImages] = useState([] as Blob[]);
   const [uploadProgress, setUploadProgress] = useState(0);
+  const [isConfirmDeleteModalOpen, setIsConfirmDeleteModalOpen] =
+    useState(false);
   const submit = useSubmit();
   const navigation = useNavigation();
   const navigate = useNavigate();
@@ -190,9 +204,15 @@ export default function EditProfile(): React.ReactElement {
     submit(formData, { method: 'post', encType: 'multipart/form-data' });
   };
 
+  const onDeleteProfile = async () => {
+    const formData = new FormData();
+    formData.append('intent', 'delete-profile');
+    submit(formData, { method: 'post' });
+  };
+
   useEffect(() => {
     if (response?.error) {
-      toast(response.error.message, {
+      toast(response.error?.message, {
         type: 'error',
         position: 'bottom-right',
       });
@@ -234,6 +254,19 @@ export default function EditProfile(): React.ReactElement {
     navigate(-1);
   };
 
+  const openConfirmDeleteModal = (): void => {
+    setIsConfirmDeleteModalOpen(true);
+  };
+
+  const onCloseConfirmDeleteModal = async (
+    confirmed: boolean
+  ): Promise<void> => {
+    setIsConfirmDeleteModalOpen(false);
+    if (confirmed) {
+      onDeleteProfile();
+    }
+  };
+
   //----------------- Edit Profile -------------------
   const editProfileMethods = useForm({
     defaultValues: {
@@ -247,7 +280,6 @@ export default function EditProfile(): React.ReactElement {
     getValues: getEditProfileValues,
     // setValue: setEditProfileValue,
     formState: { isValid: isEditProfileValid },
-    // watch,
     setError: setEditProfileError,
   } = editProfileMethods;
   // ------------------------------------------------
@@ -315,6 +347,14 @@ export default function EditProfile(): React.ReactElement {
       Save
     </button>
   );
+  const btnDeleteProfile = (
+    <button
+      className='btn btn-error text-red-100'
+      onClick={(): void => openConfirmDeleteModal()}
+    >
+      Delete
+    </button>
+  );
   const btnDisabled = (
     <button className='btn btn-disabled btn-primary'>Save</button>
   );
@@ -322,6 +362,12 @@ export default function EditProfile(): React.ReactElement {
     <button className='btn btn-disabled w-full'>
       <span className='loading loading-spinner'></span>
       Save
+    </button>
+  );
+  const btnDeleteLoading = (
+    <button className='btn btn-disabled w-full'>
+      <span className='loading loading-spinner'></span>
+      Delete
     </button>
   );
   const editProfileButton = !isEditProfileValid
@@ -334,6 +380,8 @@ export default function EditProfile(): React.ReactElement {
     : isLoading
     ? btnLoading
     : btnChangePassword;
+  const deleteProfileButton = isLoading ? btnDeleteLoading : btnDeleteProfile;
+
   const uploadProgressStyle = {
     '--size': '3.2rem',
     '--value': uploadProgress,
@@ -393,7 +441,7 @@ export default function EditProfile(): React.ReactElement {
             method='post'
             onSubmit={(event) => onPasswordChanged(event)}
             id='change-password-form'
-            className='mx-auto flex max-w-2xl flex-col items-center overflow-hidden py-5'
+            className='mx-auto flex max-w-2xl flex-col items-center overflow-hidden pt-5'
           >
             <div className='card w-3/4 bg-slate-50 shadow-xl'>
               <div className='card-body'>
@@ -437,6 +485,35 @@ export default function EditProfile(): React.ReactElement {
           </Form>
         </FormProvider>
       )}
+
+      <div className='mx-auto flex max-w-2xl flex-col items-center overflow-hidden py-5'>
+        <div className='card w-3/4 bg-red-50 shadow-xl'>
+          <div className='card-body'>
+            <div className='card-title text-red-500'>
+              <h1>Delete my Profile</h1>
+            </div>
+            <div className='card-actions justify-end'>
+              <div>{deleteProfileButton}</div>
+              <div>
+                <button
+                  type='button'
+                  className={`btn btn-outline btn-accent ${
+                    isLoading ? 'btn-disabled' : ''
+                  }`}
+                  onClick={handleCancel}
+                >
+                  Cancel
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <DeleteProfileModal
+        isOpen={isConfirmDeleteModalOpen}
+        onClose={onCloseConfirmDeleteModal}
+      />
     </section>
   );
 }

@@ -13,6 +13,7 @@ export const appConstant = {
 export const appMessageKeys = {
   PASSWORD_RESET_SUCCESS: 'passwordResetSuccess',
   PROFILE_UPDATE_SUCCESS: 'profileUpdateSuccess',
+  PROFILE_DELETE_SUCCESS: 'profileDeleteSuccess',
   PASSWORD_CHANGE_SUCCESS: 'passwordChangeSuccess',
   USER_CREATE_SUCCESS: 'userCreateSuccess',
   USER_UPDATE_SUCCESS: 'userUpdateSuccess',
@@ -25,6 +26,7 @@ export const appMessages = {
   passwordResetSuccess:
     'Password successfully reset! Please login with your new password.',
   profileUpdateSuccess: 'Profile successfully updated!',
+  profileDeleteSuccess: 'Profile successfully deleted!',
   passwordChangeSuccess: 'Password successfully updated!',
   userCreateSuccess: 'User successfully created!',
   userUpdateSuccess: 'User successfully updated!',

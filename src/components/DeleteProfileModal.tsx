@@ -1,12 +1,9 @@
-import { IUser } from '../types/custom-types';
 import Modal from './Modal';
 
-const DeleteUserModal = ({
-  user,
+const DeleteProfileModal = ({
   isOpen,
   onClose,
 }: {
-  user: IUser;
   isOpen: boolean;
   onClose: (success: boolean) => Promise<void>;
 }) => {
@@ -17,9 +14,6 @@ const DeleteUserModal = ({
   };
 
   const onDelete = async (): Promise<void> => {
-    if (!user?.uuid) {
-      return;
-    }
     onClose(true);
   };
 
@@ -45,9 +39,7 @@ const DeleteUserModal = ({
   );
 
   const body = (
-    <div className='mt-5'>
-      Are you sure you want to delete this user <b>{user?.name}</b> ?
-    </div>
+    <div className='mt-5'>Are you sure you want to delete your profile ?</div>
   );
 
   const footer = (
@@ -56,9 +48,7 @@ const DeleteUserModal = ({
       <button
         id='btn-cancel'
         type='button'
-        className={`btn btn-outline mx-1 ${
-          isLoading ? 'btn-disabled' : ''
-        }`}
+        className={`btn btn-outline mx-1 ${isLoading ? 'btn-disabled' : ''}`}
         onClick={onCancel}
       >
         Cancel
@@ -77,4 +67,4 @@ const DeleteUserModal = ({
   );
 };
 
-export default DeleteUserModal;
+export default DeleteProfileModal;

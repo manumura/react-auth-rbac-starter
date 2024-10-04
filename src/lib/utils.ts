@@ -1,5 +1,5 @@
 import { redirect } from 'react-router-dom';
-import { IAuthenticatedUser, IUser } from '../types/custom-types';
+import { IAuthenticatedUser } from '../types/custom-types';
 import { getUserFromIdToken } from './jwt.utils';
 import { getSavedIdToken } from './storage';
 
@@ -7,7 +7,7 @@ export const sleep = async (ms: number): Promise<void> => {
   return new Promise((resolve, reject) => setTimeout(resolve, ms));
 };
 
-export const isAdmin = (user: IUser): boolean => {
+export const isAdmin = (user: IAuthenticatedUser): boolean => {
   return user && user.role === 'ADMIN';
 };
 

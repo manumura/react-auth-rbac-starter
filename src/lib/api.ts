@@ -186,6 +186,12 @@ export const updateProfile = async (name: string): Promise<IUser> => {
     .then((response) => response.data);
 };
 
+export const deleteProfile = async (): Promise<IUser> => {
+  return axiosInstance
+    .delete('/v1/profile')
+    .then((response) => response.data);
+};
+
 export const updatePassword = async (
   oldPassword: string,
   newPassword: string
