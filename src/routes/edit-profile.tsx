@@ -11,8 +11,10 @@ import {
   useSubmit,
 } from 'react-router-dom';
 import { toast } from 'react-toastify';
+import DeleteProfileModal from '../components/DeleteProfileModal';
 import DropBox from '../components/DropBox';
 import FormInput from '../components/FormInput';
+import { handleLogout } from '../components/LogoutButton';
 import { appMessageKeys } from '../config/constant';
 import {
   deleteProfile,
@@ -20,10 +22,7 @@ import {
   updateProfile,
   updateProfileImage,
 } from '../lib/api';
-import { sleep } from '../lib/utils';
 import { IUser } from '../types/custom-types';
-import DeleteProfileModal from '../components/DeleteProfileModal';
-import { handleLogout } from '../components/LogoutButton';
 
 export const action = async ({
   request,
@@ -393,7 +392,7 @@ export default function EditProfile(): React.ReactElement {
     <section className='min-h-screen bg-slate-200'>
       <FormProvider {...editProfileMethods}>
         <Form
-          method='post'
+          //TODO  method='post'
           onSubmit={(event) => onEditProfile(event)}
           id='edit-profile-form'
           className='mx-auto flex max-w-2xl flex-col items-center overflow-hidden pt-10'
@@ -438,7 +437,7 @@ export default function EditProfile(): React.ReactElement {
       {shouldShowChangePasswordForm && (
         <FormProvider {...changePasswordMethods}>
           <Form
-            method='post'
+            //TODO method='post'
             onSubmit={(event) => onPasswordChanged(event)}
             id='change-password-form'
             className='mx-auto flex max-w-2xl flex-col items-center overflow-hidden pt-5'
