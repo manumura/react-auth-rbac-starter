@@ -287,7 +287,6 @@ export default function Users() {
     });
 
     const email = user.email ? <div>{user.email}</div> : providers;
-    console.log('user:', user);
 
     return (
       <tr key={user.uuid} id={`user-${user.uuid}`}>
