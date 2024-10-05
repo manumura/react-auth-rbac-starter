@@ -1,7 +1,8 @@
 import { AxiosError } from 'axios';
 import { UUID } from 'crypto';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { FormProvider, useForm } from 'react-hook-form';
+import { IoEyeOffSharp, IoEyeSharp } from 'react-icons/io5';
 import {
   Form,
   Params,
@@ -16,7 +17,11 @@ import FormInput from '../components/FormInput';
 import FormSelect from '../components/FormSelect';
 import { appMessageKeys } from '../config/constant';
 import { getUserByUuid, updateUser } from '../lib/api';
-import { getCurrentUserFromStorage, isAdmin } from '../lib/utils';
+import {
+  getCurrentUserFromStorage,
+  isAdmin,
+  validatePassword,
+} from '../lib/utils';
 import { IUser } from '../types/custom-types';
 
 export const loader = async ({
@@ -83,6 +88,13 @@ export const action = async ({
     return { error: new Error('Passwords do not match') };
   }
 
+  if (password) {
+    const { isValid: isPasswordValid, message } = validatePassword(password);
+    if (!isPasswordValid) {
+      return { error: new Error(message || 'Password is invalid') };
+    }
+  }
+
   try {
     const user = await updateUser(userUuid, name, email, role, password);
     if (!user) {
@@ -90,7 +102,9 @@ export const action = async ({
     }
 
     const time = new Date().getTime();
-    return redirect('/users?msg=' + appMessageKeys.USER_UPDATE_SUCCESS + '&t=' + time);
+    return redirect(
+      '/users?msg=' + appMessageKeys.USER_UPDATE_SUCCESS + '&t=' + time
+    );
   } catch (error) {
     // You cannot `useLoaderData` in an errorElemen
     console.error(error);
@@ -133,6 +147,31 @@ export default function EditUser(): React.ReactElement {
   const { user } = useLoaderData() as { user: IUser };
   const response = useActionData() as {
     error: Error | undefined;
+  };
+
+  const iconEye = <IoEyeSharp size={24} className='cursor-pointer' />;
+  const iconEyeOff = <IoEyeOffSharp size={24} className='cursor-pointer' />;
+  const [type, setType] = useState('password');
+  const [icon, setIcon] = useState(iconEyeOff);
+  const onPasswordToggle = () => {
+    if (type === 'password') {
+      setIcon(iconEye);
+      setType('text');
+    } else {
+      setIcon(iconEyeOff);
+      setType('password');
+    }
+  };
+  const [typeConfirm, setTypeConfirm] = useState('password');
+  const [iconConfirm, setIconConfirm] = useState(iconEyeOff);
+  const onPasswordConfirmToggle = () => {
+    if (typeConfirm === 'password') {
+      setIconConfirm(iconEye);
+      setTypeConfirm('text');
+    } else {
+      setIconConfirm(iconEyeOff);
+      setTypeConfirm('password');
+    }
   };
 
   useEffect(() => {
@@ -185,6 +224,16 @@ export default function EditUser(): React.ReactElement {
       value: 8,
       message: 'Password is min 8 characters',
     },
+    validate: (value: string): string | undefined => {
+      if (!value) {
+        return;
+      }
+
+      const { isValid, message } = validatePassword(value);
+      if (!isValid) {
+        return message || 'Password is invalid';
+      }
+    },
   };
   const passwordConfirmConstraints = {
     // required: { value: true, message: 'Confirm Password is required' },
@@ -227,14 +276,18 @@ export default function EditUser(): React.ReactElement {
           <FormInput
             label='Password'
             name='password'
-            type='password'
+            type={type}
             constraints={passwordConstraints}
+            iconEnd={icon}
+            onClickIconEnd={onPasswordToggle}
           />
           <FormInput
             label='Confirm Password'
             name='passwordConfirm'
-            type='password'
+            type={typeConfirm}
             constraints={passwordConfirmConstraints}
+            iconEnd={iconConfirm}
+            onClickIconEnd={onPasswordConfirmToggle}
           />
           <FormSelect
             label='Role'
