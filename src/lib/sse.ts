@@ -141,11 +141,11 @@ export const processMessage = (message: EventSourceMessage): EventMessage => {
 
   let msg = '';
   if (type === 'USER_CREATED') {
-    msg = `New user has been created: ${userFromEvent.email}. Please refresh the page to see the changes.`;
+    msg = `New user has been created: ${userFromEvent.uuid}. Please refresh the page to see the changes.`;
   }
 
   if (type === 'USER_UPDATED') {
-    msg = `User has been updated: ${userFromEvent.email}.`;
+    msg = `User has been updated: ${userFromEvent.uuid}.`;
   }
 
   // if (type === 'USER_DELETED' && userInList) {
@@ -156,7 +156,7 @@ export const processMessage = (message: EventSourceMessage): EventMessage => {
   //   setUsersToDisplay([...usersToDisplay]);
   // }
   if (type === 'USER_DELETED') {
-    msg = `User has been deleted: ${userFromEvent.email}. Please refresh the page to see the changes.`;
+    msg = `User has been deleted: ${userFromEvent.uuid}. Please refresh the page to see the changes.`;
   }
 
   return { eventType: type, user: userFromEvent, message: msg };
