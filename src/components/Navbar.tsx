@@ -51,7 +51,7 @@ export default function Navbar(): React.ReactElement {
   };
 
   useEffect(() => {
-    console.log('Navbar current user', currentUser);
+    // console.log('Navbar current user', currentUser);
     setNavItems(getNavItems(currentUser));
   }, [currentUser]);
 

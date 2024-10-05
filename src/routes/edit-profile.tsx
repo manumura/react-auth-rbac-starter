@@ -32,6 +32,7 @@ export const action = async ({
   | Response
   | {
       error: Error | undefined;
+      time: number | undefined;
     }
 > => {
   const formData = await request.formData();
@@ -87,7 +88,8 @@ export const action = async ({
       message = error.message;
     }
 
-    return { error: new Error(message) };
+    const time = new Date().getTime();
+    return { error: new Error(message), time };
   }
 };
 
@@ -161,6 +163,7 @@ export default function EditProfile(): React.ReactElement {
   const { user } = useLoaderData() as { user: IUser };
   const response = useActionData() as {
     error: Error | undefined;
+    time: number | undefined;
   };
   const isLoading = navigation.state === 'submitting';
 
@@ -211,16 +214,23 @@ export default function EditProfile(): React.ReactElement {
 
   useEffect(() => {
     if (response?.error) {
-      toast(response.error?.message, {
-        type: 'error',
-        position: 'bottom-right',
-      });
+      const time = response.time ?? new Date().getTime();
+      const message = response.error?.message;
+      const toastId = `${message}-${time}`;
+
+      if (message && !toast.isActive(toastId)) {
+        toast(message, {
+          type: 'error',
+          position: 'bottom-right',
+          toastId,
+        });
+      }
     }
   }, [response]);
 
   const onDrop = useCallback(
     (acceptedFiles: Blob[]) => {
-      acceptedFiles.map((file: Blob, index: number) => {
+      acceptedFiles.forEach((file: Blob, index: number) => {
         console.log('File index', index);
         const reader = new FileReader();
 

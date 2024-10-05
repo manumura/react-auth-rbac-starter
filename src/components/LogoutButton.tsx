@@ -21,7 +21,6 @@ export async function handleLogout() {
 export const action = async () => {
   try {
     await handleLogout();
-
     const time = new Date().getTime();
     return redirect('/?msg=' + appMessageKeys.LOGOUT_SUCCESS + '&t=' + time);
   } catch (error) {
