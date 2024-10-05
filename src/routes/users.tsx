@@ -29,6 +29,7 @@ import {
 import { OauthProvider } from '../types/provider.model';
 import { FaFacebook } from 'react-icons/fa';
 import { FcGoogle } from 'react-icons/fc';
+import { FaUserAltSlash } from "react-icons/fa";
 
 export const loader = async ({ request }: { request: Request }) => {
   try {
@@ -286,9 +287,11 @@ export default function Users() {
     });
 
     const email = user.email ? <div>{user.email}</div> : providers;
+    console.log('user:', user);
 
     return (
       <tr key={user.uuid} id={`user-${user.uuid}`}>
+        <th>{!user.isActive ? <FaUserAltSlash size={24} color='red' title='Inactive user' /> : null}</th>
         <th>{user.uuid}</th>
         <td>{user.name}</td>
         <td>{email}</td>
@@ -321,6 +324,7 @@ export default function Users() {
         <table className='table table-zebra w-full'>
           <thead>
             <tr>
+              <th></th>
               <th></th>
               <th>Name</th>
               <th>Email</th>

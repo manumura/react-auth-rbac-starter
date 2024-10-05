@@ -14,7 +14,7 @@ export async function handleLogout() {
   clearAuthentication();
   googleLogout();
   FacebookLoginClient.logout(() => {
-    console.log('Facebook logout completed!');
+    console.log('Logout completed!');
   });
 }
 
