@@ -1,9 +1,10 @@
-import { Outlet, redirect, useNavigation } from 'react-router-dom';
+import { Outlet, redirect, useNavigation, useRouteLoaderData } from 'react-router-dom';
 import TopBarProgress from 'react-topbar-progress-indicator';
 import Navbar from '../components/Navbar';
 import { clearAuthentication } from '../lib/storage';
 import useUserStore from '../lib/user-store';
 import { getCurrentUserFromStorage } from '../lib/utils';
+import { IAuthenticatedUser } from '../types/custom-types';
 
 export const loader = async () => {
   try {
@@ -12,6 +13,7 @@ export const loader = async () => {
 
     if (!currentUser) {
       clearAuthentication();
+      return null;
     }
     return currentUser;
   } catch (error) {
@@ -23,6 +25,7 @@ export const loader = async () => {
 export default function Layout() {
   const navigation = useNavigation();
   const loading = navigation.state === 'loading';
+  const currentUser = useRouteLoaderData('root') as IAuthenticatedUser | null;
 
   TopBarProgress.config({
     barColors: {
@@ -37,7 +40,7 @@ export default function Layout() {
     <TopBarProgress />
   ) : (
     <>
-      <Navbar />
+      <Navbar user={currentUser} />
       <Outlet />
     </>
   );

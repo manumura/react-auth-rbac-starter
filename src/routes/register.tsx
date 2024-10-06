@@ -225,7 +225,7 @@ export default function Register(): React.ReactElement {
     <section className='h-section w-full py-20 bg-slate-200'>
       <FormProvider {...methods}>
         <Form
-          method='post'
+          // method='post'
           onSubmit={(event) => onSubmit(event)}
           id='register-form'
           className='mx-auto w-full max-w-md space-y-5 overflow-hidden rounded-2xl bg-slate-50 p-8 shadow-lg'

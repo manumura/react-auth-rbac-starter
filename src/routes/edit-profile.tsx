@@ -23,6 +23,8 @@ import {
   updateProfileImage,
 } from '../lib/api';
 import { IUser } from '../types/custom-types';
+import { IoEyeOffSharp, IoEyeSharp } from 'react-icons/io5';
+import { validatePassword } from '../lib/utils';
 
 export const action = async ({
   request,
@@ -101,6 +103,11 @@ async function changePassword(
     throw new Error('Invalid form data');
   }
 
+  const { isValid: isPasswordValid, message } = validatePassword(newPassword);
+  if (!isPasswordValid) {
+    throw new Error(message || 'Password is invalid');
+  }
+
   const user = await updatePassword(oldPassword, newPassword);
   if (!user) {
     throw new Error('Change password failed');
@@ -151,7 +158,6 @@ async function removeProfile(): Promise<IUser> {
   return user;
 }
 
-// TODO change password validation
 export default function EditProfile(): React.ReactElement {
   const [images, setImages] = useState([] as Blob[]);
   const [uploadProgress, setUploadProgress] = useState(0);
@@ -166,6 +172,43 @@ export default function EditProfile(): React.ReactElement {
     time: number | undefined;
   };
   const isLoading = navigation.state === 'submitting';
+
+  const iconEye = <IoEyeSharp size={24} className='cursor-pointer' />;
+  const iconEyeOff = <IoEyeOffSharp size={24} className='cursor-pointer' />;
+  const [type, setType] = useState('password');
+  const [icon, setIcon] = useState(iconEyeOff);
+  const onPasswordToggle = () => {
+    if (type === 'password') {
+      setIcon(iconEye);
+      setType('text');
+    } else {
+      setIcon(iconEyeOff);
+      setType('password');
+    }
+  };
+  const [typeConfirm, setTypeConfirm] = useState('password');
+  const [iconConfirm, setIconConfirm] = useState(iconEyeOff);
+  const onPasswordConfirmToggle = () => {
+    if (typeConfirm === 'password') {
+      setIconConfirm(iconEye);
+      setTypeConfirm('text');
+    } else {
+      setIconConfirm(iconEyeOff);
+      setTypeConfirm('password');
+    }
+  };
+
+  const [typeOld, setTypeOld] = useState('password');
+  const [iconOld, setIconOld] = useState(iconEyeOff);
+  const onOldPasswordToggle = () => {
+    if (typeOld === 'password') {
+      setIconOld(iconEye);
+      setTypeOld('text');
+    } else {
+      setIconOld(iconEyeOff);
+      setTypeOld('password');
+    }
+  };
 
   const onPasswordChanged = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -320,11 +363,20 @@ export default function EditProfile(): React.ReactElement {
       message: 'Full Name is min 5 characters',
     },
   };
+  const oldPasswordConstraints = {
+    required: { value: true, message: 'Password is required' },
+  };
   const passwordConstraints = {
     required: { value: true, message: 'Password is required' },
     minLength: {
       value: 8,
       message: 'Password is min 8 characters',
+    },
+    validate: (value: string): string | undefined => {
+      const { isValid, message } = validatePassword(value);
+      if (!isValid) {
+        return message || 'Password is invalid';
+      }
     },
   };
   const passwordConfirmConstraints = {
@@ -402,7 +454,6 @@ export default function EditProfile(): React.ReactElement {
     <section className='min-h-screen bg-slate-200'>
       <FormProvider {...editProfileMethods}>
         <Form
-          //TODO  method='post'
           onSubmit={(event) => onEditProfile(event)}
           id='edit-profile-form'
           className='mx-auto flex max-w-2xl flex-col items-center overflow-hidden pt-10'
@@ -447,7 +498,6 @@ export default function EditProfile(): React.ReactElement {
       {shouldShowChangePasswordForm && (
         <FormProvider {...changePasswordMethods}>
           <Form
-            //TODO method='post'
             onSubmit={(event) => onPasswordChanged(event)}
             id='change-password-form'
             className='mx-auto flex max-w-2xl flex-col items-center overflow-hidden pt-5'
@@ -460,20 +510,26 @@ export default function EditProfile(): React.ReactElement {
                 <FormInput
                   label='Current Password'
                   name='oldPassword'
-                  type='password'
-                  constraints={passwordConstraints}
+                  type={typeOld}
+                  constraints={oldPasswordConstraints}
+                  iconEnd={iconOld}
+                  onClickIconEnd={onOldPasswordToggle}
                 />
                 <FormInput
                   label='New Password'
                   name='newPassword'
-                  type='password'
+                  type={type}
                   constraints={passwordConstraints}
+                  iconEnd={icon}
+                  onClickIconEnd={onPasswordToggle}
                 />
                 <FormInput
                   label='Confirm New Password'
                   name='newPasswordConfirm'
-                  type='password'
+                  type={typeConfirm}
                   constraints={passwordConfirmConstraints}
+                  iconEnd={iconConfirm}
+                  onClickIconEnd={onPasswordConfirmToggle}
                 />
                 <div className='card-actions justify-end'>
                   <div>{changePasswordButton}</div>
