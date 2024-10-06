@@ -227,7 +227,7 @@ export default function Login(): React.ReactElement {
     <section className='h-section py-20 w-full bg-slate-200'>
       <FormProvider {...methods}>
         <Form
-          method='post'
+          // method='post'
           onSubmit={(event) => onSubmit(event)}
           id='login-form'
           className='mx-auto w-full max-w-md space-y-5 p-8 overflow-hidden rounded-2xl bg-slate-50 shadow-lg'

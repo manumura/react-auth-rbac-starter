@@ -1,46 +1,38 @@
 import React, { useEffect, useState } from 'react';
-import { Link, useRouteLoaderData } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import { isAdmin } from '../lib/utils';
-import { IUser } from '../types/custom-types';
+import { IAuthenticatedUser } from '../types/custom-types';
 import LoginButton from './LoginButton';
 import LogoutButton from './LogoutButton';
 
-function getNavItems(user: IUser | null | undefined): React.JSX.Element[] {
-  const navItems: React.JSX.Element[] = [];
+const registerLink = (
+  <Link to='/register' id='register-link' className='text-neutral'>
+    Register
+  </Link>
+);
+const loginLink = <LoginButton id='login-link' />;
+const usersLink = (
+  <Link to='/users' id='users-link' className='text-neutral'>
+    Users
+  </Link>
+);
+const profileLink = (
+  <Link to='/profile' id='profile-link' className='text-neutral'>
+    Profile
+  </Link>
+);
+const logoutLink = <LogoutButton id='logout-link' />;
 
-  if (!user) {
-    const registerLink = (
-      <Link to='/register' id='register-link' className='text-neutral'>
-        Register
-      </Link>
-    );
-    const loginLink = <LoginButton id='login-link' />;
-    navItems.push(registerLink);
-    navItems.push(loginLink);
-    return navItems;
-  }
+const unauthenticatedNavItems = [registerLink, loginLink];
+const authenticatedNavItems = [profileLink, logoutLink];
+const adminNavItems = [usersLink, ...authenticatedNavItems];
 
-  if (isAdmin(user)) {
-    const usersLink = (
-      <Link to='/users' id='users-link' className='text-neutral'>
-        Users
-      </Link>
-    );
-    navItems.push(usersLink);
-  }
-  const profileLink = (
-    <Link to='/profile' id='profile-link' className='text-neutral'>
-      Profile
-    </Link>
-  );
-  const logoutLink = <LogoutButton id='logout-link' />;
-  navItems.push(profileLink);
-  navItems.push(logoutLink);
-  return navItems;
-}
-
-export default function Navbar(): React.ReactElement {
-  const currentUser = useRouteLoaderData('root') as IUser | null | undefined;
+export default function Navbar({
+  user,
+}: {
+  readonly user: IAuthenticatedUser | null;
+}): React.ReactElement {
+  // const currentUser = useRouteLoaderData('root') as IAuthenticatedUser | undefined;
   const [navItems, setNavItems] = useState<React.JSX.Element[]>([]);
 
   const closeDrawer = (): void => {
@@ -51,9 +43,14 @@ export default function Navbar(): React.ReactElement {
   };
 
   useEffect(() => {
-    // console.log('Navbar current user', currentUser);
-    setNavItems(getNavItems(currentUser));
-  }, [currentUser]);
+    // console.log('Navbar current user', user);
+    const navItems = user
+      ? isAdmin(user)
+        ? adminNavItems
+        : authenticatedNavItems
+      : unauthenticatedNavItems;
+    setNavItems(navItems);
+  }, [user]);
 
   const navItemsList = navItems.map((item: React.JSX.Element) => {
     return <li key={item.props.id}>{item}</li>;
