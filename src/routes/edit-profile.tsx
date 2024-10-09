@@ -1,8 +1,7 @@
 import { AxiosError, AxiosProgressEvent } from 'axios';
 import { useCallback, useEffect, useState } from 'react';
-import { FormProvider, useForm } from 'react-hook-form';
+import { useForm } from 'react-hook-form';
 import {
-  Form,
   redirect,
   useActionData,
   useLoaderData,
@@ -11,9 +10,9 @@ import {
   useSubmit,
 } from 'react-router-dom';
 import { toast } from 'react-toastify';
-import DeleteProfileModal from '../components/DeleteProfileModal';
-import DropBox from '../components/DropBox';
-import FormInput from '../components/FormInput';
+import ChangePasswordForm from '../components/ChangePasswordForm';
+import DeleteProfileForm from '../components/DeleteProfileForm';
+import EditProfileForm from '../components/EditProfileForm';
 import { handleLogout } from '../components/LogoutButton';
 import { appMessageKeys } from '../config/constant';
 import {
@@ -22,9 +21,9 @@ import {
   updateProfile,
   updateProfileImage,
 } from '../lib/api';
-import { IUser } from '../types/custom-types';
-import { IoEyeOffSharp, IoEyeSharp } from 'react-icons/io5';
 import { validatePassword } from '../lib/utils';
+import { ValidationError } from '../types/custom-errors';
+import { IUser } from '../types/custom-types';
 
 export const action = async ({
   request,
@@ -48,30 +47,29 @@ export const action = async ({
       const user = await editProfile(name, image);
       // if (Object.hasOwn(response, 'error')) {
       if (!user) {
-        throw new Error('Profile update failed');
+        throw new ValidationError('Profile update failed', { name, image });
       }
       return redirect(
         '/profile?msg=' + appMessageKeys.PROFILE_UPDATE_SUCCESS + '&t=' + time
       );
-    }
-
-    if (intent === 'delete-profile') {
+    } else if (intent === 'delete-profile') {
       const user = await removeProfile();
       if (!user) {
-        throw new Error('Profile delete failed');
+        throw new ValidationError('Profile delete failed', {});
       }
       await handleLogout();
       return redirect(
         '/?msg=' + appMessageKeys.PROFILE_DELETE_SUCCESS + '&t=' + time
       );
-    }
-
-    if (intent === 'change-password') {
+    } else if (intent === 'change-password') {
       const oldPassword = formData.get('oldPassword') as string;
       const newPassword = formData.get('newPassword') as string;
       const user = await changePassword(oldPassword, newPassword);
       if (!user) {
-        throw new Error('Change password failed');
+        throw new ValidationError('Change password failed', {
+          oldPassword,
+          newPassword,
+        });
       }
       return redirect(
         '/profile?msg=' + appMessageKeys.PASSWORD_CHANGE_SUCCESS + '&t=' + time
@@ -160,9 +158,6 @@ async function removeProfile(): Promise<IUser> {
 
 export default function EditProfile(): React.ReactElement {
   const [images, setImages] = useState([] as Blob[]);
-  const [uploadProgress, setUploadProgress] = useState(0);
-  const [isConfirmDeleteModalOpen, setIsConfirmDeleteModalOpen] =
-    useState(false);
   const submit = useSubmit();
   const navigation = useNavigation();
   const navigate = useNavigate();
@@ -172,43 +167,6 @@ export default function EditProfile(): React.ReactElement {
     time: number | undefined;
   };
   const isLoading = navigation.state === 'submitting';
-
-  const iconEye = <IoEyeSharp size={24} className='cursor-pointer' />;
-  const iconEyeOff = <IoEyeOffSharp size={24} className='cursor-pointer' />;
-  const [type, setType] = useState('password');
-  const [icon, setIcon] = useState(iconEyeOff);
-  const onPasswordToggle = () => {
-    if (type === 'password') {
-      setIcon(iconEye);
-      setType('text');
-    } else {
-      setIcon(iconEyeOff);
-      setType('password');
-    }
-  };
-  const [typeConfirm, setTypeConfirm] = useState('password');
-  const [iconConfirm, setIconConfirm] = useState(iconEyeOff);
-  const onPasswordConfirmToggle = () => {
-    if (typeConfirm === 'password') {
-      setIconConfirm(iconEye);
-      setTypeConfirm('text');
-    } else {
-      setIconConfirm(iconEyeOff);
-      setTypeConfirm('password');
-    }
-  };
-
-  const [typeOld, setTypeOld] = useState('password');
-  const [iconOld, setIconOld] = useState(iconEyeOff);
-  const onOldPasswordToggle = () => {
-    if (typeOld === 'password') {
-      setIconOld(iconEye);
-      setTypeOld('text');
-    } else {
-      setIconOld(iconEyeOff);
-      setTypeOld('password');
-    }
-  };
 
   const onPasswordChanged = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -294,29 +252,8 @@ export default function EditProfile(): React.ReactElement {
     [images]
   );
 
-  // const onUploadProgress = (progressEvent: AxiosProgressEvent): void => {
-  //   const { loaded, total } = progressEvent;
-  //   if (total && progressEvent.bytes) {
-  //     const progress = Math.round((loaded / total) * 100);
-  //     setUploadProgress(progress);
-  //   }
-  // };
-
   const handleCancel = (): void => {
     navigate(-1);
-  };
-
-  const openConfirmDeleteModal = (): void => {
-    setIsConfirmDeleteModalOpen(true);
-  };
-
-  const onCloseConfirmDeleteModal = async (
-    confirmed: boolean
-  ): Promise<void> => {
-    setIsConfirmDeleteModalOpen(false);
-    if (confirmed) {
-      onDeleteProfile();
-    }
   };
 
   //----------------- Edit Profile -------------------
@@ -331,7 +268,6 @@ export default function EditProfile(): React.ReactElement {
   const {
     getValues: getEditProfileValues,
     // setValue: setEditProfileValue,
-    formState: { isValid: isEditProfileValid },
     setError: setEditProfileError,
   } = editProfileMethods;
   // ------------------------------------------------
@@ -350,234 +286,36 @@ export default function EditProfile(): React.ReactElement {
   const {
     getValues: getChangePasswordValues,
     // setValue: setChangePasswordValue,
-    formState: { isValid: isChangePasswordValid },
-    watch,
     setError: setChangePasswordError,
   } = changePasswordMethods;
   // ------------------------------------------------
-
-  const nameConstraints = {
-    required: { value: true, message: 'Full Name is required' },
-    minLength: {
-      value: 5,
-      message: 'Full Name is min 5 characters',
-    },
-  };
-  const oldPasswordConstraints = {
-    required: { value: true, message: 'Password is required' },
-  };
-  const passwordConstraints = {
-    required: { value: true, message: 'Password is required' },
-    minLength: {
-      value: 8,
-      message: 'Password is min 8 characters',
-    },
-    validate: (value: string): string | undefined => {
-      const { isValid, message } = validatePassword(value);
-      if (!isValid) {
-        return message || 'Password is invalid';
-      }
-    },
-  };
-  const passwordConfirmConstraints = {
-    required: { value: true, message: 'Confirm Password is required' },
-    validate: (value: string): string | undefined => {
-      if (watch('newPassword') !== value) {
-        return 'Passwords do no match';
-      }
-    },
-  };
-
-  const btnEditProfile = (
-    <button
-      type='submit'
-      name='intent'
-      value='edit-profile'
-      className='btn btn-primary'
-    >
-      Save
-    </button>
-  );
-  const btnChangePassword = (
-    <button
-      type='submit'
-      name='intent'
-      value='change-password'
-      className='btn btn-primary'
-    >
-      Save
-    </button>
-  );
-  const btnDeleteProfile = (
-    <button
-      className='btn btn-error text-red-100'
-      onClick={(): void => openConfirmDeleteModal()}
-    >
-      Delete
-    </button>
-  );
-  const btnDisabled = (
-    <button className='btn btn-disabled btn-primary'>Save</button>
-  );
-  const btnLoading = (
-    <button className='btn btn-disabled w-full'>
-      <span className='loading loading-spinner'></span>
-      Save
-    </button>
-  );
-  const btnDeleteLoading = (
-    <button className='btn btn-disabled w-full'>
-      <span className='loading loading-spinner'></span>
-      Delete
-    </button>
-  );
-  const editProfileButton = !isEditProfileValid
-    ? btnDisabled
-    : isLoading
-    ? btnLoading
-    : btnEditProfile;
-  const changePasswordButton = !isChangePasswordValid
-    ? btnDisabled
-    : isLoading
-    ? btnLoading
-    : btnChangePassword;
-  const deleteProfileButton = isLoading ? btnDeleteLoading : btnDeleteProfile;
-
-  const uploadProgressStyle = {
-    '--size': '3.2rem',
-    '--value': uploadProgress,
-  } as React.CSSProperties;
 
   const shouldShowChangePasswordForm = user.providers?.length <= 0;
 
   return (
     <section className='min-h-screen bg-slate-200'>
-      <FormProvider {...editProfileMethods}>
-        <Form
-          onSubmit={(event) => onEditProfile(event)}
-          id='edit-profile-form'
-          className='mx-auto flex max-w-2xl flex-col items-center overflow-hidden pt-10'
-        >
-          <div className='card w-3/4 bg-slate-50 shadow-xl'>
-            <div className='card-body'>
-              <div className='card-title'>
-                <h1>Edit my Profile</h1>
-              </div>
-              <FormInput
-                label='Full Name'
-                name='name'
-                constraints={nameConstraints}
-              />
-              Image
-              <DropBox onDrop={onDrop} imgSrc={user.imageUrl} />
-              {/* <FormInput label='Image' name='image' type='file' /> */}
-              <div className='card-actions justify-end'>
-                {uploadProgress > 0 && (
-                  <div className='radial-progress' style={uploadProgressStyle}>
-                    {uploadProgress}%
-                  </div>
-                )}
-                <div>{editProfileButton}</div>
-                <div>
-                  <button
-                    type='button'
-                    className={`btn btn-outline btn-accent ${
-                      isLoading ? 'btn-disabled' : ''
-                    }`}
-                    onClick={handleCancel}
-                  >
-                    Cancel
-                  </button>
-                </div>
-              </div>
-            </div>
-          </div>
-        </Form>
-      </FormProvider>
+      <EditProfileForm
+        user={user}
+        onEditProfile={onEditProfile}
+        onDrop={onDrop}
+        onCancel={handleCancel}
+        isLoading={isLoading}
+        editProfileMethods={editProfileMethods}
+      />
 
       {shouldShowChangePasswordForm && (
-        <FormProvider {...changePasswordMethods}>
-          <Form
-            onSubmit={(event) => onPasswordChanged(event)}
-            id='change-password-form'
-            className='mx-auto flex max-w-2xl flex-col items-center overflow-hidden pt-5'
-          >
-            <div className='card w-3/4 bg-slate-50 shadow-xl'>
-              <div className='card-body'>
-                <div className='card-title'>
-                  <h1>Change my Password</h1>
-                </div>
-                <FormInput
-                  label='Current Password'
-                  name='oldPassword'
-                  type={typeOld}
-                  constraints={oldPasswordConstraints}
-                  iconEnd={iconOld}
-                  onClickIconEnd={onOldPasswordToggle}
-                />
-                <FormInput
-                  label='New Password'
-                  name='newPassword'
-                  type={type}
-                  constraints={passwordConstraints}
-                  iconEnd={icon}
-                  onClickIconEnd={onPasswordToggle}
-                />
-                <FormInput
-                  label='Confirm New Password'
-                  name='newPasswordConfirm'
-                  type={typeConfirm}
-                  constraints={passwordConfirmConstraints}
-                  iconEnd={iconConfirm}
-                  onClickIconEnd={onPasswordConfirmToggle}
-                />
-                <div className='card-actions justify-end'>
-                  <div>{changePasswordButton}</div>
-                  <div>
-                    <button
-                      type='button'
-                      className={`btn btn-outline btn-accent ${
-                        isLoading ? 'btn-disabled' : ''
-                      }`}
-                      onClick={handleCancel}
-                    >
-                      Cancel
-                    </button>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </Form>
-        </FormProvider>
+        <ChangePasswordForm
+          onPasswordChanged={onPasswordChanged}
+          onCancel={handleCancel}
+          isLoading={isLoading}
+          changePasswordMethods={changePasswordMethods}
+        />
       )}
 
-      <div className='mx-auto flex max-w-2xl flex-col items-center overflow-hidden py-5'>
-        <div className='card w-3/4 bg-red-50 shadow-xl'>
-          <div className='card-body'>
-            <div className='card-title text-red-500'>
-              <h1>Delete my Profile</h1>
-            </div>
-            <div className='card-actions justify-end'>
-              <div>{deleteProfileButton}</div>
-              <div>
-                <button
-                  type='button'
-                  className={`btn btn-outline btn-accent ${
-                    isLoading ? 'btn-disabled' : ''
-                  }`}
-                  onClick={handleCancel}
-                >
-                  Cancel
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <DeleteProfileModal
-        isOpen={isConfirmDeleteModalOpen}
-        onClose={onCloseConfirmDeleteModal}
+      <DeleteProfileForm
+        onDeleteProfile={onDeleteProfile}
+        onCancel={handleCancel}
+        isLoading={isLoading}
       />
     </section>
   );
