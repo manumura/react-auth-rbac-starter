@@ -17,17 +17,18 @@ export default function Home(): React.ReactElement {
   const user = useUserStore().user;
   const { data } = useLoaderData() as { data: Promise<[InfoResponse, string]> };
   const [searchParams, setSearchParams] = useSearchParams();
-  const msg = searchParams.get('msg');
-  const time = searchParams.get('t');
 
   useEffect(() => {
+    const msg = searchParams.get('msg');
+    const time = searchParams.get('t');
+
     if (msg) {
+      setSearchParams({});
       const toastId = `${msg}-${time}`;
       let message = appMessages[msg as keyof typeof appMessages];
       if (msg === appMessageKeys.LOGIN_SUCCESS) {
         message += ` ${user?.name}`;
       }
-      setSearchParams({});
       
       if (!toast.isActive(toastId)) {
         toast(message, {
@@ -37,7 +38,7 @@ export default function Home(): React.ReactElement {
         });
       }
     }
-  }, [msg]);
+  }, [searchParams]);
 
   return (
     <section className='h-section bg-slate-200 pt-20'>

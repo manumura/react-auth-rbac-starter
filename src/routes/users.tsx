@@ -121,8 +121,6 @@ export default function Users() {
   const submit = useSubmit();
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
-  const msg = searchParams.get('msg');
-  const time = searchParams.get('t');
 
   useEffect(() => {
     if (response) {
@@ -143,10 +141,13 @@ export default function Users() {
   }, [response]);
 
   useEffect(() => {
+    const msg = searchParams.get('msg');
+    const time = searchParams.get('t');
+    
     if (msg) {
+      setSearchParams({});
       const toastId = `${msg}-${time}`;
       const message = appMessages[msg as keyof typeof appMessages];
-      setSearchParams({});
 
       if (!toast.isActive(toastId)) {
         toast(message, {
@@ -156,7 +157,7 @@ export default function Users() {
         });
       }
     }
-  }, [msg]);
+  }, [searchParams]);
 
   useEffect(() => {
     setUsersToDisplay(users);

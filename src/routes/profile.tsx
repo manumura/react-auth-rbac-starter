@@ -32,14 +32,15 @@ export default function Profile(): React.ReactElement {
   const navigate = useNavigate();
   const { user } = useLoaderData() as { user: IUser };
   const [searchParams, setSearchParams] = useSearchParams();
-  const msg = searchParams.get('msg');
-  const time = searchParams.get('t');
 
   useEffect(() => {
+    const msg = searchParams.get('msg');
+    const time = searchParams.get('t');
+
     if (msg) {
+      setSearchParams({});
       const toastId = `${msg}-${time}`;
       const message = appMessages[msg as keyof typeof appMessages];
-      setSearchParams({});
 
       if (!toast.isActive(toastId)) {
         toast(message, {
@@ -49,7 +50,7 @@ export default function Profile(): React.ReactElement {
         });
       }
     }
-  }, [msg]);
+  }, [searchParams]);
 
   const handleEdit = (): void => {
     navigate('/edit-profile');
@@ -82,9 +83,14 @@ export default function Profile(): React.ReactElement {
     return (
       <>
         <div className='text-right'>Authentication Provider:</div>
-        <div className='col-span-4 flex items-center' key={oauthProvider.externalUserId}>
+        <div
+          className='col-span-4 flex items-center'
+          key={oauthProvider.externalUserId}
+        >
           {icon && <div className='pr-2'>{icon}</div>}
-          <div>{oauthProvider.email} (ID {oauthProvider.externalUserId})</div>
+          <div>
+            {oauthProvider.email} (ID {oauthProvider.externalUserId})
+          </div>
         </div>
       </>
     );
