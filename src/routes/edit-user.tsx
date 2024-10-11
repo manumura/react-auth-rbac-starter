@@ -66,6 +66,7 @@ export const action = async ({
   | Response
   | {
       error: Error | undefined;
+      time: number | undefined;
     }
 > => {
   const formData = await request.formData();
@@ -74,24 +75,25 @@ export const action = async ({
   const role = formData.get('role') as string;
   const password = formData.get('password') as string;
   const passwordConfirm = formData.get('passwordConfirm') as string;
+  const time = new Date().getTime();
 
   const userUuid = params.userUuid as UUID;
   if (!userUuid) {
-    return { error: new Error('Invalid user UUID') };
+    return { error: new Error('Invalid user UUID'), time };
   }
 
-  if (!email || !name || !role) {
-    return { error: new Error('Invalid form data') };
+  if (!name || !role) {
+    return { error: new Error('Invalid form data'), time };
   }
 
   if (password !== passwordConfirm) {
-    return { error: new Error('Passwords do not match') };
+    return { error: new Error('Passwords do not match'), time };
   }
 
   if (password) {
     const { isValid: isPasswordValid, message } = validatePassword(password);
     if (!isPasswordValid) {
-      return { error: new Error(message || 'Password is invalid') };
+      return { error: new Error(message || 'Password is invalid'), time };
     }
   }
 
@@ -101,7 +103,6 @@ export const action = async ({
       throw new Error('Update user failed');
     }
 
-    const time = new Date().getTime();
     return redirect(
       '/users?msg=' + appMessageKeys.USER_UPDATE_SUCCESS + '&t=' + time
     );
@@ -115,7 +116,7 @@ export const action = async ({
       message = error.message;
     }
 
-    return { error: new Error(message) };
+    return { error: new Error(message), time };
   }
 };
 
@@ -147,6 +148,7 @@ export default function EditUser(): React.ReactElement {
   const { user } = useLoaderData() as { user: IUser };
   const response = useActionData() as {
     error: Error | undefined;
+    time: number | undefined;
   };
 
   const iconEye = <IoEyeSharp size={24} className='cursor-pointer' />;
@@ -176,10 +178,17 @@ export default function EditUser(): React.ReactElement {
 
   useEffect(() => {
     if (response?.error) {
-      toast(response.error.message, {
-        type: 'error',
-        position: 'bottom-right',
-      });
+      const time = response.time ?? new Date().getTime();
+      const message = response.error?.message;
+      const toastId = `${message}-${time}`;
+
+      if (message && !toast.isActive(toastId)) {
+        toast(message, {
+          type: 'error',
+          position: 'bottom-right',
+          toastId,
+        });
+      }
     }
   }, [response]);
 
@@ -253,6 +262,8 @@ export default function EditUser(): React.ReactElement {
     { label: 'User', value: 'USER' },
   ];
 
+  const shouldShowChangePasswordForm = user.providers?.length <= 0;
+
   const editUserForm = (
     <div className='w-full py-10'>
       <FormProvider {...methods}>
@@ -267,28 +278,32 @@ export default function EditUser(): React.ReactElement {
             name='name'
             constraints={nameConstraints}
           />
-          <FormInput
-            label='Email'
-            name='email'
-            type='email'
-            constraints={emailConstraints}
-          />
-          <FormInput
-            label='Password'
-            name='password'
-            type={type}
-            constraints={passwordConstraints}
-            iconEnd={icon}
-            onClickIconEnd={onPasswordToggle}
-          />
-          <FormInput
-            label='Confirm Password'
-            name='passwordConfirm'
-            type={typeConfirm}
-            constraints={passwordConfirmConstraints}
-            iconEnd={iconConfirm}
-            onClickIconEnd={onPasswordConfirmToggle}
-          />
+          {shouldShowChangePasswordForm && (
+            <>
+              <FormInput
+                label='Email'
+                name='email'
+                type='email'
+                constraints={emailConstraints}
+              />
+              <FormInput
+                label='Password'
+                name='password'
+                type={type}
+                constraints={passwordConstraints}
+                iconEnd={icon}
+                onClickIconEnd={onPasswordToggle}
+              />
+              <FormInput
+                label='Confirm Password'
+                name='passwordConfirm'
+                type={typeConfirm}
+                constraints={passwordConfirmConstraints}
+                iconEnd={iconConfirm}
+                onClickIconEnd={onPasswordConfirmToggle}
+              />
+            </>
+          )}
           <FormSelect
             label='Role'
             name='role'

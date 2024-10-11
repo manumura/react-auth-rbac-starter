@@ -39,12 +39,14 @@ export const action = async ({
   | Response
   | {
       error: Error | undefined;
+      time: number | undefined;
     }
 > => {
   const formData = await request.formData();
   const email = formData.get('email') as string;
   const name = formData.get('name') as string;
   const role = formData.get('role') as string;
+  const time = new Date().getTime();
 
   try {
     if (!name || !email || !role) {
@@ -66,7 +68,7 @@ export const action = async ({
       message = error.message;
     }
 
-    return { error: new Error(message) };
+    return { error: new Error(message), time };
   }
 };
 
@@ -96,6 +98,7 @@ export default function CreateUser(): React.ReactElement {
   const navigate = useNavigate();
   const response = useActionData() as {
     error: Error | undefined;
+    time: number | undefined;
   };
   const isLoading = navigation.state === 'submitting';
 
@@ -109,10 +112,17 @@ export default function CreateUser(): React.ReactElement {
 
   useEffect(() => {
     if (response?.error) {
-      toast(response.error.message, {
-        type: 'error',
-        position: 'bottom-right',
-      });
+      const time = response.time ?? new Date().getTime();
+      const message = response.error?.message;
+      const toastId = `${message}-${time}`;
+
+      if (message && !toast.isActive(toastId)) {
+        toast(message, {
+          type: 'error',
+          position: 'bottom-right',
+          toastId,
+        });
+      }
     }
   }, [response]);
 

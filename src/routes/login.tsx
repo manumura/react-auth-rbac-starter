@@ -142,8 +142,6 @@ export default function Login(): React.ReactElement {
   const { executeRecaptcha } = useGoogleReCaptcha();
   const isLoading = navigation.state === 'submitting';
   const [searchParams, setSearchParams] = useSearchParams();
-  const msg = searchParams.get('msg');
-  const time = searchParams.get('t');
 
   const iconEye = <IoEyeSharp size={24} className='cursor-pointer' />;
   const iconEyeOff = <IoEyeOffSharp size={24} className='cursor-pointer' />;
@@ -160,10 +158,13 @@ export default function Login(): React.ReactElement {
   };
 
   useEffect(() => {
+    const msg = searchParams.get('msg');
+    const time = searchParams.get('t');
+
     if (msg) {
+      setSearchParams({});
       const toastId = `${msg}-${time}`;
       const message = appMessages[msg as keyof typeof appMessages];
-      setSearchParams({});
 
       if (!toast.isActive(toastId)) {
         toast(message, {
@@ -173,7 +174,7 @@ export default function Login(): React.ReactElement {
         });
       }
     }
-  }, [msg]);
+  }, [searchParams]);
 
   useEffect(() => {
     if (response?.error) {
