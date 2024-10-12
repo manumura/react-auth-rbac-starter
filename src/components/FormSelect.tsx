@@ -1,4 +1,3 @@
-import React from 'react';
 import { useFormContext } from 'react-hook-form';
 
 const FormSelect = ({
@@ -6,6 +5,11 @@ const FormSelect = ({
   name,
   options,
   constraints = {},
+}: {
+  readonly label: string;
+  readonly name: string;
+  readonly options: { value: string; label: string }[];
+  readonly constraints?: Record<string, unknown>;
 }) => {
   const {
     register,

@@ -4,7 +4,8 @@ import { getUserFromIdToken } from './jwt.utils';
 import { getSavedIdToken } from './storage';
 
 export const sleep = async (ms: number): Promise<void> => {
-  return new Promise((resolve, reject) => setTimeout(resolve, ms));
+  // return new Promise((resolve, reject) => setTimeout(resolve, ms));
+  return new Promise((resolve) => setTimeout(resolve, ms));
 };
 
 export const isAdmin = (user: IAuthenticatedUser): boolean => {

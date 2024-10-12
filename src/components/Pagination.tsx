@@ -3,6 +3,11 @@ export const Pagination = ({
   totalElements,
   onPageSelect,
   rowsPerPage,
+}: {
+  readonly currentPage: number;
+  readonly totalElements: number;
+  readonly onPageSelect: (page: number) => void;
+  readonly rowsPerPage: number;
 }) => {
     // https://reacthustle.com/blog/how-to-create-daisyui-table-with-sorting-and-pagination-typescript
     // https://www.bartonblogs.com/software-development/create-a-pagination-component-with-daisy-ui-in-react
