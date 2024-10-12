@@ -21,7 +21,7 @@ import { login, validateRecaptcha } from '../lib/api';
 import { getUserFromIdToken } from '../lib/jwt.utils';
 import { saveAuthentication } from '../lib/storage';
 import useUserStore from '../lib/user-store';
-import { getCurrentUserFromStorage, sleep } from '../lib/utils';
+import { getCurrentUserFromStorage } from '../lib/utils';
 import { ValidationError } from '../types/custom-errors';
 
 export const loader = async () => {
@@ -53,9 +53,6 @@ export const action = async ({
   const email = formData.get('email') as string;
   const password = formData.get('password') as string;
   const token = formData.get('token') as string;
-
-  // TODO
-  await sleep(2000);
 
   try {
     if (!email || !password) {
