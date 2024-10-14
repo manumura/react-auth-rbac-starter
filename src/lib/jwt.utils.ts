@@ -3,10 +3,10 @@ import appConfig from '../config/config';
 import { appConstant } from '../config/constant';
 import { IAuthenticatedUser } from '../types/custom-types';
 
-const idTokenPublicKey =
-  appConfig.idTokenPublicKeyAsBase64 === ''
-    ? ''
-    : atob(appConfig.idTokenPublicKeyAsBase64);
+if (!appConfig.idTokenPublicKeyAsBase64) {
+  throw new Error('No idTokenPublicKeyAsBase64 found in appConfig');
+}
+const idTokenPublicKey = atob(appConfig.idTokenPublicKeyAsBase64);
     // : Buffer.from(appConfig.idTokenPublicKeyAsBase64, 'base64').toString(
     //     'utf8'
     //   );

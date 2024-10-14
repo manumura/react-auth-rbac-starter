@@ -33,4 +33,8 @@ export default {
 
 `
 ncu -u -x eslint -x @typescript-eslint/eslint-plugin -x @typescript-eslint/parser
+
+docker build -t manumura/nginx-react-auth-rbac-starter:latest .
+
+docker run -d --rm -p 80:80 --env-file=.env --name nginx-react-auth-rbac-starter manumura/nginx-react-auth-rbac-starter
 `
