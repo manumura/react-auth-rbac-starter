@@ -24,9 +24,6 @@ COPY --from=build /usr/src/app/nginx /etc/nginx/conf.d
 
 COPY --from=build /usr/src/app/dist /usr/share/nginx/html
 
-COPY env.sh /docker-entrypoint.d/env.sh
-RUN chmod +x /docker-entrypoint.d/env.sh
-
 EXPOSE 80
 
 ENTRYPOINT ["nginx", "-g", "daemon off;"]
