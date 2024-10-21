@@ -1,7 +1,9 @@
 {
   "name": "react-auth-rbac-starter",
-  "private": true,
   "version": "0.0.1",
+  "description": "NestJS starter with RBAC authentication",
+  "author": "Emmanuel Mura",
+  "license": "MIT",
   "type": "module",
   "scripts": {
     "dev": "vite --port 3001",

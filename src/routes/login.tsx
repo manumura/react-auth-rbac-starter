@@ -79,7 +79,7 @@ export const action = async ({
       throw new ValidationError('Invalid response', { email, password });
     }
 
-    const { accessToken, refreshToken, idToken } = response;
+    const { accessToken, accessTokenExpiresAt, refreshToken, idToken } = response;
     if (!idToken || !accessToken || !refreshToken) {
       throw new ValidationError('Invalid response', { email, password });
     }
@@ -89,7 +89,7 @@ export const action = async ({
       throw new ValidationError('Invalid user', { email, password });
     }
 
-    saveAuthentication(accessToken, refreshToken, idToken);
+    saveAuthentication(accessToken, accessTokenExpiresAt, refreshToken, idToken);
     useUserStore.getState().setUser(user);
     const time = new Date().getTime();
 

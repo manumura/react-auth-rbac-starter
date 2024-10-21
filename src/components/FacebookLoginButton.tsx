@@ -54,7 +54,7 @@ const getUser = async (
       return null;
     }
 
-    const { accessToken, refreshToken, idToken } = response;
+    const { accessToken, accessTokenExpiresAt, refreshToken, idToken } = response;
     if (!idToken || !accessToken || !refreshToken) {
       return null;
     }
@@ -64,7 +64,7 @@ const getUser = async (
       return null;
     }
 
-    saveAuthentication(accessToken, refreshToken, idToken);
+    saveAuthentication(accessToken, accessTokenExpiresAt, refreshToken, idToken);
     return user;
   } catch (error) {
     console.error(error);

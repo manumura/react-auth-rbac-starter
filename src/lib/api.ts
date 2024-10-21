@@ -9,8 +9,9 @@ import {
   MessageResponse,
 } from '../types/custom-types';
 import { ProfileSuccessResponse } from '@greatsumini/react-facebook-login';
-import { clearAuthentication } from './storage';
+import { clearAuthentication, saveAuthentication } from './storage';
 import useUserStore from './user-store';
+import { getUserFromIdToken } from './jwt.utils';
 
 const BASE_URL = appConfig.baseUrl;
 const REFRESH_TOKEN_ENDPOINT = '/v1/refresh-token';
@@ -54,26 +55,14 @@ axiosInstance.interceptors.response.use(
     }
 
     try {
-      const response = await axios.post(
-        REFRESH_TOKEN_ENDPOINT,
-        {},
-        {
-          baseURL: `${BASE_URL}/api`,
-          headers: {
-            'Content-Type': 'application/json',
-            Cookie: config.headers.Cookie,
-          },
-          withCredentials: true, // for cookies
-        }
-      );
+      const { accessToken, accessTokenExpiresAt, refreshToken, idToken } = await postRefreshToken();
 
-      // Update cookies
-      if (response?.status === 200 && response?.data) {
-        config.headers.set('set-cookie', response.headers['set-cookie']);
-        console.log('Token refreshed succesfully');
+      saveAuthentication(accessToken, accessTokenExpiresAt, refreshToken, idToken);
+      const user = await getUserFromIdToken(idToken);
+      if (user) {
+        useUserStore.getState().setUser(user);
       }
 
-      // retun config;
       return axiosInstance(config);
     } catch (error) {
       const err = error as AxiosError;
@@ -89,6 +78,15 @@ axiosInstance.interceptors.response.use(
     }
   }
 );
+
+////////////////////////////////////////////////////////////////
+// Refresh token API
+const postRefreshToken = async (): Promise<LoginResponse> => {
+  return await axiosPublicInstance.post(
+    REFRESH_TOKEN_ENDPOINT,
+    {},
+  ).then((response) => response.data);
+}
 
 ////////////////////////////////////////////////////////////////
 // Public APIs

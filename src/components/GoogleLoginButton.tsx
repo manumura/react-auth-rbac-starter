@@ -46,7 +46,7 @@ const getUser = async (token: string): Promise<IAuthenticatedUser | null> => {
       return null;
     }
 
-    const { accessToken, refreshToken, idToken } = response;
+    const { accessToken, accessTokenExpiresAt, refreshToken, idToken } = response;
     if (!idToken || !accessToken || !refreshToken) {
       return null;
     }
@@ -56,7 +56,7 @@ const getUser = async (token: string): Promise<IAuthenticatedUser | null> => {
       return null;
     }
 
-    saveAuthentication(accessToken, refreshToken, idToken);
+    saveAuthentication(accessToken, accessTokenExpiresAt, refreshToken, idToken);
     return user;
   } catch (error) {
     console.error(error);
