@@ -19,11 +19,10 @@
 
     /* Linting */
     "strict": true,
-    // "noUnusedLocals": true,
-    "noUnusedParameters": false,
     "noFallthroughCasesInSwitch": true,
     // "noImplicitAny": true,
-    "noUnusedLocals": false,
+    "noUnusedParameters": true,
+    "noUnusedLocals": true,
   },
   "include": ["src"]
 }
