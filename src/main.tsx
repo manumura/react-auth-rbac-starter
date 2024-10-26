@@ -38,7 +38,11 @@ import Users, {
   action as deleteUserAction,
   loader as usersLoader,
 } from './routes/users';
-import VerifyEmail, { loader as verifyEmailLoader } from './routes/verify-email';
+import VerifyEmail, {
+  loader as verifyEmailLoader,
+} from './routes/verify-email';
+import Plausible from 'plausible-tracker';
+import appConfig from './config/config';
 
 const router = createBrowserRouter([
   {
@@ -139,6 +143,12 @@ const router = createBrowserRouter([
     action: logoutAction,
   },
 ]);
+
+const { enableAutoPageviews } = Plausible({
+  domain: 'manumura.com',
+  apiHost: 'https://plausible.manumura.com',
+});
+enableAutoPageviews();
 
 ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>
