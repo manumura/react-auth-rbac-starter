@@ -1,3 +1,4 @@
+import Plausible from 'plausible-tracker';
 import React from 'react';
 import ReactDOM from 'react-dom/client';
 import { createBrowserRouter, RouterProvider } from 'react-router-dom';
@@ -41,8 +42,6 @@ import Users, {
 import VerifyEmail, {
   loader as verifyEmailLoader,
 } from './routes/verify-email';
-import Plausible from 'plausible-tracker';
-import appConfig from './config/config';
 
 const router = createBrowserRouter([
   {
