@@ -10,8 +10,9 @@ const appConfig: {
   idTokenPublicKeyAsBase64: string;
   googleClientId: string;
   facebookAppId: string;
-  domain: string;
   nodeEnv: string;
+  domain: string;
+  plausibleApiHost?: string;
 } = {
   defaultRowsPerPage: 5,
   baseUrl: import.meta.env.VITE_BASE_URL as string,
@@ -24,8 +25,9 @@ const appConfig: {
   idTokenPublicKeyAsBase64: import.meta.env.VITE_ID_TOKEN_PUBLIC_KEY_AS_BASE64 as string,
   googleClientId: import.meta.env.VITE_GOOGLE_CLIENT_ID as string,
   facebookAppId: import.meta.env.VITE_FACEBOOK_APP_ID as string,
-  domain: import.meta.env.DOMAIN ?? '',
   nodeEnv: import.meta.env.NODE_ENV ?? '',
+  domain: 'manumura.com',
+  plausibleApiHost: 'https://plausible.manumura.com',
 };
 
 export default appConfig;

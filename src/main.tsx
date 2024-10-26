@@ -42,6 +42,7 @@ import Users, {
 import VerifyEmail, {
   loader as verifyEmailLoader,
 } from './routes/verify-email';
+import appConfig from './config/config';
 
 const router = createBrowserRouter([
   {
@@ -144,8 +145,8 @@ const router = createBrowserRouter([
 ]);
 
 const { enableAutoPageviews } = Plausible({
-  domain: 'manumura.com',
-  apiHost: 'https://plausible.manumura.com',
+  domain: appConfig.domain,
+  apiHost: appConfig.plausibleApiHost,
 });
 enableAutoPageviews();
 
