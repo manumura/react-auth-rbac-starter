@@ -54,6 +54,7 @@ export default function ChangePasswordForm({
   };
 
   const {
+    clearErrors,
     formState: { isValid: isChangePasswordValid },
     watch,
   } = changePasswordMethods;
@@ -67,11 +68,19 @@ export default function ChangePasswordForm({
       value: 8,
       message: 'Password is min 8 characters',
     },
+    maxLength: {
+      value: 70,
+      message: 'Password is max 70 characters',
+    },
     validate: (value: string): string | undefined => {
       const { isValid, message } = validatePassword(value);
       if (!isValid) {
         return message || 'Password is invalid';
       }
+      if (watch('newPasswordConfirm') && watch('newPasswordConfirm') !== value) {
+        return 'Passwords do no match';
+      }
+      clearErrors('newPasswordConfirm');
     },
   };
   const passwordConfirmConstraints = {
@@ -80,6 +89,7 @@ export default function ChangePasswordForm({
       if (watch('newPassword') !== value) {
         return 'Passwords do no match';
       }
+      clearErrors('newPassword');
     },
   };
 

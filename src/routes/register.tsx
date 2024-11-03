@@ -2,6 +2,7 @@ import { AxiosError } from 'axios';
 import React, { useEffect, useState } from 'react';
 import { useGoogleReCaptcha } from 'react-google-recaptcha-v3';
 import { FormProvider, useForm } from 'react-hook-form';
+import { IoEyeOffSharp, IoEyeSharp } from 'react-icons/io5';
 import {
   Form,
   Link,
@@ -16,7 +17,6 @@ import { appConstant, appMessageKeys } from '../config/constant';
 import { register, validateRecaptcha } from '../lib/api';
 import { validatePassword } from '../lib/utils';
 import { ValidationError } from '../types/custom-errors';
-import { IoEyeOffSharp, IoEyeSharp } from 'react-icons/io5';
 
 export const action = async ({
   request,
@@ -57,14 +57,11 @@ export const action = async ({
 
     const { isValid: isPasswordValid, message } = validatePassword(password);
     if (!isPasswordValid) {
-      throw new ValidationError(
-        message || 'Password is invalid.',
-        {
-          name,
-          email,
-          password,
-        }
-      );
+      throw new ValidationError(message || 'Password is invalid.', {
+        name,
+        email,
+        password,
+      });
     }
 
     const user = await register(email, password, name);
@@ -180,6 +177,7 @@ export default function Register(): React.ReactElement {
   });
 
   const {
+    clearErrors,
     getValues,
     formState: { isValid },
     watch,
@@ -205,11 +203,19 @@ export default function Register(): React.ReactElement {
       value: 8,
       message: 'Password is min 8 characters',
     },
+    maxLength: {
+      value: 70,
+      message: 'Password is max 70 characters',
+    },
     validate: (value: string): string | undefined => {
       const { isValid, message } = validatePassword(value);
       if (!isValid) {
         return message || 'Password is invalid';
       }
+      if (watch('passwordConfirm') && watch('passwordConfirm') !== value) {
+        return 'Passwords do no match';
+      }
+      clearErrors('passwordConfirm');
     },
   };
   const passwordConfirmConstraints = {
@@ -218,6 +224,7 @@ export default function Register(): React.ReactElement {
       if (watch('password') !== value) {
         return 'Passwords do no match';
       }
+      clearErrors('password');
     },
   };
 

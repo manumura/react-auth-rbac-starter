@@ -1,5 +1,5 @@
 import { AxiosError } from 'axios';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useGoogleReCaptcha } from 'react-google-recaptcha-v3';
 import { FormProvider, useForm } from 'react-hook-form';
 import {
@@ -16,6 +16,8 @@ import FormInput from '../components/FormInput';
 import { appMessageKeys } from '../config/constant';
 import { getUserFromToken, resetPassword, validateRecaptcha } from '../lib/api';
 import { ValidationError } from '../types/custom-errors';
+import { validatePassword } from '../lib/utils';
+import { IoEyeOffSharp, IoEyeSharp } from 'react-icons/io5';
 
 export const loader = async ({ request }: { request: Request }) => {
   try {
@@ -64,6 +66,13 @@ export const action = async ({
     const isCaptchaValid = await validateRecaptcha(recaptchaToken);
     if (!isCaptchaValid) {
       throw new ValidationError('Captcha validation failed', {
+        password,
+      });
+    }
+
+    const { isValid: isPasswordValid, message } = validatePassword(password);
+    if (!isPasswordValid) {
+      throw new ValidationError(message || 'Password is invalid.', {
         password,
       });
     }
@@ -119,10 +128,36 @@ export default function ResetPassword(): React.ReactElement {
   const { executeRecaptcha } = useGoogleReCaptcha();
   const isLoading = navigation.state === 'submitting';
 
+  const iconEye = <IoEyeSharp size={24} className='cursor-pointer' />;
+  const iconEyeOff = <IoEyeOffSharp size={24} className='cursor-pointer' />;
+  const [type, setType] = useState('password');
+  const [icon, setIcon] = useState(iconEyeOff);
+  const onPasswordToggle = () => {
+    if (type === 'password') {
+      setIcon(iconEye);
+      setType('text');
+    } else {
+      setIcon(iconEyeOff);
+      setType('password');
+    }
+  };
+  const [typeConfirm, setTypeConfirm] = useState('password');
+  const [iconConfirm, setIconConfirm] = useState(iconEyeOff);
+  const onPasswordConfirmToggle = () => {
+    if (typeConfirm === 'password') {
+      setIconConfirm(iconEye);
+      setTypeConfirm('text');
+    } else {
+      setIconConfirm(iconEyeOff);
+      setTypeConfirm('password');
+    }
+  };
+
   const methods = useForm({
     mode: 'all',
   });
   const {
+    clearErrors,
     getValues,
     setValue,
     watch,
@@ -170,6 +205,20 @@ export default function ResetPassword(): React.ReactElement {
       value: 8,
       message: 'Password is min 8 characters',
     },
+    maxLength: {
+      value: 70,
+      message: 'Password is max 70 characters',
+    },
+    validate: (value: string): string | undefined => {
+      const { isValid, message } = validatePassword(value);
+      if (!isValid) {
+        return message || 'Password is invalid';
+      }
+      if (watch('passwordConfirm') && watch('passwordConfirm') !== value) {
+        return 'Passwords do no match';
+      }
+      clearErrors("passwordConfirm");
+    },
   };
   const passwordConfirmConstraints = {
     required: { value: true, message: 'Confirm Password is required' },
@@ -177,6 +226,7 @@ export default function ResetPassword(): React.ReactElement {
       if (watch('password') !== value) {
         return 'Passwords do no match';
       }
+      clearErrors("password");
     },
   };
 
@@ -195,14 +245,18 @@ export default function ResetPassword(): React.ReactElement {
           <FormInput
             label='New Password'
             name='password'
-            type='password'
+            type={type}
             constraints={passwordConstraints}
+            iconEnd={icon}
+            onClickIconEnd={onPasswordToggle}
           />
           <FormInput
             label='Confirm New Password'
             name='passwordConfirm'
-            type='password'
+            type={typeConfirm}
             constraints={passwordConfirmConstraints}
+            iconEnd={iconConfirm}
+            onClickIconEnd={onPasswordConfirmToggle}
           />
 
           <SubmitButton isValid={isValid} isLoading={isLoading} />

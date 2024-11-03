@@ -204,6 +204,7 @@ export default function EditUser(): React.ReactElement {
   });
 
   const {
+    clearErrors,
     watch,
     formState: { isValid },
     // setError,
@@ -233,6 +234,10 @@ export default function EditUser(): React.ReactElement {
       value: 8,
       message: 'Password is min 8 characters',
     },
+    maxLength: {
+      value: 70,
+      message: 'Password is max 70 characters',
+    },
     validate: (value: string): string | undefined => {
       if (!value) {
         return;
@@ -242,6 +247,10 @@ export default function EditUser(): React.ReactElement {
       if (!isValid) {
         return message || 'Password is invalid';
       }
+      if (watch('passwordConfirm') && watch('passwordConfirm') !== value) {
+        return 'Passwords do no match';
+      }
+      clearErrors('passwordConfirm');
     },
   };
   const passwordConfirmConstraints = {
@@ -250,6 +259,7 @@ export default function EditUser(): React.ReactElement {
       if (watch('password') !== value) {
         return 'Passwords do no match';
       }
+      clearErrors('password');
     },
   };
   const roleConstraints = {
