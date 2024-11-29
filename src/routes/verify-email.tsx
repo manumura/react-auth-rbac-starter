@@ -1,6 +1,6 @@
 import clsx from 'clsx';
 import React from 'react';
-import { Await, defer, redirect, useLoaderData } from 'react-router-dom';
+import { Await, redirect, useLoaderData } from 'react-router-dom';
 import { verifyEmail } from '../lib/api';
 
 export const loader = async ({ request }: { request: Request }) => {
@@ -12,9 +12,9 @@ export const loader = async ({ request }: { request: Request }) => {
   }
 
   const data = verifyEmail(token).then((user) => (user ? 'success' : 'failed'));
-  return defer({
+  return {
     data,
-  });
+  };
 };
 
 export default function VerifyEmail(): React.ReactElement {

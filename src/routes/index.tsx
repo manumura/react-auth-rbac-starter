@@ -1,5 +1,5 @@
 import React, { useEffect } from 'react';
-import { Await, defer, useLoaderData, useSearchParams } from 'react-router-dom';
+import { Await, useLoaderData, useSearchParams } from 'react-router-dom';
 import { info, welcome } from '../lib/api';
 import { InfoResponse, MessageResponse } from '../types/custom-types';
 import { toast } from 'react-toastify';
@@ -8,14 +8,14 @@ import useUserStore from '../lib/user-store';
 
 export async function loader() {
   const data = Promise.all([info(), welcome()]);
-  return defer({
+  return {
     data,
-  });
+  };
 }
 
 export default function Home(): React.ReactElement {
   const user = useUserStore().user;
-  const { data } = useLoaderData() as { data: Promise<[InfoResponse, string]> };
+  const { data } = useLoaderData() as { data: Promise<[InfoResponse, MessageResponse]> };
   const [searchParams, setSearchParams] = useSearchParams();
 
   useEffect(() => {
