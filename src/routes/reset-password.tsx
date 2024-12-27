@@ -3,8 +3,10 @@ import { useEffect, useState } from 'react';
 import { useGoogleReCaptcha } from 'react-google-recaptcha-v3';
 import { FormProvider, useForm } from 'react-hook-form';
 import {
+  ActionFunction,
   Form,
   Link,
+  LoaderFunction,
   redirect,
   useActionData,
   useLoaderData,
@@ -19,7 +21,7 @@ import { ValidationError } from '../types/custom-errors';
 import { validatePassword } from '../lib/utils';
 import { IoEyeOffSharp, IoEyeSharp } from 'react-icons/io5';
 
-export const loader = async ({ request }: { request: Request }) => {
+export const loader: LoaderFunction<any> = async ({ request }: { request: Request }) => {
   try {
     const searchParams = new URL(request.url).searchParams;
     const token = searchParams.get('token');
@@ -41,7 +43,7 @@ export const loader = async ({ request }: { request: Request }) => {
   }
 };
 
-export const action = async ({
+export const action: ActionFunction<any> = async ({
   request,
 }: {
   request: Request;

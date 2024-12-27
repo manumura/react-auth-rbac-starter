@@ -1,9 +1,9 @@
 import clsx from 'clsx';
 import React from 'react';
-import { Await, redirect, useLoaderData } from 'react-router-dom';
+import { Await, LoaderFunction, redirect, useLoaderData } from 'react-router-dom';
 import { verifyEmail } from '../lib/api';
 
-export const loader = async ({ request }: { request: Request }) => {
+export const loader: LoaderFunction<any> = async ({ request }: { request: Request }) => {
   const searchParams = new URL(request.url).searchParams;
   const token = searchParams.get('token');
   if (!token) {

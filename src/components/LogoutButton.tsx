@@ -1,6 +1,6 @@
 import { googleLogout } from '@react-oauth/google';
 import { useEffect } from 'react';
-import { redirect, useFetcher } from 'react-router-dom';
+import { LoaderFunction, redirect, useFetcher } from 'react-router-dom';
 import { toast } from 'react-toastify';
 import { appMessageKeys } from '../config/constant';
 import { logout } from '../lib/api';
@@ -18,7 +18,7 @@ export async function handleLogout() {
   });
 }
 
-export const action = async () => {
+export const action: LoaderFunction<any> = async () => {
   try {
     await handleLogout();
     const time = new Date().getTime();

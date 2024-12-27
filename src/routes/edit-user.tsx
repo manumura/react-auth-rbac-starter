@@ -4,7 +4,9 @@ import { useEffect, useState } from 'react';
 import { FormProvider, useForm } from 'react-hook-form';
 import { IoEyeOffSharp, IoEyeSharp } from 'react-icons/io5';
 import {
+  ActionFunction,
   Form,
+  LoaderFunction,
   Params,
   redirect,
   useActionData,
@@ -24,7 +26,7 @@ import {
 } from '../lib/utils';
 import { IUser } from '../types/custom-types';
 
-export const loader = async ({
+export const loader: LoaderFunction<any> = async ({
   params,
 }: {
   request: Request;
@@ -56,7 +58,7 @@ export const loader = async ({
   }
 };
 
-export const action = async ({
+export const action: ActionFunction<any> = async ({
   request,
   params,
 }: {

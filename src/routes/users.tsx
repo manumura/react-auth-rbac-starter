@@ -6,6 +6,8 @@ import { FaFacebook, FaUserAltSlash } from 'react-icons/fa';
 import { FcGoogle } from 'react-icons/fc';
 import { FiDelete, FiEdit, FiPlusCircle } from 'react-icons/fi';
 import {
+  ActionFunction,
+  LoaderFunction,
   redirect,
   useActionData,
   useLoaderData,
@@ -30,7 +32,7 @@ import {
 } from '../types/custom-types';
 import { OauthProvider } from '../types/provider.model';
 
-export const loader = async ({ request }: { request: Request }) => {
+export const loader: LoaderFunction<any> = async ({ request }: { request: Request }) => {
   try {
     const currentUser = await getCurrentUserFromStorage();
     if (!currentUser || !isAdmin(currentUser)) {
@@ -61,7 +63,7 @@ export const loader = async ({ request }: { request: Request }) => {
   }
 };
 
-export const action = async ({
+export const action: ActionFunction<any> = async ({
   request,
 }: {
   request: Request;

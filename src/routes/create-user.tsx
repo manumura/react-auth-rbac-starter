@@ -2,7 +2,9 @@ import { AxiosError } from 'axios';
 import { useEffect } from 'react';
 import { FormProvider, useForm } from 'react-hook-form';
 import {
+  ActionFunction,
   Form,
+  LoaderFunction,
   redirect,
   useActionData,
   useNavigate,
@@ -16,7 +18,7 @@ import { createUser } from '../lib/api';
 import { getCurrentUserFromStorage, isAdmin } from '../lib/utils';
 import { ValidationError } from '../types/custom-errors';
 
-export const loader = async () => {
+export const loader: LoaderFunction<any> = async () => {
   try {
     const currentUser = await getCurrentUserFromStorage();
     if (!currentUser || !isAdmin(currentUser)) {
@@ -31,7 +33,7 @@ export const loader = async () => {
   }
 };
 
-export const action = async ({
+export const action: ActionFunction<any> = async ({
   request,
 }: {
   request: Request;

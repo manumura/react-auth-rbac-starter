@@ -4,8 +4,10 @@ import { useGoogleReCaptcha } from 'react-google-recaptcha-v3';
 import { FormProvider, useForm } from 'react-hook-form';
 import { IoEyeOffSharp, IoEyeSharp } from 'react-icons/io5';
 import {
+  ActionFunction,
   Form,
   Link,
+  LoaderFunction,
   redirect,
   useActionData,
   useNavigation,
@@ -24,7 +26,7 @@ import useUserStore from '../lib/user-store';
 import { getCurrentUserFromStorage } from '../lib/utils';
 import { ValidationError } from '../types/custom-errors';
 
-export const loader = async () => {
+export const loader: LoaderFunction<any> = async () => {
   try {
     const currentUser = await getCurrentUserFromStorage();
     if (currentUser) {
@@ -39,7 +41,7 @@ export const loader = async () => {
   }
 };
 
-export const action = async ({
+export const action: ActionFunction<any> = async ({
   request,
 }: {
   request: Request;

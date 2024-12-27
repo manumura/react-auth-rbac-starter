@@ -2,6 +2,7 @@ import { useEffect } from 'react';
 import { FaFacebook } from 'react-icons/fa';
 import { FcGoogle } from 'react-icons/fc';
 import {
+  LoaderFunction,
   redirect,
   useLoaderData,
   useNavigate,
@@ -13,7 +14,7 @@ import { getProfile } from '../lib/api';
 import { IOauthProvider, IUser } from '../types/custom-types';
 import { OauthProvider } from '../types/provider.model';
 
-export const loader = async () => {
+export const loader: LoaderFunction<any> = async () => {
   try {
     const user = await getProfile();
     if (!user) {

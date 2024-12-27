@@ -1,4 +1,4 @@
-import { Outlet, redirect, useNavigation, useRouteLoaderData } from 'react-router-dom';
+import { LoaderFunction, Outlet, redirect, useNavigation, useRouteLoaderData } from 'react-router-dom';
 import TopBarProgress from 'react-topbar-progress-indicator';
 import Navbar from '../components/Navbar';
 import { clearAuthentication } from '../lib/storage';
@@ -6,7 +6,7 @@ import useUserStore from '../lib/user-store';
 import { getCurrentUserFromStorage } from '../lib/utils';
 import { IAuthenticatedUser } from '../types/custom-types';
 
-export const loader = async () => {
+export const loader: LoaderFunction<any> = async () => {
   try {
     const currentUser = await getCurrentUserFromStorage();
     useUserStore.getState().setUser(currentUser);
