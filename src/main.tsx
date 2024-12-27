@@ -7,6 +7,7 @@ import { action as googleLoginAction } from './components/GoogleLoginButton';
 import LoadingOverlay from './components/LoadingOverlay';
 import { action as logoutAction } from './components/LogoutButton';
 import { Providers } from './components/Providers';
+import appConfig from './config/config';
 import ErrorPage from './error-page';
 import './index.css';
 import Home, { loader as homeLoader } from './routes';
@@ -42,7 +43,6 @@ import Users, {
 import VerifyEmail, {
   loader as verifyEmailLoader,
 } from './routes/verify-email';
-import appConfig from './config/config';
 
 const router = createBrowserRouter([
   {
@@ -50,6 +50,7 @@ const router = createBrowserRouter([
     id: 'root',
     element: <Layout />,
     errorElement: <ErrorPage />,
+    hydrateFallbackElement: <LoadingOverlay label='Loading...' />,
     loader: rootLoader,
     children: [
       {
@@ -155,7 +156,6 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
     <Providers>
       <RouterProvider
         router={router}
-        fallbackElement={<LoadingOverlay label='Loading...' />}
       />
     </Providers>
   </React.StrictMode>

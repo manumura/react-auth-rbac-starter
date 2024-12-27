@@ -1,3 +1,4 @@
+import { JSX } from 'react';
 import { useFormContext } from 'react-hook-form';
 
 const FormInput = ({
@@ -15,7 +16,7 @@ const FormInput = ({
   placeholder?: string;
   constraints?: Record<string, unknown>;
   iconEnd?: JSX.Element | null;
-  onClickIconEnd?: (() => void) | undefined;
+  onClickIconEnd?: (() => void);
 }) => {
   const {
     register,

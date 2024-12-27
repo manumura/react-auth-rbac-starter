@@ -1,5 +1,5 @@
 import clsx from 'clsx';
-import { useMemo } from 'react';
+import { JSX, useMemo } from 'react';
 import { useDropzone } from 'react-dropzone';
 
 function DropBox({ onDrop, imgSrc = null }: { readonly onDrop: (files: File[]) => void; readonly imgSrc?: string | null }): JSX.Element {

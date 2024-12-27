@@ -1,5 +1,5 @@
 import clsx from 'clsx';
-import { useRef } from 'react';
+import { JSX, useRef } from 'react';
 import useClickAway from 'react-use/lib/useClickAway';
 
 const Modal = ({
