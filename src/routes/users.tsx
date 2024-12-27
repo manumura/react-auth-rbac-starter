@@ -2,6 +2,8 @@ import { EventSourceMessage } from '@microsoft/fetch-event-source';
 import { AxiosError } from 'axios';
 import { UUID } from 'crypto';
 import { useEffect, useState } from 'react';
+import { FaFacebook, FaUserAltSlash } from 'react-icons/fa';
+import { FcGoogle } from 'react-icons/fc';
 import { FiDelete, FiEdit, FiPlusCircle } from 'react-icons/fi';
 import {
   redirect,
@@ -27,9 +29,6 @@ import {
   IUser,
 } from '../types/custom-types';
 import { OauthProvider } from '../types/provider.model';
-import { FaFacebook } from 'react-icons/fa';
-import { FcGoogle } from 'react-icons/fc';
-import { FaUserAltSlash } from "react-icons/fa";
 
 export const loader = async ({ request }: { request: Request }) => {
   try {
