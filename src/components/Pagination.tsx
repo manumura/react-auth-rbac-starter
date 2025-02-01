@@ -9,8 +9,6 @@ export const Pagination = ({
   readonly onPageSelect: (page: number) => void;
   readonly rowsPerPage: number;
 }) => {
-    // https://reacthustle.com/blog/how-to-create-daisyui-table-with-sorting-and-pagination-typescript
-    // https://www.bartonblogs.com/software-development/create-a-pagination-component-with-daisy-ui-in-react
   const lastPage = Math.ceil(totalElements / rowsPerPage);
   const canGoToPreviousPage = currentPage > 1;
   const canGoToNextPage = currentPage < lastPage;

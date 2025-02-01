@@ -16,17 +16,21 @@ import { forgotPassword, validateRecaptcha } from '../lib/api';
 import { ValidationError } from '../types/custom-errors';
 import { appConstant } from '../config/constant';
 
+type ForgotPasswordResponse = {
+  message: string | undefined;
+  error: Error | undefined;
+  time: number | undefined;
+};
+
 export const action = async ({
   request,
 }: {
   request: Request;
-}): Promise<{
-  message: string | undefined;
-  error: Error | undefined;
-}> => {
+}): Promise<ForgotPasswordResponse> => {
   const formData = await request.formData();
   const email = formData.get('email') as string;
   const token = formData.get('token') as string;
+  const time = new Date().getTime();
 
   try {
     if (!email) {
@@ -45,7 +49,8 @@ export const action = async ({
     if (!response.message) {
       throw new ValidationError('Invalid response', { email });
     }
-    return { message: response.message, error: undefined };
+    
+    return { message: response.message, error: undefined, time };
   } catch (error) {
     // You cannot `useLoaderData` in an errorElemen
     console.error(error);
@@ -56,7 +61,7 @@ export const action = async ({
       message = error.message;
     }
 
-    return { message: undefined, error: new Error(message) };
+    return { message: undefined, error: new Error(message), time };
   }
 };
 
@@ -84,10 +89,7 @@ function SubmitButton({
 export default function ForgotPassword(): React.ReactElement {
   const navigation = useNavigation();
   const navigate = useNavigate();
-  const response = useActionData() as {
-    message: string | undefined;
-    error: Error | undefined;
-  };
+  const response = useActionData() as ForgotPasswordResponse;
   const submit = useSubmit();
   const { executeRecaptcha } = useGoogleReCaptcha();
   const isLoading = navigation.state === 'submitting';
@@ -120,21 +122,27 @@ export default function ForgotPassword(): React.ReactElement {
   };
 
   useEffect(() => {
-    if (response) {
-      if (response?.error) {
+    if (response?.error) {
+      const time = response?.time;
+      const toastId = `forgot-password-error-${time}`;
+      if (!toast.isActive(toastId)) {
         toast(response.error?.message, {
           type: 'error',
           position: 'bottom-right',
         });
       }
+    }
 
-      if (response?.message) {
+    if (response?.message) {
+      const time = response?.time;
+      const toastId = `forgot-password-success-${time}`;
+      if (!toast.isActive(toastId)) {
         toast('Please follow the link sent to your email', {
           type: 'success',
           position: 'bottom-right',
         });
-        navigate('/login');
       }
+      navigate('/login');
     }
   }, [response]);
 

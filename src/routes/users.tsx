@@ -32,7 +32,11 @@ import {
 } from '../types/custom-types';
 import { OauthProvider } from '../types/provider.model';
 
-export const loader: LoaderFunction<any> = async ({ request }: { request: Request }) => {
+export const loader: LoaderFunction<any> = async ({
+  request,
+}: {
+  request: Request;
+}) => {
   try {
     const currentUser = await getCurrentUserFromStorage();
     if (!currentUser || !isAdmin(currentUser)) {
@@ -63,19 +67,20 @@ export const loader: LoaderFunction<any> = async ({ request }: { request: Reques
   }
 };
 
+type DeleteUserResponse = {
+  error: Error | undefined;
+  user: IUser | undefined;
+  time: number | undefined;
+};
+
 export const action: ActionFunction<any> = async ({
   request,
 }: {
   request: Request;
-}): Promise<
-  | Response
-  | {
-      error: Error | undefined;
-      user: IUser | undefined;
-    }
-> => {
+}): Promise<DeleteUserResponse> => {
   const formData = await request.formData();
   const userUuid = formData.get('userUuid') as UUID;
+  const time = new Date().getTime();
 
   try {
     if (!userUuid) {
@@ -86,7 +91,8 @@ export const action: ActionFunction<any> = async ({
     if (!user) {
       throw new ValidationError(`Invalid user: ${userUuid}`, { userUuid });
     }
-    return { user, error: undefined };
+    
+    return { user, error: undefined, time };
   } catch (error) {
     // You cannot `useLoaderData` in an errorElemen
     console.error(error);
@@ -97,7 +103,7 @@ export const action: ActionFunction<any> = async ({
       message = error.message;
     }
 
-    return { user: undefined, error: new Error(message) };
+    return { user: undefined, error: new Error(message), time };
   }
 };
 
@@ -111,10 +117,7 @@ export default function Users() {
     pageSize: number;
     role: string;
   };
-  const response = useActionData() as {
-    error: Error | undefined;
-    user: IUser | undefined;
-  };
+  const response = useActionData() as DeleteUserResponse;
   const userChangeEventAbortController = new AbortController();
   const [selectedUser, setSelectedUser] = useState<IUser | null>(null);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
@@ -124,15 +127,21 @@ export default function Users() {
   const [searchParams, setSearchParams] = useSearchParams();
 
   useEffect(() => {
-    if (response) {
-      if (response.error) {
-        toast(response.error.message, {
+    if (response?.error) {
+      const time = response?.time;
+      const toastId = `users-error-${time}`;
+      if (!toast.isActive(toastId)) {
+        toast(response.error?.message, {
           type: 'error',
           position: 'bottom-right',
         });
       }
+    }
 
-      if (response.user) {
+    if (response?.user) {
+      const time = response?.time;
+      const toastId = `users-success-${time}`;
+      if (!toast.isActive(toastId)) {
         toast(`User deleted successfully ${response.user.email}`, {
           type: 'success',
           position: 'bottom-right',
@@ -144,7 +153,7 @@ export default function Users() {
   useEffect(() => {
     const msg = searchParams.get('msg');
     const time = searchParams.get('t');
-    
+
     if (msg) {
       setSearchParams({});
       const toastId = `${msg}-${time}`;
@@ -292,7 +301,11 @@ export default function Users() {
 
     return (
       <tr key={user.uuid} id={`user-${user.uuid}`}>
-        <th>{!user.isActive ? <FaUserAltSlash size={24} color='red' title='Inactive user' /> : null}</th>
+        <th>
+          {!user.isActive ? (
+            <FaUserAltSlash size={24} color='red' title='Inactive user' />
+          ) : null}
+        </th>
         <th>{user.uuid}</th>
         <td>{user.name}</td>
         <td>{email}</td>

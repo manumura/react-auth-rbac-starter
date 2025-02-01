@@ -21,7 +21,11 @@ import { ValidationError } from '../types/custom-errors';
 import { validatePassword } from '../lib/utils';
 import { IoEyeOffSharp, IoEyeSharp } from 'react-icons/io5';
 
-export const loader: LoaderFunction<any> = async ({ request }: { request: Request }) => {
+export const loader: LoaderFunction<any> = async ({
+  request,
+}: {
+  request: Request;
+}) => {
   try {
     const searchParams = new URL(request.url).searchParams;
     const token = searchParams.get('token');
@@ -43,21 +47,22 @@ export const loader: LoaderFunction<any> = async ({ request }: { request: Reques
   }
 };
 
+type ResetPasswordResponse = {
+  error: Error | undefined;
+  password: string | undefined;
+  time: number | undefined;
+};
+
 export const action: ActionFunction<any> = async ({
   request,
 }: {
   request: Request;
-}): Promise<
-  | Response
-  | {
-      error: Error | undefined;
-      password: string | undefined;
-    }
-> => {
+}): Promise<Response | ResetPasswordResponse> => {
   const formData = await request.formData();
   const password = formData.get('password') as string;
   const token = formData.get('token') as string;
   const recaptchaToken = formData.get('recaptchaToken') as string;
+  const time = new Date().getTime();
 
   try {
     if (!recaptchaToken) {
@@ -83,7 +88,10 @@ export const action: ActionFunction<any> = async ({
     if (!user) {
       throw new ValidationError('Invalid response', { password });
     }
-    return redirect('/login?msg=' + appMessageKeys.PASSWORD_RESET_SUCCESS);
+
+    return redirect(
+      '/login?msg=' + appMessageKeys.PASSWORD_RESET_SUCCESS + '&t=' + time
+    );
   } catch (error) {
     // You cannot `useLoaderData` in an errorElemen
     console.error(error);
@@ -94,7 +102,7 @@ export const action: ActionFunction<any> = async ({
       message = error.message;
     }
 
-    return { error: new Error(message), password };
+    return { error: new Error(message), password, time };
   }
 };
 
@@ -122,10 +130,7 @@ function SubmitButton({
 export default function ResetPassword(): React.ReactElement {
   const { token } = useLoaderData() as { token: string };
   const navigation = useNavigation();
-  const response = useActionData() as {
-    error: Error | undefined;
-    password: string | undefined;
-  };
+  const response = useActionData() as ResetPasswordResponse;
   const submit = useSubmit();
   const { executeRecaptcha } = useGoogleReCaptcha();
   const isLoading = navigation.state === 'submitting';
@@ -187,17 +192,19 @@ export default function ResetPassword(): React.ReactElement {
   };
 
   useEffect(() => {
-    if (response) {
-      if (response.error) {
-        toast(response.error.message, {
+    if (response?.error) {
+      const time = response?.time;
+      const toastId = `reset-password-error-${time}`;
+      if (!toast.isActive(toastId)) {
+        toast(response.error?.message, {
           type: 'error',
           position: 'bottom-right',
         });
-
-        if (response.password) {
-          setValue('password', response.password);
-        }
       }
+    }
+
+    if (response?.password) {
+      setValue('password', response.password);
     }
   }, [response]);
 
@@ -219,7 +226,7 @@ export default function ResetPassword(): React.ReactElement {
       if (watch('passwordConfirm') && watch('passwordConfirm') !== value) {
         return 'Passwords do no match';
       }
-      clearErrors("passwordConfirm");
+      clearErrors('passwordConfirm');
     },
   };
   const passwordConfirmConstraints = {
@@ -228,7 +235,7 @@ export default function ResetPassword(): React.ReactElement {
       if (watch('password') !== value) {
         return 'Passwords do no match';
       }
-      clearErrors("password");
+      clearErrors('password');
     },
   };
 
