@@ -290,7 +290,7 @@ export default function EditProfile(): React.ReactElement {
   } = changePasswordMethods;
   // ------------------------------------------------
 
-  const shouldShowChangePasswordForm = user.providers?.length <= 0;
+  const shouldShowChangePasswordForm = !user.providers || user.providers?.length <= 0;
 
   return (
     <section className='min-h-screen bg-slate-200'>

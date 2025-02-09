@@ -274,7 +274,7 @@ export default function EditUser(): React.ReactElement {
     { label: 'User', value: 'USER' },
   ];
 
-  const shouldShowChangePasswordForm = user.providers?.length <= 0;
+  const shouldShowChangePasswordForm = !user.providers || user.providers?.length <= 0;
 
   const editUserForm = (
     <div className='w-full py-10'>
