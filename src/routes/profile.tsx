@@ -59,13 +59,13 @@ export default function Profile(): React.ReactElement {
 
   const avatar = user?.imageUrl ? (
     <div className='avatar'>
-      <div className='w-24 rounded-full ring ring-primary ring-offset-base-100 ring-offset-2 relative'>
+      <div className='w-24 rounded-full ring-3 ring-primary ring-offset-base-100 ring-offset-2 relative'>
         <img alt='my avatar' src={user.imageUrl} className='rounded-full' />
       </div>
     </div>
   ) : (
     <div className='avatar placeholder'>
-      <div className='w-24 rounded-full bg-neutral-focus text-neutral-content ring ring-primary ring-offset-base-100 ring-offset-24'>
+      <div className='w-24 rounded-full bg-neutral-focus text-neutral-content ring-3 ring-primary ring-offset-base-100 ring-offset-24'>
         <span className='text-3xl'>
           {user?.name?.substring(0, 2).toUpperCase()}
         </span>
@@ -100,7 +100,7 @@ export default function Profile(): React.ReactElement {
   return (
     <section className='h-section bg-slate-200'>
       <div className='flex flex-col items-center pt-10'>
-        <div className='card w-3/4 max-w-screen-lg bg-slate-50 shadow-xl'>
+        <div className='card w-3/4 max-w-(--breakpoint-lg) bg-slate-50 shadow-xl'>
           <div className='card-body'>
             <div className='card-title'>
               <h1>My Profile</h1>

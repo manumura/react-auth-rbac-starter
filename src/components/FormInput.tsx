@@ -32,7 +32,7 @@ const FormInput = ({
         <input
           type={type}
           placeholder={placeholder}
-          className='w-full rounded-2xl appearance-none focus:outline-none py-2 px-4'
+          className='w-full rounded-2xl appearance-none focus:outline-hidden py-2 px-4'
           {...register(name, constraints)}
         />
         {iconEnd && (
