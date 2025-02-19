@@ -58,7 +58,7 @@ function DropBox({ onDrop, imgSrc = null }: { readonly onDrop: (files: File[]) =
     </div>
   ) : (
     <div className='avatar placeholder'>
-      <div className='w-24 rounded-full bg-base-200 text-neutral-content ring-3 ring-primary ring-offset-base-100 ring-offset-24'>
+      <div className='w-24 rounded-full bg-base-200 text-neutral-content ring-3 ring-primary ring-offset-base-100 ring-offset-2'>
         <span className='text-3xl' />
       </div>
     </div>

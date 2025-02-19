@@ -65,7 +65,7 @@ export default function Profile(): React.ReactElement {
     </div>
   ) : (
     <div className='avatar placeholder'>
-      <div className='w-24 rounded-full bg-neutral-focus text-neutral-content ring-3 ring-primary ring-offset-base-100 ring-offset-24'>
+      <div className='w-24 rounded-full bg-neutral-focus text-neutral-content ring-3 ring-primary ring-offset-base-100 ring-offset-2'>
         <span className='text-3xl'>
           {user?.name?.substring(0, 2).toUpperCase()}
         </span>
