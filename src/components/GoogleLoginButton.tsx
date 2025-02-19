@@ -1,15 +1,12 @@
 import { CredentialResponse, GoogleLogin } from '@react-oauth/google';
-import { useEffect } from 'react';
-import { redirect, useFetcher } from 'react-router-dom';
-import { toast } from 'react-toastify';
+import { ActionFunction, redirect } from 'react-router-dom';
 import { appMessageKeys } from '../config/constant';
 import { googleLogin } from '../lib/api';
 import { getUserFromIdToken } from '../lib/jwt.utils';
 import { saveAuthentication } from '../lib/storage';
 import { IAuthenticatedUser } from '../types/custom-types';
-import LoadingSpinner from './LoadingSpinner';
 
-export const action = async ({
+export const action: ActionFunction<any> = async ({
   request,
 }: {
   request: Request;
@@ -46,7 +43,8 @@ const getUser = async (token: string): Promise<IAuthenticatedUser | null> => {
       return null;
     }
 
-    const { accessToken, accessTokenExpiresAt, refreshToken, idToken } = response;
+    const { accessToken, accessTokenExpiresAt, refreshToken, idToken } =
+      response;
     if (!idToken || !accessToken || !refreshToken) {
       return null;
     }
@@ -56,7 +54,12 @@ const getUser = async (token: string): Promise<IAuthenticatedUser | null> => {
       return null;
     }
 
-    saveAuthentication(accessToken, accessTokenExpiresAt, refreshToken, idToken);
+    saveAuthentication(
+      accessToken,
+      accessTokenExpiresAt,
+      refreshToken,
+      idToken
+    );
     return user;
   } catch (error) {
     console.error(error);
@@ -64,45 +67,16 @@ const getUser = async (token: string): Promise<IAuthenticatedUser | null> => {
   }
 };
 
-export default function GoogleLoginButton(): React.ReactElement {
-  const fetcher = useFetcher();
-  const isSubmitting = fetcher.state === 'submitting';
-  const error = fetcher.data?.error;
-
-  useEffect(() => {
-    if (error) {
-      toast('Login failed', {
-        type: 'error',
-        position: 'bottom-right',
-      });
-    }
-  }, [error]);
-
-  const onGoogleLoginFailed = () => {
-    toast('Login failed', {
-      type: 'error',
-      position: 'bottom-right',
-    });
-  };
-
-  const onGoogleLoginSuccess = async (
+export default function GoogleLoginButton({
+  onGoogleLoginSuccess,
+  onGoogleLoginFailed,
+}: {
+  readonly onGoogleLoginSuccess: (
     credentialResponse: CredentialResponse | null
-  ) => {
-    if (!credentialResponse?.credential) {
-      toast('Login failed', {
-        type: 'error',
-        position: 'bottom-right',
-      });
-      return;
-    }
-
-    const payload = { token: credentialResponse.credential };
-    fetcher.submit(payload, { method: 'post', action: '/oauth/google' });
-  };
-
-  return isSubmitting ? (
-    <LoadingSpinner label='Loading' isHorizontal={true} />
-  ) : (
+  ) => void;
+  readonly onGoogleLoginFailed: () => void;
+}): React.ReactElement {
+  return (
     <GoogleLogin
       theme='filled_blue'
       size='large'

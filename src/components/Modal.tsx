@@ -9,11 +9,11 @@ const Modal = ({
   isOpen,
   onClose,
 }: {
-  title: JSX.Element;
-  body: JSX.Element;
-  footer: JSX.Element;
-  isOpen: boolean;
-  onClose: () => Promise<void>;
+  readonly title: JSX.Element;
+  readonly body: JSX.Element;
+  readonly footer: JSX.Element;
+  readonly isOpen: boolean;
+  readonly onClose: () => Promise<void>;
 }) => {
   const ref = useRef(null);
   useClickAway(ref, async () => {

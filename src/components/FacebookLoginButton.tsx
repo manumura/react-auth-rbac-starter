@@ -3,19 +3,16 @@ import FacebookLogin, {
   ProfileSuccessResponse,
   SuccessResponse,
 } from '@greatsumini/react-facebook-login';
-import { useEffect } from 'react';
 import { FaFacebook } from 'react-icons/fa';
-import { redirect, useFetcher } from 'react-router-dom';
-import { toast } from 'react-toastify';
+import { ActionFunction, redirect } from 'react-router-dom';
 import appConfig from '../config/config';
 import { appMessageKeys } from '../config/constant';
 import { facebookLogin } from '../lib/api';
 import { getUserFromIdToken } from '../lib/jwt.utils';
 import { saveAuthentication } from '../lib/storage';
 import { IAuthenticatedUser } from '../types/custom-types';
-import LoadingSpinner from './LoadingSpinner';
 
-export const action = async ({
+export const action: ActionFunction<any> = async ({
   request,
 }: {
   request: Request;
@@ -54,7 +51,8 @@ const getUser = async (
       return null;
     }
 
-    const { accessToken, accessTokenExpiresAt, refreshToken, idToken } = response;
+    const { accessToken, accessTokenExpiresAt, refreshToken, idToken } =
+      response;
     if (!idToken || !accessToken || !refreshToken) {
       return null;
     }
@@ -64,7 +62,12 @@ const getUser = async (
       return null;
     }
 
-    saveAuthentication(accessToken, accessTokenExpiresAt, refreshToken, idToken);
+    saveAuthentication(
+      accessToken,
+      accessTokenExpiresAt,
+      refreshToken,
+      idToken
+    );
     return user;
   } catch (error) {
     console.error(error);
@@ -73,51 +76,18 @@ const getUser = async (
 };
 
 // https://medium.com/@syedmahmad/login-with-facebook-meta-in-react-app-88efb7a9fc0a
-export default function FacebookLoginButton(): React.ReactElement {
-  const fetcher = useFetcher();
-  const isSubmitting = fetcher.state === 'submitting';
-  const error = fetcher.data?.error;
-
-  useEffect(() => {
-    if (error) {
-      toast('Login failed', {
-        type: 'error',
-        position: 'bottom-right',
-      });
-    }
-  }, [error]);
-
-  const onFacebookLoginFailed = (error: FailResponse | null) => {
-    console.error('Login Failed!', error);
-    toast('Login failed', {
-      type: 'error',
-      position: 'bottom-right',
-    });
-  };
-
-  const onFacebookLoginSuccess = async (response: SuccessResponse | null) => {
-    console.log('Login Success!', response);
-  };
-
-  const onFacebookProfileSuccess = async (
+export default function FacebookLoginButton({
+  onFacebookLoginFailed,
+  onFacebookLoginSuccess,
+  onFacebookProfileSuccess,
+}: {
+  readonly onFacebookLoginFailed: (error: FailResponse | null) => void;
+  readonly onFacebookLoginSuccess: (response: SuccessResponse | null) => void;
+  readonly onFacebookProfileSuccess: (
     response: ProfileSuccessResponse | null
-  ) => {
-    if (!response) {
-      toast('Login failed', {
-        type: 'error',
-        position: 'bottom-right',
-      });
-      return;
-    }
-
-    const formData = new FormData();
-    formData.append('profile', JSON.stringify(response));
-    fetcher.submit(formData, { method: 'post', action: '/oauth/facebook' });
-  };
-  
-  return isSubmitting ? (
-    <LoadingSpinner label='Loading' isHorizontal={true} />
-  ) : (
+  ) => void;
+}): React.ReactElement {
+  return (
     <FacebookLogin
       appId={appConfig.facebookAppId}
       initParams={{

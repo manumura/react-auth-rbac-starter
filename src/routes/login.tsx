@@ -1,3 +1,9 @@
+import {
+  FailResponse,
+  ProfileSuccessResponse,
+  SuccessResponse,
+} from '@greatsumini/react-facebook-login';
+import { CredentialResponse } from '@react-oauth/google';
 import { AxiosError } from 'axios';
 import { useEffect, useState } from 'react';
 import { useGoogleReCaptcha } from 'react-google-recaptcha-v3';
@@ -10,6 +16,7 @@ import {
   LoaderFunction,
   redirect,
   useActionData,
+  useFetcher,
   useNavigation,
   useSearchParams,
   useSubmit,
@@ -18,6 +25,7 @@ import { toast } from 'react-toastify';
 import FacebookLoginButton from '../components/FacebookLoginButton';
 import FormInput from '../components/FormInput';
 import GoogleLoginButton from '../components/GoogleLoginButton';
+import LoadingSpinner from '../components/LoadingSpinner';
 import { appConstant, appMessageKeys, appMessages } from '../config/constant';
 import { login, validateRecaptcha } from '../lib/api';
 import { getUserFromIdToken } from '../lib/jwt.utils';
@@ -81,7 +89,8 @@ export const action: ActionFunction<any> = async ({
       throw new ValidationError('Invalid response', { email, password });
     }
 
-    const { accessToken, accessTokenExpiresAt, refreshToken, idToken } = response;
+    const { accessToken, accessTokenExpiresAt, refreshToken, idToken } =
+      response;
     if (!idToken || !accessToken || !refreshToken) {
       throw new ValidationError('Invalid response', { email, password });
     }
@@ -91,7 +100,12 @@ export const action: ActionFunction<any> = async ({
       throw new ValidationError('Invalid user', { email, password });
     }
 
-    saveAuthentication(accessToken, accessTokenExpiresAt, refreshToken, idToken);
+    saveAuthentication(
+      accessToken,
+      accessTokenExpiresAt,
+      refreshToken,
+      idToken
+    );
     useUserStore.getState().setUser(user);
     const time = new Date().getTime();
 
@@ -142,13 +156,18 @@ export default function Login(): React.ReactElement {
   };
   const submit = useSubmit();
   const { executeRecaptcha } = useGoogleReCaptcha();
-  const isLoading = navigation.state === 'submitting';
   const [searchParams, setSearchParams] = useSearchParams();
+
+  const fetcher = useFetcher();
+  const error = fetcher.data?.error;
+  const isLoading =
+    navigation.state === 'submitting' || fetcher.state === 'submitting';
 
   const iconEye = <IoEyeSharp size={24} className='cursor-pointer' />;
   const iconEyeOff = <IoEyeOffSharp size={24} className='cursor-pointer' />;
   const [type, setType] = useState('password');
   const [icon, setIcon] = useState(iconEyeOff);
+  
   const onPasswordToggle = () => {
     if (type === 'password') {
       setIcon(iconEye);
@@ -186,6 +205,15 @@ export default function Login(): React.ReactElement {
       });
     }
   }, [response]);
+
+  useEffect(() => {
+    if (error) {
+      toast('Login failed', {
+        type: 'error',
+        position: 'bottom-right',
+      });
+    }
+  }, [error]);
 
   const onSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -226,6 +254,56 @@ export default function Login(): React.ReactElement {
     required: { value: true, message: 'Password is required' },
   };
 
+  const onGoogleLoginFailed = () => {
+    toast('Login failed', {
+      type: 'error',
+      position: 'bottom-right',
+    });
+  };
+
+  const onGoogleLoginSuccess = (
+    credentialResponse: CredentialResponse | null
+  ) => {
+    if (!credentialResponse?.credential) {
+      toast('Login failed', {
+        type: 'error',
+        position: 'bottom-right',
+      });
+      return;
+    }
+
+    const payload = { token: credentialResponse.credential };
+    fetcher.submit(payload, { method: 'post', action: '/oauth/google' });
+  };
+
+  const onFacebookLoginFailed = (error: FailResponse | null) => {
+    console.error('Login Failed!', error);
+    toast('Login failed', {
+      type: 'error',
+      position: 'bottom-right',
+    });
+  };
+
+  const onFacebookLoginSuccess = (response: SuccessResponse | null) => {
+    console.log('Login Success!', response);
+  };
+
+  const onFacebookProfileSuccess = (
+    response: ProfileSuccessResponse | null
+  ) => {
+    if (!response) {
+      toast('Login failed', {
+        type: 'error',
+        position: 'bottom-right',
+      });
+      return;
+    }
+
+    const formData = new FormData();
+    formData.append('profile', JSON.stringify(response));
+    fetcher.submit(formData, { method: 'post', action: '/oauth/facebook' });
+  };
+
   return (
     <section className='h-section py-20 w-full bg-slate-200'>
       <FormProvider {...methods}>
@@ -257,7 +335,6 @@ export default function Login(): React.ReactElement {
               Forgot Password?
             </Link>
           </div>
-
           <SubmitButton isValid={isValid} isLoading={isLoading} />
           <span className='block'>
             Need an account?{' '}
@@ -265,10 +342,22 @@ export default function Login(): React.ReactElement {
               Sign Up Here
             </Link>
           </span>
-
           <div className='divider'>OR</div>
-          <GoogleLoginButton />
-          <FacebookLoginButton />
+          {isLoading ? (
+            <LoadingSpinner label='Loading' isHorizontal={true} />
+          ) : (
+            <>
+              <GoogleLoginButton
+                onGoogleLoginSuccess={onGoogleLoginSuccess}
+                onGoogleLoginFailed={onGoogleLoginFailed}
+              />
+              <FacebookLoginButton 
+                onFacebookLoginFailed={onFacebookLoginFailed}
+                onFacebookLoginSuccess={onFacebookLoginSuccess}
+                onFacebookProfileSuccess={onFacebookProfileSuccess}
+              />
+            </>
+          )}
         </Form>
       </FormProvider>
     </section>
