@@ -1,10 +1,10 @@
 import React, { useEffect } from 'react';
-import { Await, useLoaderData, useSearchParams } from 'react-router-dom';
-import { info, welcome } from '../lib/api';
-import { InfoResponse, MessageResponse } from '../types/custom-types';
+import { Await, useLoaderData } from 'react-router-dom';
 import { toast } from 'react-toastify';
-import { appMessageKeys, appMessages } from '../config/constant';
-import useUserStore from '../lib/user-store';
+import { appMessages } from '../config/constant';
+import { info, welcome } from '../lib/api';
+import useMessageStore from '../lib/message-store';
+import { InfoResponse, MessageResponse } from '../types/custom-types';
 
 export async function loader() {
   const data = Promise.all([info(), welcome()]);
@@ -14,31 +14,26 @@ export async function loader() {
 }
 
 export default function Home(): React.ReactElement {
-  const user = useUserStore().user;
-  const { data } = useLoaderData() as { data: Promise<[InfoResponse, MessageResponse]> };
-  const [searchParams, setSearchParams] = useSearchParams();
+  const { data } = useLoaderData() as {
+    data: Promise<[InfoResponse, MessageResponse]>;
+  };
+  const message = useMessageStore().message;
 
   useEffect(() => {
-    const msg = searchParams.get('msg');
-    const time = searchParams.get('t');
+    if (message) {
+      const toastId = `${message.type}-${message.id}`;
+      const msg = appMessages[message.type as keyof typeof appMessages];
+      useMessageStore.getState().clearMessage();
 
-    if (msg) {
-      setSearchParams({});
-      const toastId = `${msg}-${time}`;
-      let message = appMessages[msg as keyof typeof appMessages];
-      if (msg === appMessageKeys.LOGIN_SUCCESS) {
-        message += ` ${user?.name}`;
-      }
-      
       if (!toast.isActive(toastId)) {
-        toast(message, {
+        toast(msg, {
           type: 'success',
           position: 'bottom-right',
           toastId,
         });
       }
     }
-  }, [searchParams]);
+  }, [message]);
 
   return (
     <section className='h-section bg-slate-200 pt-20'>
@@ -73,7 +68,9 @@ function HomeSection({
 }): React.ReactElement {
   return (
     <>
-      <p className='text-3xl font-semibold'>{welcome?.message || 'Welcome !'}</p>
+      <p className='text-3xl font-semibold'>
+        {welcome?.message || 'Welcome !'}
+      </p>
       <p className='text-2xl font-semibold'>
         {information?.env || 'Env not found'}
       </p>

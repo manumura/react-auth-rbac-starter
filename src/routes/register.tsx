@@ -17,6 +17,7 @@ import { appConstant, appMessageKeys } from '../config/constant';
 import { register, validateRecaptcha } from '../lib/api';
 import { validatePassword } from '../lib/utils';
 import { ValidationError } from '../types/custom-errors';
+import useMessageStore from '../lib/message-store';
 
 export const action = async ({
   request,
@@ -70,8 +71,12 @@ export const action = async ({
     }
 
     const time = new Date().getTime();
+    useMessageStore.getState().setMessage({
+      type: appMessageKeys.REGISTER_SUCCESS,
+      id: time,
+    });
     return redirect(
-      '/login?msg=' + appMessageKeys.REGISTER_SUCCESS + '&t=' + time
+      '/login'
     );
   } catch (error) {
     // You cannot `useLoaderData` in an errorElemen

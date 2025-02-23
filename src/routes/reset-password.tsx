@@ -20,6 +20,7 @@ import { getUserFromToken, resetPassword, validateRecaptcha } from '../lib/api';
 import { ValidationError } from '../types/custom-errors';
 import { validatePassword } from '../lib/utils';
 import { IoEyeOffSharp, IoEyeSharp } from 'react-icons/io5';
+import useMessageStore from '../lib/message-store';
 
 export const loader: LoaderFunction<any> = async ({
   request,
@@ -89,8 +90,12 @@ export const action: ActionFunction<any> = async ({
       throw new ValidationError('Invalid response', { password });
     }
 
+    useMessageStore.getState().setMessage({
+      type: appMessageKeys.PASSWORD_RESET_SUCCESS,
+      id: time,
+    });
     return redirect(
-      '/login?msg=' + appMessageKeys.PASSWORD_RESET_SUCCESS + '&t=' + time
+      '/login'
     );
   } catch (error) {
     // You cannot `useLoaderData` in an errorElemen

@@ -24,6 +24,7 @@ import {
 import { validatePassword } from '../lib/utils';
 import { ValidationError } from '../types/custom-errors';
 import { IUser } from '../types/custom-types';
+import useMessageStore from '../lib/message-store';
 
 export const action = async ({
   request,
@@ -49,8 +50,13 @@ export const action = async ({
       if (!user) {
         throw new ValidationError('Profile update failed', { name, image });
       }
+
+      useMessageStore.getState().setMessage({
+        type: appMessageKeys.PROFILE_UPDATE_SUCCESS,
+        id: time,
+      });
       return redirect(
-        '/profile?msg=' + appMessageKeys.PROFILE_UPDATE_SUCCESS + '&t=' + time
+        '/profile',
       );
     } else if (intent === 'delete-profile') {
       const user = await removeProfile();
@@ -58,8 +64,14 @@ export const action = async ({
         throw new ValidationError('Profile delete failed', {});
       }
       await handleLogout();
+
+      // TODO test on home page
+      useMessageStore.getState().setMessage({
+        type: appMessageKeys.PROFILE_DELETE_SUCCESS,
+        id: time,
+      });
       return redirect(
-        '/?msg=' + appMessageKeys.PROFILE_DELETE_SUCCESS + '&t=' + time
+        '/',
       );
     } else if (intent === 'change-password') {
       const oldPassword = formData.get('oldPassword') as string;
@@ -71,8 +83,13 @@ export const action = async ({
           newPassword,
         });
       }
+
+      useMessageStore.getState().setMessage({
+        type: appMessageKeys.PASSWORD_CHANGE_SUCCESS,
+        id: time,
+      });
       return redirect(
-        '/profile?msg=' + appMessageKeys.PASSWORD_CHANGE_SUCCESS + '&t=' + time
+        '/profile',
       );
     }
 

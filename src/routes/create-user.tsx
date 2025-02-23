@@ -17,6 +17,7 @@ import { appMessageKeys } from '../config/constant';
 import { createUser } from '../lib/api';
 import { getCurrentUserFromStorage, isAdmin } from '../lib/utils';
 import { ValidationError } from '../types/custom-errors';
+import useMessageStore from '../lib/message-store';
 
 export const loader: LoaderFunction<any> = async () => {
   try {
@@ -59,7 +60,12 @@ export const action: ActionFunction<any> = async ({
     if (!user) {
       throw new ValidationError('Invalid user', { email, name, role });
     }
-    return redirect('/users?msg=' + appMessageKeys.USER_CREATE_SUCCESS);
+
+    useMessageStore.getState().setMessage({
+      type: appMessageKeys.USER_CREATE_SUCCESS,
+      id: time,
+    });
+    return redirect('/users');
   } catch (error) {
     // You cannot `useLoaderData` in an errorElemen
     console.error(error);

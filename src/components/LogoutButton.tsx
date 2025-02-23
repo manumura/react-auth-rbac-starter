@@ -7,6 +7,7 @@ import { logout } from '../lib/api';
 import { clearAuthentication } from '../lib/storage';
 import useUserStore from '../lib/user-store';
 import { FacebookLoginClient } from '@greatsumini/react-facebook-login';
+import useMessageStore from '../lib/message-store';
 
 export async function handleLogout() {
   await logout();
@@ -22,7 +23,11 @@ export const action: LoaderFunction<any> = async () => {
   try {
     await handleLogout();
     const time = new Date().getTime();
-    return redirect('/?msg=' + appMessageKeys.LOGOUT_SUCCESS + '&t=' + time);
+    useMessageStore.getState().setMessage({
+      type: appMessageKeys.LOGOUT_SUCCESS,
+      id: time,
+    });
+    return redirect('/');
   } catch (error) {
     return 'failed';
   }

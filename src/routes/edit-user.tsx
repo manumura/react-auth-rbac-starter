@@ -25,6 +25,7 @@ import {
   validatePassword,
 } from '../lib/utils';
 import { IUser } from '../types/custom-types';
+import useMessageStore from '../lib/message-store';
 
 export const loader: LoaderFunction<any> = async ({
   params,
@@ -105,8 +106,12 @@ export const action: ActionFunction<any> = async ({
       throw new Error('Update user failed');
     }
 
+    useMessageStore.getState().setMessage({
+      type: appMessageKeys.USER_UPDATE_SUCCESS,
+      id: time,
+    });
     return redirect(
-      '/users?msg=' + appMessageKeys.USER_UPDATE_SUCCESS + '&t=' + time
+      '/users'
     );
   } catch (error) {
     // You cannot `useLoaderData` in an errorElemen

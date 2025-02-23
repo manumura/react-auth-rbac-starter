@@ -11,6 +11,7 @@ import { facebookLogin } from '../lib/api';
 import { getUserFromIdToken } from '../lib/jwt.utils';
 import { saveAuthentication } from '../lib/storage';
 import { IAuthenticatedUser } from '../types/custom-types';
+import useMessageStore from '../lib/message-store';
 
 export const action: ActionFunction<any> = async ({
   request,
@@ -35,7 +36,11 @@ export const action: ActionFunction<any> = async ({
   }
 
   const time = new Date().getTime();
-  return redirect('/?msg=' + appMessageKeys.LOGIN_SUCCESS + '&t=' + time);
+  useMessageStore.getState().setMessage({
+    type: appMessageKeys.LOGIN_SUCCESS,
+    id: time,
+  });
+  return redirect('/');
 };
 
 const getUser = async (

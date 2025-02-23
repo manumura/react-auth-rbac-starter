@@ -12,8 +12,7 @@ import {
   useActionData,
   useLoaderData,
   useNavigate,
-  useSearchParams,
-  useSubmit,
+  useSubmit
 } from 'react-router-dom';
 import { toast } from 'react-toastify';
 import DeleteUserModal from '../components/DeleteUserModal';
@@ -21,6 +20,7 @@ import { Pagination } from '../components/Pagination';
 import appConfig from '../config/config';
 import { appMessages } from '../config/constant';
 import { deleteUser, getUsers } from '../lib/api';
+import useMessageStore from '../lib/message-store';
 import { processMessage, shouldProcessMessage, subscribe } from '../lib/sse';
 import useUserStore from '../lib/user-store';
 import { getCurrentUserFromStorage, isAdmin } from '../lib/utils';
@@ -91,7 +91,7 @@ export const action: ActionFunction<any> = async ({
     if (!user) {
       throw new ValidationError(`Invalid user: ${userUuid}`, { userUuid });
     }
-    
+
     return { user, error: undefined, time };
   } catch (error) {
     // You cannot `useLoaderData` in an errorElemen
@@ -124,7 +124,7 @@ export default function Users() {
   const [usersToDisplay, setUsersToDisplay] = useState(users);
   const submit = useSubmit();
   const navigate = useNavigate();
-  const [searchParams, setSearchParams] = useSearchParams();
+  const message = useMessageStore().message;
 
   useEffect(() => {
     if (response?.error) {
@@ -151,23 +151,20 @@ export default function Users() {
   }, [response]);
 
   useEffect(() => {
-    const msg = searchParams.get('msg');
-    const time = searchParams.get('t');
-
-    if (msg) {
-      setSearchParams({});
-      const toastId = `${msg}-${time}`;
-      const message = appMessages[msg as keyof typeof appMessages];
+    if (message) {
+      const toastId = `${message.type}-${message.id}`;
+      const msg = appMessages[message.type as keyof typeof appMessages];
+      useMessageStore.getState().clearMessage();
 
       if (!toast.isActive(toastId)) {
-        toast(message, {
+        toast(msg, {
           type: 'success',
           position: 'bottom-right',
           toastId,
         });
       }
     }
-  }, [searchParams]);
+  }, [message]);
 
   useEffect(() => {
     setUsersToDisplay(users);

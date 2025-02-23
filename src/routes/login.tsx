@@ -18,7 +18,6 @@ import {
   useActionData,
   useFetcher,
   useNavigation,
-  useSearchParams,
   useSubmit,
 } from 'react-router-dom';
 import { toast } from 'react-toastify';
@@ -29,6 +28,7 @@ import LoadingSpinner from '../components/LoadingSpinner';
 import { appConstant, appMessageKeys, appMessages } from '../config/constant';
 import { login, validateRecaptcha } from '../lib/api';
 import { getUserFromIdToken } from '../lib/jwt.utils';
+import useMessageStore from '../lib/message-store';
 import { saveAuthentication } from '../lib/storage';
 import useUserStore from '../lib/user-store';
 import { getCurrentUserFromStorage } from '../lib/utils';
@@ -109,7 +109,11 @@ export const action: ActionFunction<any> = async ({
     useUserStore.getState().setUser(user);
     const time = new Date().getTime();
 
-    return redirect('/?msg=' + appMessageKeys.LOGIN_SUCCESS + '&t=' + time);
+    useMessageStore.getState().setMessage({
+      type: appMessageKeys.LOGIN_SUCCESS,
+      id: time,
+    });
+    return redirect('/');
   } catch (error) {
     // You cannot `useLoaderData` in an errorElemen
     console.error(error);
@@ -156,7 +160,7 @@ export default function Login(): React.ReactElement {
   };
   const submit = useSubmit();
   const { executeRecaptcha } = useGoogleReCaptcha();
-  const [searchParams, setSearchParams] = useSearchParams();
+  const message = useMessageStore().message;
 
   const fetcher = useFetcher();
   const error = fetcher.data?.error;
@@ -167,7 +171,7 @@ export default function Login(): React.ReactElement {
   const iconEyeOff = <IoEyeOffSharp size={24} className='cursor-pointer' />;
   const [type, setType] = useState('password');
   const [icon, setIcon] = useState(iconEyeOff);
-  
+
   const onPasswordToggle = () => {
     if (type === 'password') {
       setIcon(iconEye);
@@ -179,23 +183,20 @@ export default function Login(): React.ReactElement {
   };
 
   useEffect(() => {
-    const msg = searchParams.get('msg');
-    const time = searchParams.get('t');
-
-    if (msg) {
-      setSearchParams({});
-      const toastId = `${msg}-${time}`;
-      const message = appMessages[msg as keyof typeof appMessages];
+    if (message) {
+      const toastId = `${message.type}-${message.id}`;
+      const msg = appMessages[message.type as keyof typeof appMessages];
+      useMessageStore.getState().clearMessage();
 
       if (!toast.isActive(toastId)) {
-        toast(message, {
+        toast(msg, {
           type: 'success',
           position: 'bottom-right',
           toastId,
         });
       }
     }
-  }, [searchParams]);
+  }, [message]);
 
   useEffect(() => {
     if (response?.error) {
@@ -351,7 +352,7 @@ export default function Login(): React.ReactElement {
                 onGoogleLoginSuccess={onGoogleLoginSuccess}
                 onGoogleLoginFailed={onGoogleLoginFailed}
               />
-              <FacebookLoginButton 
+              <FacebookLoginButton
                 onFacebookLoginFailed={onFacebookLoginFailed}
                 onFacebookLoginSuccess={onFacebookLoginSuccess}
                 onFacebookProfileSuccess={onFacebookProfileSuccess}

@@ -6,16 +6,19 @@ import {
   redirect,
   useLoaderData,
   useNavigate,
-  useSearchParams,
 } from 'react-router-dom';
 import { toast } from 'react-toastify';
 import { appMessages } from '../config/constant';
 import { getProfile } from '../lib/api';
+import useMessageStore from '../lib/message-store';
 import { IOauthProvider, IUser } from '../types/custom-types';
 import { OauthProvider } from '../types/provider.model';
 
 export const loader: LoaderFunction<any> = async () => {
   try {
+    // TODO remove this console.log
+    const now = new Date().getTime();
+    console.log('Loading profile...', now);
     const user = await getProfile();
     if (!user) {
       console.error('Invalid user');
@@ -32,26 +35,23 @@ export const loader: LoaderFunction<any> = async () => {
 export default function Profile(): React.ReactElement {
   const navigate = useNavigate();
   const { user } = useLoaderData() as { user: IUser };
-  const [searchParams, setSearchParams] = useSearchParams();
+  const message = useMessageStore().message;
 
   useEffect(() => {
-    const msg = searchParams.get('msg');
-    const time = searchParams.get('t');
-
-    if (msg) {
-      setSearchParams({});
-      const toastId = `${msg}-${time}`;
-      const message = appMessages[msg as keyof typeof appMessages];
+    if (message) {
+      const toastId = `${message.type}-${message.id}`;
+      const msg = appMessages[message.type as keyof typeof appMessages];
+      useMessageStore.getState().clearMessage();
 
       if (!toast.isActive(toastId)) {
-        toast(message, {
+        toast(msg, {
           type: 'success',
           position: 'bottom-right',
           toastId,
         });
       }
     }
-  }, [searchParams]);
+  }, [message]);
 
   const handleEdit = (): void => {
     navigate('/edit-profile');

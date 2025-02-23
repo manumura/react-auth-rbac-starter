@@ -52,3 +52,8 @@ export type EventMessage = {
   user: IUser;
   message: string;
 };
+
+export type IMessage = {
+  type: string;
+  id: number;
+};
