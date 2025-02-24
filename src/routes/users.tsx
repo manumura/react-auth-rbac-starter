@@ -1,4 +1,3 @@
-import { EventSourceMessage } from '@microsoft/fetch-event-source';
 import { AxiosError } from 'axios';
 import { UUID } from 'crypto';
 import { useEffect, useState } from 'react';
@@ -21,14 +20,11 @@ import appConfig from '../config/config';
 import { appMessages } from '../config/constant';
 import { deleteUser, getUsers } from '../lib/api';
 import useMessageStore from '../lib/message-store';
-import { processMessage, shouldProcessMessage, subscribe } from '../lib/sse';
-import useUserStore from '../lib/user-store';
 import { getCurrentUserFromStorage, isAdmin } from '../lib/utils';
 import { ValidationError } from '../types/custom-errors';
 import {
-  IAuthenticatedUser,
   IOauthProvider,
-  IUser,
+  IUser
 } from '../types/custom-types';
 import { OauthProvider } from '../types/provider.model';
 
@@ -108,8 +104,6 @@ export const action: ActionFunction<any> = async ({
 };
 
 export default function Users() {
-  const userSore = useUserStore();
-  const currentUser = userSore.user;
   const { users, totalElements, page, pageSize } = useLoaderData() as {
     users: IUser[];
     totalElements: number;
@@ -118,7 +112,6 @@ export default function Users() {
     role: string;
   };
   const response = useActionData() as DeleteUserResponse;
-  const userChangeEventAbortController = new AbortController();
   const [selectedUser, setSelectedUser] = useState<IUser | null>(null);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [usersToDisplay, setUsersToDisplay] = useState(users);
@@ -170,17 +163,6 @@ export default function Users() {
     setUsersToDisplay(users);
   }, [users]);
 
-  useEffect(() => {
-    subscribeUserChangeEvents();
-    return () => {
-      userChangeEventAbortController.abort();
-      console.log(
-        'Unsubscribed to user change events - signal aborted:',
-        userChangeEventAbortController.signal.aborted
-      );
-    };
-  }, []);
-
   const onPageSelect = (pageSelected: number): void => {
     navigate(`?page=${pageSelected}`);
   };
@@ -205,68 +187,15 @@ export default function Users() {
     navigate('/create-user');
   };
 
-  const onMessage = (
-    message: EventSourceMessage,
-    currentUser: IAuthenticatedUser
-  ) => {
-    const shouldProcess =
-      currentUser && shouldProcessMessage(message, currentUser);
-    if (!shouldProcess) {
-      return;
-    }
-
-    const event = processMessage(message);
-    if (!event) {
-      return;
-    }
-
-    console.log(event.message);
-    const toastType = event.eventType === 'USER_DELETED' ? 'warning' : 'info';
-    toast(event.message, {
-      type: toastType,
-      position: 'bottom-right',
-      autoClose: false,
-    });
-
-    if (event.eventType === 'USER_UPDATED') {
-      const userFromEvent = event.user;
-      const userIndex = usersToDisplay.findIndex(
-        (u: IUser) => u.uuid === userFromEvent.uuid
-      );
-
-      if (userIndex !== -1) {
-        usersToDisplay[userIndex] = userFromEvent;
-        setUsersToDisplay([...usersToDisplay]);
-
-        hightlightRow(userFromEvent.uuid);
-      }
-    }
-  };
-
-  const hightlightRow = (userUuid: string) => {
-    const row = document.getElementById('user-' + userUuid);
-    if (row) {
-      row.classList.add('highlight-row');
-      row.onanimationend = () => {
-        row.classList.remove('highlight-row');
-      };
-    }
-  };
-
-  async function subscribeUserChangeEvents() {
-    if (!currentUser) {
-      console.error('Invalid current user');
-      return;
-    }
-
-    console.log('Subscribing to user change events');
-    subscribe(
-      `${appConfig.baseUrl}/api/v1/events/users`,
-      userChangeEventAbortController,
-      onMessage,
-      currentUser
-    );
-  }
+  // const hightlightRow = (userUuid: string) => {
+  //   const row = document.getElementById('user-' + userUuid);
+  //   if (row) {
+  //     row.classList.add('highlight-row');
+  //     row.onanimationend = () => {
+  //       row.classList.remove('highlight-row');
+  //     };
+  //   }
+  // };
 
   const isUserListEmpty = !usersToDisplay || usersToDisplay.length <= 0;
   const noUserRow = (

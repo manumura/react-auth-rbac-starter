@@ -32,7 +32,6 @@ export default function Navbar({
 }: {
   readonly user: IAuthenticatedUser | null;
 }): React.ReactElement {
-  // const currentUser = useRouteLoaderData('root') as IAuthenticatedUser | undefined;
   const [navItems, setNavItems] = useState<React.JSX.Element[]>([]);
 
   const closeDrawer = (): void => {
@@ -43,12 +42,12 @@ export default function Navbar({
   };
 
   useEffect(() => {
-    // console.log('Navbar current user', user);
-    const navItems = user
-      ? isAdmin(user)
-        ? adminNavItems
-        : authenticatedNavItems
-      : unauthenticatedNavItems;
+    let navItems;
+    if (user) {
+      navItems = isAdmin(user) ? adminNavItems : authenticatedNavItems;
+    } else {
+      navItems = unauthenticatedNavItems;
+    }
     setNavItems(navItems);
   }, [user]);
 

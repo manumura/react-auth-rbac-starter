@@ -6,8 +6,11 @@ import {
 import { UUID } from 'crypto';
 import { appConstant } from '../config/constant';
 import { FatalError, RetriableError } from '../types/custom-errors';
-import { EventMessage, IAuthenticatedUser } from '../types/custom-types';
-import { getSavedUserEvents, saveUserEvents } from './storage';
+import { IAuthenticatedUser } from '../types/custom-types';
+import {
+  getSavedUserEvents as getCurrentSavedUserEvents,
+  saveUserEvents,
+} from './storage';
 
 export async function subscribe(
   url: string,
@@ -87,7 +90,7 @@ export const shouldProcessMessage = (
   currentUser: IAuthenticatedUser
 ): boolean => {
   if (!message.event || !message.data || !message.id) {
-    // console.log('Invalid message:', message);
+    console.log('Invalid message:', message);
     return false;
   }
 
@@ -95,69 +98,27 @@ export const shouldProcessMessage = (
   const auditUserUuid = data.auditUserUuid;
 
   if (auditUserUuid === currentUser.uuid) {
-    // console.log('Ignoring event from current user');
+    console.warn('Ignoring event from current user');
     return false;
   }
 
   // Store notifications to prevent duplicate notifications
-  const userEventsMap = getSavedUserEvents() || new Map<UUID, string[]>();
-  const events = userEventsMap?.get(currentUser.uuid) || [];
+  const currentUserEventsMap =
+    getCurrentSavedUserEvents() || new Map<UUID, string[]>();
+  const events = currentUserEventsMap?.get(currentUser.uuid) || [];
 
   if (events.includes(message.id)) {
-    // console.log('Event already processed:', message.id);
+    console.warn('Event already processed:', message.id);
     return false;
   }
 
   const newEvents = [message.id, ...events];
+  // Clear old events
   if (newEvents.length >= appConstant.MAX_USER_EVENTS_TO_STORE) {
     newEvents.pop();
   }
-  userEventsMap.set(currentUser.uuid, newEvents);
-  saveUserEvents(userEventsMap);
+  currentUserEventsMap.set(currentUser.uuid, newEvents);
+  saveUserEvents(currentUserEventsMap);
 
   return true;
-};
-
-export const processMessage = (message: EventSourceMessage): EventMessage => {
-  const data = JSON.parse(message.data);
-  const type = message.event;
-  const userFromEvent = data.user;
-
-  // const userInList = usersToDisplay.find(
-  //   (u) => u.uuid === userFromEvent.uuid,
-  // );
-  // const isUserModified =
-  //   userInList && userInList.updatedAt !== userFromEvent.updatedAt;
-
-  // if (type === 'USER_CREATED' && !userInList && +page === 1) {
-  //   // Add user to list
-  //   console.log('Adding user to list');
-  //   // Remove last record if page is full
-  //   if (usersToDisplay.length >= pageSize) {
-  //     usersToDisplay.pop();
-  //   }
-  //   setUsersToDisplay([userFromEvent, ...usersToDisplay]);
-  // }
-
-  let msg = '';
-  if (type === 'USER_CREATED') {
-    msg = `New user has been created: ${userFromEvent.uuid}. Please refresh the page to see the changes.`;
-  }
-
-  if (type === 'USER_UPDATED') {
-    msg = `User has been updated: ${userFromEvent.uuid}.`;
-  }
-
-  // if (type === 'USER_DELETED' && userInList) {
-  //   // Remove user from list
-  //   console.log('Removing user from list');
-  //   const index = usersToDisplay.indexOf(userInList);
-  //   usersToDisplay.splice(index, 1);
-  //   setUsersToDisplay([...usersToDisplay]);
-  // }
-  if (type === 'USER_DELETED') {
-    msg = `User has been deleted: ${userFromEvent.uuid}. Please refresh the page to see the changes.`;
-  }
-
-  return { eventType: type, user: userFromEvent, message: msg };
 };
