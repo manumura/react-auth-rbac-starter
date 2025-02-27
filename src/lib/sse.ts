@@ -90,7 +90,7 @@ export const shouldProcessMessage = (
   currentUser: IAuthenticatedUser
 ): boolean => {
   if (!message.event || !message.data || !message.id) {
-    console.log('Invalid message:', message);
+    console.error('Invalid message:', message);
     return false;
   }
 

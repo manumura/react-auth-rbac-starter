@@ -16,9 +16,6 @@ import { OauthProvider } from '../types/provider.model';
 
 export const loader: LoaderFunction<any> = async () => {
   try {
-    // TODO remove this console.log
-    const now = new Date().getTime();
-    console.log('Loading profile...', now);
     const user = await getProfile();
     if (!user) {
       console.error('Invalid user');

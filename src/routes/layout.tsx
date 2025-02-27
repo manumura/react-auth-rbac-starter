@@ -41,6 +41,7 @@ export default function Layout() {
     const userIsAdmin = currentUser && isAdmin(currentUser);
 
     if (userIsAdmin) {
+      console.log('===== Subscribing to user change events =====');
       subscribeUserChangeEvents(currentUser, userChangeEventAbortController);
       return () => {
         userChangeEventAbortController.abort();

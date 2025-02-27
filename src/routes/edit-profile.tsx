@@ -65,7 +65,6 @@ export const action = async ({
       }
       await handleLogout();
 
-      // TODO test on home page
       useMessageStore.getState().setMessage({
         type: appMessageKeys.PROFILE_DELETE_SUCCESS,
         id: time,

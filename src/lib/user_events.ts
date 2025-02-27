@@ -14,7 +14,6 @@ export async function subscribeUserChangeEvents(
     return;
   }
 
-  console.log('===== Subscribing to user change events =====');
   subscribe(
     `${appConfig.baseUrl}/api/v1/events/users`,
     userChangeEventAbortController,
