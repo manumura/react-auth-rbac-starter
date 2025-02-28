@@ -13,11 +13,11 @@ import {
 } from 'react-router-dom';
 import { toast } from 'react-toastify';
 import FormInput from '../components/FormInput';
-import { appConstant, appMessageKeys } from '../config/constant';
+import { appConstant, appMessages } from '../config/constant';
 import { register, validateRecaptcha } from '../lib/api';
+import useMessageStore from '../lib/message-store';
 import { validatePassword } from '../lib/utils';
 import { ValidationError } from '../types/custom-errors';
-import useMessageStore from '../lib/message-store';
 
 export const action = async ({
   request,
@@ -72,7 +72,8 @@ export const action = async ({
 
     const time = new Date().getTime();
     useMessageStore.getState().setMessage({
-      type: appMessageKeys.REGISTER_SUCCESS,
+      type: appMessages.REGISTER_SUCCESS.type,
+      text: appMessages.REGISTER_SUCCESS.text,
       id: time,
     });
     return redirect(

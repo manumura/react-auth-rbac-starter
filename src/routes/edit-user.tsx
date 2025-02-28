@@ -17,15 +17,15 @@ import {
 import { toast } from 'react-toastify';
 import FormInput from '../components/FormInput';
 import FormSelect from '../components/FormSelect';
-import { appMessageKeys } from '../config/constant';
+import { appMessages } from '../config/constant';
 import { getUserByUuid, updateUser } from '../lib/api';
+import useMessageStore from '../lib/message-store';
 import {
   getCurrentUserFromStorage,
   isAdmin,
   validatePassword,
 } from '../lib/utils';
 import { IUser } from '../types/custom-types';
-import useMessageStore from '../lib/message-store';
 
 export const loader: LoaderFunction<any> = async ({
   params,
@@ -107,7 +107,8 @@ export const action: ActionFunction<any> = async ({
     }
 
     useMessageStore.getState().setMessage({
-      type: appMessageKeys.USER_UPDATE_SUCCESS,
+      type: appMessages.USER_UPDATE_SUCCESS.type,
+      text: appMessages.USER_UPDATE_SUCCESS.text,
       id: time,
     });
     return redirect(

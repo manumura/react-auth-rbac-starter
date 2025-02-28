@@ -10,29 +10,45 @@ export const appConstant = {
     /^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*$/,
 };
 
-export const appMessageKeys = {
-  PASSWORD_RESET_SUCCESS: 'passwordResetSuccess',
-  PROFILE_UPDATE_SUCCESS: 'profileUpdateSuccess',
-  PROFILE_DELETE_SUCCESS: 'profileDeleteSuccess',
-  PASSWORD_CHANGE_SUCCESS: 'passwordChangeSuccess',
-  USER_CREATE_SUCCESS: 'userCreateSuccess',
-  USER_UPDATE_SUCCESS: 'userUpdateSuccess',
-  LOGIN_SUCCESS: 'loginSuccess',
-  LOGOUT_SUCCESS: 'logoutSuccess',
-  REGISTER_SUCCESS: 'registerSuccess',
-};
-
 export const appMessages = {
-  passwordResetSuccess:
-    'Password successfully reset! Please login with your new password.',
-  profileUpdateSuccess: 'Profile successfully updated!',
-  profileDeleteSuccess: 'Profile successfully deleted!',
-  passwordChangeSuccess: 'Password successfully updated!',
-  userCreateSuccess: 'User successfully created!',
-  userUpdateSuccess: 'User successfully updated!',
-  loginSuccess: 'Welcome',
-  loginFailedEmailNotVerified: 'Please verify your email before logging in.',
-  logoutSuccess: 'Logout successful',
-  registerSuccess:
-    'Registration successful! Please follow the link sent to your email to verify your account.',
+  PASSWORD_RESET_SUCCESS: {
+    type: 'PASSWORD_RESET_SUCCESS',
+    text: 'Password successfully reset! Please login with your new password.',
+  }, 
+  PROFILE_UPDATE_SUCCESS: {
+    type: 'PROFILE_UPDATE_SUCCESS',
+    text: 'Profile successfully updated!',
+  },
+  PROFILE_DELETE_SUCCESS: {
+    type: 'PROFILE_DELETE_SUCCESS',
+    text: 'Profile successfully deleted!',
+  },
+  PASSWORD_CHANGE_SUCCESS: {
+    type: 'PASSWORD_CHANGE_SUCCESS',
+    text: 'Password successfully updated!',
+  },
+  USER_CREATE_SUCCESS: {
+    type: 'USER_CREATE_SUCCESS',
+    text: 'User successfully created!',
+  },
+  USER_UPDATE_SUCCESS: {
+    type: 'USER_UPDATE_SUCCESS',
+    text: 'User successfully updated!',
+  },
+  LOGIN_SUCCESS: {
+    type: 'LOGIN_SUCCESS',
+    text: 'Welcome ${name}.',
+  },
+  LOGIN_FAILED_EMAIL_NOT_VERIFIED: {
+    type: 'LOGIN_FAILED_EMAIL_NOT_VERIFIED',
+    text: 'Please verify your email before logging in.',
+  },
+  LOGOUT_SUCCESS: {
+    type: 'LOGOUT_SUCCESS',
+    text: 'Logout successful.',
+  },
+  REGISTER_SUCCESS: {
+    type: 'REGISTER_SUCCESS',
+    text: 'Registration successful! Please follow the link sent to your email to verify your account.',
+  },
 };

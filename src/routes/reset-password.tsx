@@ -2,6 +2,7 @@ import { AxiosError } from 'axios';
 import { useEffect, useState } from 'react';
 import { useGoogleReCaptcha } from 'react-google-recaptcha-v3';
 import { FormProvider, useForm } from 'react-hook-form';
+import { IoEyeOffSharp, IoEyeSharp } from 'react-icons/io5';
 import {
   ActionFunction,
   Form,
@@ -15,12 +16,11 @@ import {
 } from 'react-router-dom';
 import { toast } from 'react-toastify';
 import FormInput from '../components/FormInput';
-import { appMessageKeys } from '../config/constant';
+import { appMessages } from '../config/constant';
 import { getUserFromToken, resetPassword, validateRecaptcha } from '../lib/api';
-import { ValidationError } from '../types/custom-errors';
-import { validatePassword } from '../lib/utils';
-import { IoEyeOffSharp, IoEyeSharp } from 'react-icons/io5';
 import useMessageStore from '../lib/message-store';
+import { validatePassword } from '../lib/utils';
+import { ValidationError } from '../types/custom-errors';
 
 export const loader: LoaderFunction<any> = async ({
   request,
@@ -91,7 +91,8 @@ export const action: ActionFunction<any> = async ({
     }
 
     useMessageStore.getState().setMessage({
-      type: appMessageKeys.PASSWORD_RESET_SUCCESS,
+      type: appMessages.PASSWORD_RESET_SUCCESS.type,
+      text: appMessages.PASSWORD_RESET_SUCCESS.text,
       id: time,
     });
     return redirect(

@@ -17,7 +17,6 @@ import { toast } from 'react-toastify';
 import DeleteUserModal from '../components/DeleteUserModal';
 import { Pagination } from '../components/Pagination';
 import appConfig from '../config/config';
-import { appMessages } from '../config/constant';
 import { deleteUser, getUsers } from '../lib/api';
 import useMessageStore from '../lib/message-store';
 import { getCurrentUserFromStorage, isAdmin } from '../lib/utils';
@@ -146,7 +145,7 @@ export default function Users() {
   useEffect(() => {
     if (message) {
       const toastId = `${message.type}-${message.id}`;
-      const msg = appMessages[message.type as keyof typeof appMessages];
+      const msg = message.text;
       useMessageStore.getState().clearMessage();
 
       if (!toast.isActive(toastId)) {

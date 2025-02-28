@@ -54,6 +54,7 @@ export type UserEventMessage = {
 };
 
 export type IMessage = {
-  type: string;
   id: number;
+  type: string;
+  text: string;
 };

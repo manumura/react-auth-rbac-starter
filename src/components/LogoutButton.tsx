@@ -1,13 +1,13 @@
+import { FacebookLoginClient } from '@greatsumini/react-facebook-login';
 import { googleLogout } from '@react-oauth/google';
 import { useEffect } from 'react';
 import { LoaderFunction, redirect, useFetcher } from 'react-router-dom';
 import { toast } from 'react-toastify';
-import { appMessageKeys } from '../config/constant';
+import { appMessages } from '../config/constant';
 import { logout } from '../lib/api';
+import useMessageStore from '../lib/message-store';
 import { clearAuthentication } from '../lib/storage';
 import useUserStore from '../lib/user-store';
-import { FacebookLoginClient } from '@greatsumini/react-facebook-login';
-import useMessageStore from '../lib/message-store';
 
 export async function handleLogout() {
   await logout();
@@ -24,7 +24,8 @@ export const action: LoaderFunction<any> = async () => {
     await handleLogout();
     const time = new Date().getTime();
     useMessageStore.getState().setMessage({
-      type: appMessageKeys.LOGOUT_SUCCESS,
+      type: appMessages.LOGOUT_SUCCESS.type,
+      text: appMessages.LOGOUT_SUCCESS.text,
       id: time,
     });
     return redirect('/');

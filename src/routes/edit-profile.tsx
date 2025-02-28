@@ -14,17 +14,17 @@ import ChangePasswordForm from '../components/ChangePasswordForm';
 import DeleteProfileForm from '../components/DeleteProfileForm';
 import EditProfileForm from '../components/EditProfileForm';
 import { handleLogout } from '../components/LogoutButton';
-import { appMessageKeys } from '../config/constant';
+import { appMessages } from '../config/constant';
 import {
   deleteProfile,
   updatePassword,
   updateProfile,
   updateProfileImage,
 } from '../lib/api';
+import useMessageStore from '../lib/message-store';
 import { validatePassword } from '../lib/utils';
 import { ValidationError } from '../types/custom-errors';
 import { IUser } from '../types/custom-types';
-import useMessageStore from '../lib/message-store';
 
 export const action = async ({
   request,
@@ -52,7 +52,8 @@ export const action = async ({
       }
 
       useMessageStore.getState().setMessage({
-        type: appMessageKeys.PROFILE_UPDATE_SUCCESS,
+        type: appMessages.PROFILE_UPDATE_SUCCESS.type,
+        text: appMessages.PROFILE_UPDATE_SUCCESS.text,
         id: time,
       });
       return redirect(
@@ -66,7 +67,8 @@ export const action = async ({
       await handleLogout();
 
       useMessageStore.getState().setMessage({
-        type: appMessageKeys.PROFILE_DELETE_SUCCESS,
+        type: appMessages.PROFILE_DELETE_SUCCESS.type,
+        text: appMessages.PROFILE_DELETE_SUCCESS.text,
         id: time,
       });
       return redirect(
@@ -84,7 +86,8 @@ export const action = async ({
       }
 
       useMessageStore.getState().setMessage({
-        type: appMessageKeys.PASSWORD_CHANGE_SUCCESS,
+        type: appMessages.PASSWORD_CHANGE_SUCCESS.type,
+        text: appMessages.PASSWORD_CHANGE_SUCCESS.text,
         id: time,
       });
       return redirect(

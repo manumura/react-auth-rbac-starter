@@ -25,7 +25,7 @@ import FacebookLoginButton from '../components/FacebookLoginButton';
 import FormInput from '../components/FormInput';
 import GoogleLoginButton from '../components/GoogleLoginButton';
 import LoadingSpinner from '../components/LoadingSpinner';
-import { appConstant, appMessageKeys, appMessages } from '../config/constant';
+import { appConstant, appMessages } from '../config/constant';
 import { login, validateRecaptcha } from '../lib/api';
 import { getUserFromIdToken } from '../lib/jwt.utils';
 import useMessageStore from '../lib/message-store';
@@ -110,7 +110,8 @@ export const action: ActionFunction<any> = async ({
     const time = new Date().getTime();
 
     useMessageStore.getState().setMessage({
-      type: appMessageKeys.LOGIN_SUCCESS,
+      type: appMessages.LOGIN_SUCCESS.type,
+      text: appMessages.LOGIN_SUCCESS.text.replace("${name}", user.name),
       id: time,
     });
     return redirect('/');
@@ -119,11 +120,11 @@ export const action: ActionFunction<any> = async ({
     console.error(error);
     let message = 'Unknown error';
     if (error instanceof AxiosError && error.response?.data) {
-      const err = error.response.data.error;
+      const msg = error.response.data.message;
       message =
-        err === 'email_not_verified'
-          ? appMessages.loginFailedEmailNotVerified
-          : error.response.data.message;
+        msg === 'email_not_verified'
+          ? appMessages.LOGIN_FAILED_EMAIL_NOT_VERIFIED
+          : msg;
     } else if (error instanceof Error) {
       message = error.message;
     }
@@ -185,7 +186,7 @@ export default function Login(): React.ReactElement {
   useEffect(() => {
     if (message) {
       const toastId = `${message.type}-${message.id}`;
-      const msg = appMessages[message.type as keyof typeof appMessages];
+      const msg = message.text;
       useMessageStore.getState().clearMessage();
 
       if (!toast.isActive(toastId)) {

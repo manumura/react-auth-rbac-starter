@@ -13,11 +13,11 @@ import {
 import { toast } from 'react-toastify';
 import FormInput from '../components/FormInput';
 import FormSelect from '../components/FormSelect';
-import { appMessageKeys } from '../config/constant';
+import { appMessages } from '../config/constant';
 import { createUser } from '../lib/api';
+import useMessageStore from '../lib/message-store';
 import { getCurrentUserFromStorage, isAdmin } from '../lib/utils';
 import { ValidationError } from '../types/custom-errors';
-import useMessageStore from '../lib/message-store';
 
 export const loader: LoaderFunction<any> = async () => {
   try {
@@ -62,7 +62,8 @@ export const action: ActionFunction<any> = async ({
     }
 
     useMessageStore.getState().setMessage({
-      type: appMessageKeys.USER_CREATE_SUCCESS,
+      type: appMessages.USER_CREATE_SUCCESS.type,
+      text: appMessages.USER_CREATE_SUCCESS.text,
       id: time,
     });
     return redirect('/users');

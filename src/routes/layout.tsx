@@ -34,22 +34,23 @@ export default function Layout() {
   const navigation = useNavigation();
   const loading = navigation.state === 'loading';
   const currentUser = useRouteLoaderData('root') as IAuthenticatedUser | null;
-  const userChangeEventAbortController = new AbortController();
 
   useEffect(() => {
+    const userChangeEventAbortController = new AbortController();
     console.log(`===== Current user: ${JSON.stringify(currentUser)} =====`);
     const userIsAdmin = currentUser && isAdmin(currentUser);
 
     if (userIsAdmin) {
       console.log('===== Subscribing to user change events =====');
       subscribeUserChangeEvents(currentUser, userChangeEventAbortController);
-      return () => {
-        userChangeEventAbortController.abort();
-        console.log(
-          `===== Unsubscribed to user change events - signal aborted: ${userChangeEventAbortController.signal.aborted} =====`,
-        );
-      };
     }
+
+    return () => {
+      userChangeEventAbortController.abort('User change event subscription aborted');
+      console.log(
+        `===== Unsubscribed to user change events - signal aborted: ${userChangeEventAbortController.signal.aborted} =====`,
+      );
+    };
   }, [currentUser]);
 
   TopBarProgress.config({

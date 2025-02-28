@@ -6,12 +6,12 @@ import FacebookLogin, {
 import { FaFacebook } from 'react-icons/fa';
 import { ActionFunction, redirect } from 'react-router-dom';
 import appConfig from '../config/config';
-import { appMessageKeys } from '../config/constant';
+import { appMessages } from '../config/constant';
 import { facebookLogin } from '../lib/api';
 import { getUserFromIdToken } from '../lib/jwt.utils';
+import useMessageStore from '../lib/message-store';
 import { saveAuthentication } from '../lib/storage';
 import { IAuthenticatedUser } from '../types/custom-types';
-import useMessageStore from '../lib/message-store';
 
 export const action: ActionFunction<any> = async ({
   request,
@@ -37,7 +37,8 @@ export const action: ActionFunction<any> = async ({
 
   const time = new Date().getTime();
   useMessageStore.getState().setMessage({
-    type: appMessageKeys.LOGIN_SUCCESS,
+    type: appMessages.LOGIN_SUCCESS.type,
+    text: appMessages.LOGIN_SUCCESS.text.replace("${name}", user.name),
     id: time,
   });
   return redirect('/');
