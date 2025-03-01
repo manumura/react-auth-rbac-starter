@@ -7,10 +7,7 @@ import { UUID } from 'crypto';
 import { appConstant } from '../config/constant';
 import { FatalError, RetriableError } from '../types/custom-errors';
 import { IAuthenticatedUser } from '../types/custom-types';
-import {
-  getSavedUserEvents as getCurrentSavedUserEvents,
-  saveUserEvents,
-} from './storage';
+import { getSavedUserEvents, saveUserEvents } from './storage';
 
 export async function subscribe(
   url: string,
@@ -103,9 +100,8 @@ export const shouldProcessMessage = (
   }
 
   // Store notifications to prevent duplicate notifications
-  const currentUserEventsMap =
-    getCurrentSavedUserEvents() || new Map<UUID, string[]>();
-  const events = currentUserEventsMap?.get(currentUser.uuid) || [];
+  const savedUserEventsMap = getSavedUserEvents() || new Map<UUID, string[]>();
+  const events = savedUserEventsMap?.get(currentUser.uuid) || [];
 
   if (events.includes(message.id)) {
     console.warn('Event already processed:', message.id);
@@ -117,8 +113,8 @@ export const shouldProcessMessage = (
   if (newEvents.length >= appConstant.MAX_USER_EVENTS_TO_STORE) {
     newEvents.pop();
   }
-  currentUserEventsMap.set(currentUser.uuid, newEvents);
-  saveUserEvents(currentUserEventsMap);
+  savedUserEventsMap.set(currentUser.uuid, newEvents);
+  saveUserEvents(savedUserEventsMap);
 
   return true;
 };
