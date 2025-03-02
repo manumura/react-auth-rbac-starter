@@ -16,7 +16,7 @@ const FormInput = ({
   placeholder?: string;
   constraints?: Record<string, unknown>;
   iconEnd?: JSX.Element | null;
-  onClickIconEnd?: (() => void);
+  onClickIconEnd?: () => void;
 }) => {
   const {
     register,
@@ -32,7 +32,7 @@ const FormInput = ({
         <input
           type={type}
           placeholder={placeholder}
-          className='w-full rounded-2xl appearance-none focus:outline-hidden py-2 px-4'
+          className='input w-full rounded-2xl appearance-none focus:outline-hidden py-2 px-4'
           {...register(name, constraints)}
         />
         {iconEnd && (

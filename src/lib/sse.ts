@@ -50,7 +50,6 @@ export async function subscribe(
       onmessage(message) {
         // if the server emits an error message, throw an exception
         // so it gets handled by the onerror callback below:
-        // console.log('message received: ', message);
         if (message.event === 'FatalError') {
           throw new FatalError(message.data);
         }
@@ -64,6 +63,7 @@ export async function subscribe(
       onerror(error) {
         console.error('Fetch event source error: ', error);
         if (error instanceof FatalError) {
+          console.error('Fatal error: closing stream');
           // rethrow to stop the operation
           throw error;
         } else {
