@@ -116,7 +116,7 @@ export const action: ActionFunction<any> = async ({
     });
     return redirect('/');
   } catch (error) {
-    // You cannot `useLoaderData` in an errorElemen
+    // You cannot `useLoaderData` in an errorElement
     console.error(error);
     let message = 'Unknown error';
     if (error instanceof AxiosError && error.response?.data) {
