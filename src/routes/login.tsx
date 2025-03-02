@@ -25,7 +25,7 @@ import FacebookLoginButton from '../components/FacebookLoginButton';
 import FormInput from '../components/FormInput';
 import GoogleLoginButton from '../components/GoogleLoginButton';
 import LoadingSpinner from '../components/LoadingSpinner';
-import { appConstant, appMessages } from '../config/constant';
+import { appConstant, appMessages, errorMessages } from '../config/constant';
 import { login, validateRecaptcha } from '../lib/api';
 import { getUserFromIdToken } from '../lib/jwt.utils';
 import useMessageStore from '../lib/message-store';
@@ -121,10 +121,13 @@ export const action: ActionFunction<any> = async ({
     let message = 'Unknown error';
     if (error instanceof AxiosError && error.response?.data) {
       const msg = error.response.data.message;
-      message =
-        msg === 'email_not_verified'
-          ? appMessages.LOGIN_FAILED_EMAIL_NOT_VERIFIED
-          : msg;
+      if (msg === errorMessages.INVALID_EMAIL_OR_PASSWORD.code) {
+        message = errorMessages.INVALID_EMAIL_OR_PASSWORD.text;
+      } else if (msg === errorMessages.EMAIL_NOT_VERIFIED.code) {
+        message = errorMessages.EMAIL_NOT_VERIFIED.text;
+      } else {
+        message = msg;
+      }
     } else if (error instanceof Error) {
       message = error.message;
     }

@@ -10,6 +10,17 @@ export const appConstant = {
     /^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*$/,
 };
 
+export const errorMessages = {
+  EMAIL_NOT_VERIFIED: {
+    code: 'email_not_verified',
+    text: 'Please verify your email before logging in.',
+  },
+  INVALID_EMAIL_OR_PASSWORD: {
+    code: 'invalid_email_or_password',
+    text: 'Invalid email or password.',
+  },
+};
+
 export const appMessages = {
   PASSWORD_RESET_SUCCESS: {
     type: 'PASSWORD_RESET_SUCCESS',
@@ -38,10 +49,6 @@ export const appMessages = {
   LOGIN_SUCCESS: {
     type: 'LOGIN_SUCCESS',
     text: 'Welcome ${name}.',
-  },
-  LOGIN_FAILED_EMAIL_NOT_VERIFIED: {
-    type: 'LOGIN_FAILED_EMAIL_NOT_VERIFIED',
-    text: 'Please verify your email before logging in.',
   },
   LOGOUT_SUCCESS: {
     type: 'LOGOUT_SUCCESS',
