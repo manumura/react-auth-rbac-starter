@@ -1,15 +1,16 @@
 import { EventSourceMessage } from '@microsoft/fetch-event-source';
+import { UUID } from 'crypto';
 import { toast } from 'react-toastify';
 import appConfig from '../config/config';
-import { IAuthenticatedUser, UserEventMessage } from '../types/custom-types';
+import { UserEventMessage } from '../types/custom-types';
 import { UserEventType } from '../types/user-event.model';
 import { shouldProcessMessage, subscribe } from './sse';
 
 export async function subscribeUserChangeEvents(
-  currentUser: IAuthenticatedUser,
+  currentUserUuid: UUID,
   userChangeEventAbortController: AbortController
 ) {
-  if (!currentUser) {
+  if (!currentUserUuid) {
     console.error('Invalid current user');
     return;
   }
@@ -18,16 +19,13 @@ export async function subscribeUserChangeEvents(
     `${appConfig.baseUrl}/api/v1/events/users`,
     userChangeEventAbortController,
     onMessage,
-    currentUser
+    currentUserUuid
   );
 }
 
-const onMessage = (
-  message: EventSourceMessage,
-  currentUser: IAuthenticatedUser
-) => {
+const onMessage = (message: EventSourceMessage, currentUserUuid: UUID) => {
   const shouldProcess =
-    currentUser && shouldProcessMessage(message, currentUser);
+    currentUserUuid && shouldProcessMessage(message, currentUserUuid);
   if (!shouldProcess) {
     return;
   }

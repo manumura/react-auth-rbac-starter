@@ -52,6 +52,8 @@ const router = createBrowserRouter([
     errorElement: <ErrorPage />,
     hydrateFallbackElement: <LoadingOverlay label='Loading...' />,
     loader: rootLoader,
+    // TODO
+    // shouldRevalidate: () => false,
     children: [
       {
         errorElement: <ErrorPage />,

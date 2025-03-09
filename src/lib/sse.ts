@@ -6,17 +6,13 @@ import {
 import { UUID } from 'crypto';
 import { appConstant } from '../config/constant';
 import { FatalError, RetriableError } from '../types/custom-errors';
-import { IAuthenticatedUser } from '../types/custom-types';
 import { getSavedUserEvents, saveUserEvents } from './storage';
 
 export async function subscribe(
   url: string,
   abortController: AbortController,
-  onMessage: (
-    message: EventSourceMessage,
-    currentUser: IAuthenticatedUser
-  ) => void,
-  currentUser: IAuthenticatedUser
+  onMessage: (message: EventSourceMessage, currentUserUuid: UUID) => void,
+  currentUserUuid: UUID
 ) {
   const maxRetries = 10;
   let retryCount = 0;
@@ -54,7 +50,7 @@ export async function subscribe(
           throw new FatalError(message.data);
         }
 
-        onMessage(message, currentUser);
+        onMessage(message, currentUserUuid);
       },
       onclose() {
         // if the server closes the connection unexpectedly, retry:
@@ -84,7 +80,7 @@ export async function subscribe(
 
 export const shouldProcessMessage = (
   message: EventSourceMessage,
-  currentUser: IAuthenticatedUser
+  currentUserUuid: UUID
 ): boolean => {
   if (!message.event || !message.data || !message.id) {
     console.error('Invalid message:', message);
@@ -94,14 +90,14 @@ export const shouldProcessMessage = (
   const data = JSON.parse(message.data);
   const auditUserUuid = data.auditUserUuid;
 
-  if (auditUserUuid === currentUser.uuid) {
+  if (auditUserUuid === currentUserUuid) {
     console.warn('Ignoring event from current user');
     return false;
   }
 
   // Store notifications to prevent duplicate notifications
   const savedUserEventsMap = getSavedUserEvents() || new Map<UUID, string[]>();
-  const events = savedUserEventsMap?.get(currentUser.uuid) || [];
+  const events = savedUserEventsMap?.get(currentUserUuid) || [];
 
   if (events.includes(message.id)) {
     console.warn('Event already processed:', message.id);
@@ -113,7 +109,7 @@ export const shouldProcessMessage = (
   if (newEvents.length >= appConstant.MAX_USER_EVENTS_TO_STORE) {
     newEvents.pop();
   }
-  savedUserEventsMap.set(currentUser.uuid, newEvents);
+  savedUserEventsMap.set(currentUserUuid, newEvents);
   saveUserEvents(savedUserEventsMap);
 
   return true;
