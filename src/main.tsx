@@ -52,8 +52,6 @@ const router = createBrowserRouter([
     errorElement: <ErrorPage />,
     hydrateFallbackElement: <LoadingOverlay label='Loading...' />,
     loader: rootLoader,
-    // TODO
-    // shouldRevalidate: () => false,
     children: [
       {
         errorElement: <ErrorPage />,
@@ -153,12 +151,14 @@ const { enableAutoPageviews } = Plausible({
 });
 enableAutoPageviews();
 
-ReactDOM.createRoot(document.getElementById('root')!).render(
-  <React.StrictMode>
-    <Providers>
-      <RouterProvider
-        router={router}
-      />
-    </Providers>
-  </React.StrictMode>
-);
+function Root() {
+  return (
+    <React.StrictMode>
+      <Providers>
+        <RouterProvider router={router} />
+      </Providers>
+    </React.StrictMode>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById('root')!).render(<Root />);

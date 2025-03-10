@@ -40,7 +40,7 @@ export default function Layout() {
 
   useEffect(() => {
     const userChangeEventAbortController = new AbortController();
-    console.log(`===== Current user: ${JSON.stringify(currentUserUuid)} =====`);
+    console.log(`===== Current user: ${currentUserUuid} =====`);
 
     if (userIsAdmin) {
       console.log('===== Subscribing to user change events =====');

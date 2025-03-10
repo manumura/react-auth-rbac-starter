@@ -8,13 +8,15 @@ import { appConstant } from '../config/constant';
 import { FatalError, RetriableError } from '../types/custom-errors';
 import { getSavedUserEvents, saveUserEvents } from './storage';
 
+const maxRetries = 10;
+
+// Can try : https://github.com/EventSource/eventsource
 export async function subscribe(
   url: string,
   abortController: AbortController,
   onMessage: (message: EventSourceMessage, currentUserUuid: UUID) => void,
   currentUserUuid: UUID
 ) {
-  const maxRetries = 10;
   let retryCount = 0;
 
   try {
@@ -29,17 +31,19 @@ export async function subscribe(
             ?.startsWith(EventStreamContentType)
         ) {
           // everything's good
-          return;
+          console.log('===== Connection opened successfully =====');
+          retryCount = 0;
+          // return;
         } else if (
           response.status >= 400 &&
           response.status < 500 &&
           response.status !== 429
         ) {
           // client-side errors are usually non-retriable:
-          console.error('Fatal error on open: ', response);
+          console.error(`===== Fatal error on open: ${JSON.stringify(response)} =====`);
           throw new FatalError();
         } else {
-          console.error('Retriable error on open: ', response);
+          console.error(`===== Retriable error on open: ${JSON.stringify(response)} =====`);
           throw new RetriableError();
         }
       },
@@ -53,28 +57,29 @@ export async function subscribe(
         onMessage(message, currentUserUuid);
       },
       onclose() {
+        console.error('===== Connection closed unexpectedly =====');
         // if the server closes the connection unexpectedly, retry:
         throw new RetriableError();
       },
       onerror(error) {
-        console.error('Fetch event source error: ', error);
+        console.error(`===== Fetch event source error: ${error} =====`);
         if (error instanceof FatalError) {
-          console.error('Fatal error: closing stream');
+          console.error('===== Fatal error: closing stream =====');
           // rethrow to stop the operation
           throw error;
         } else {
+          console.error(`===== Retry count: ${retryCount} =====`);
           // do nothing to automatically retry. You can also return a specific retry interval here.
           if (retryCount >= maxRetries) {
-            console.error('Max retries reached: closing stream');
+            console.error('===== Max retries reached: closing stream =====');
             throw error;
           }
           retryCount++;
-          console.error('retry count: ', retryCount);
         }
       },
     });
   } catch (error) {
-    console.error('Error while subscribing to event stream: ', error);
+    console.error(`===== Error while subscribing to event stream: ${JSON.stringify(error)} =====`);
   }
 }
 
