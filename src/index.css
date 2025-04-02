@@ -10,7 +10,7 @@
     from 180deg at 50% 50%,
     var(--tw-gradient-stops)
   );
-  --font-display: Poppins, sans-serif;
+  /* --font-display: Poppins, sans-serif; */
 }
 
 /*

@@ -9,7 +9,6 @@ import { action as logoutAction } from './components/LogoutButton';
 import { Providers } from './components/Providers';
 import appConfig from './config/config';
 import ErrorPage from './error-page';
-import './index.css';
 import Home, { loader as homeLoader } from './routes';
 import CreateUser, {
     action as createUserAction,
