@@ -10,7 +10,7 @@ import TopBarProgress from 'react-topbar-progress-indicator';
 import Navbar from '../components/Navbar';
 import { clearAuthentication } from '../lib/storage';
 import useUserStore from '../lib/user-store';
-import { subscribeUserChangeEvents } from '../lib/user_events';
+import { subscribeUserChangeEvents, subscribeUserChangeEventsWs } from '../lib/user_events';
 import { getCurrentUserFromStorage, isAdmin } from '../lib/utils';
 import { IAuthenticatedUser } from '../types/custom-types';
 
@@ -39,19 +39,27 @@ export default function Layout() {
   const userIsAdmin = currentUser && isAdmin(currentUser);
 
   useEffect(() => {
-    const userChangeEventAbortController = new AbortController();
     console.log(`===== Current user: ${currentUserUuid} =====`);
+    // const userChangeEventAbortController = new AbortController();
+    let ws: WebSocket | null;
 
     if (userIsAdmin) {
       console.log('===== Subscribing to user change events =====');
-      subscribeUserChangeEvents(currentUserUuid, userChangeEventAbortController);
+      // TODO wss
+      ws = new WebSocket('ws://localhost:9002/api/v1/ws/events/users');
+      subscribeUserChangeEventsWs(currentUserUuid, ws);
+      // subscribeUserChangeEvents(currentUserUuid, userChangeEventAbortController);
     }
 
     return () => {
-      userChangeEventAbortController.abort('User change event subscription aborted');
-      console.log(
-        `===== Unsubscribed to user change events - signal aborted: ${userChangeEventAbortController.signal.aborted} =====`,
-      );
+      if (ws) {
+        ws.close();
+        console.log('===== WebSocket connection closed =====');
+      }
+      // userChangeEventAbortController.abort('User change event subscription aborted');
+      // console.log(
+      //   `===== Unsubscribed to user change events - signal aborted: ${userChangeEventAbortController.signal.aborted} =====`,
+      // );
     };
   }, [currentUserUuid, userIsAdmin]);
 

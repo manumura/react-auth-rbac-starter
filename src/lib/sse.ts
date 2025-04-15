@@ -4,9 +4,7 @@ import {
   fetchEventSource,
 } from '@microsoft/fetch-event-source';
 import { UUID } from 'crypto';
-import { appConstant } from '../config/constant';
 import { FatalError, RetriableError } from '../types/custom-errors';
-import { getSavedUserEvents, saveUserEvents } from './storage';
 
 const maxRetries = 10;
 
@@ -40,10 +38,14 @@ export async function subscribe(
           response.status !== 429
         ) {
           // client-side errors are usually non-retriable:
-          console.error(`===== Fatal error on open: ${JSON.stringify(response)} =====`);
+          console.error(
+            `===== Fatal error on open: ${JSON.stringify(response)} =====`
+          );
           throw new FatalError();
         } else {
-          console.error(`===== Retriable error on open: ${JSON.stringify(response)} =====`);
+          console.error(
+            `===== Retriable error on open: ${JSON.stringify(response)} =====`
+          );
           throw new RetriableError();
         }
       },
@@ -79,43 +81,10 @@ export async function subscribe(
       },
     });
   } catch (error) {
-    console.error(`===== Error while subscribing to event stream: ${JSON.stringify(error)} =====`);
+    console.error(
+      `===== Error while subscribing to event stream: ${JSON.stringify(
+        error
+      )} =====`
+    );
   }
 }
-
-export const shouldProcessMessage = (
-  message: EventSourceMessage,
-  currentUserUuid: UUID
-): boolean => {
-  if (!message.event || !message.data || !message.id) {
-    console.error('Invalid message:', message);
-    return false;
-  }
-
-  const data = JSON.parse(message.data);
-  const auditUserUuid = data.auditUserUuid;
-
-  if (auditUserUuid === currentUserUuid) {
-    console.warn('Ignoring event from current user');
-    return false;
-  }
-
-  // Store notifications to prevent duplicate notifications
-  const savedUserEventsMap = getSavedUserEvents() || new Map<UUID, string[]>();
-  const events = savedUserEventsMap?.get(currentUserUuid) || [];
-
-  if (events.includes(message.id)) {
-    console.warn('Event already processed:', message.id);
-    return false;
-  }
-
-  const newEvents = [message.id, ...events];
-  // Clear old events
-  if (newEvents.length >= appConstant.MAX_USER_EVENTS_TO_STORE) {
-    newEvents.pop();
-  }
-  savedUserEventsMap.set(currentUserUuid, newEvents);
-  saveUserEvents(savedUserEventsMap);
-
-  return true;
-};

@@ -47,6 +47,17 @@ export type IGetUsersResponse = {
   totalElements: number;
 };
 
+export type UserEventPayload = {
+	user: IUser;
+  auditUserUuid: UUID;
+}
+
+export type UserChangeEvent = {
+  id: string;
+  type: string;
+  data: UserEventPayload;
+};
+
 export type UserEventMessage = {
   eventType: string;
   user: IUser;
