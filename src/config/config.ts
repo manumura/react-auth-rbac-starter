@@ -1,6 +1,7 @@
 const appConfig: {
   defaultRowsPerPage: number;
   baseUrl: string;
+  websocketBaseUrl: string;
   homeRoute: string;
   publicRoutes: string[];
   protectedRoutes: string[];
@@ -16,6 +17,7 @@ const appConfig: {
 } = {
   defaultRowsPerPage: 5,
   baseUrl: import.meta.env.VITE_BASE_URL as string,
+  websocketBaseUrl: import.meta.env.VITE_WEBSOCKET_BASE_URL as string,
   homeRoute : '/',
   publicRoutes: ['/login', '/register', '/forgot-password', '/reset-password'],
   protectedRoutes: ['/profile', '/edit-profile', '/users', '/create-user'],

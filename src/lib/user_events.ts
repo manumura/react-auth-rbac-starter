@@ -16,21 +16,23 @@ export function subscribeUserChangeEventsWs(
   currentUserUuid: UUID,
   ws: WebSocket
 ) {
-  if (!currentUserUuid) {
-    console.error('Invalid current user');
-    return;
-  }
-
   ws.onopen = () => {
     console.log('===== WebSocket connection opened =====');
   };
+
   ws.onmessage = (event: MessageEvent<string>) => {
     console.log('===== WebSocket message received =====', event.data);
     const userChangeEvent = JSON.parse(event.data) as UserChangeEvent;
 
-    if (!userChangeEvent) {
+    if (!userChangeEvent?.data || !userChangeEvent?.type || !userChangeEvent?.id) {
       console.error('Invalid data received from WebSocket');
       return;
+    }
+
+    const shouldProcess = shouldProcessEvent(currentUserUuid, userChangeEvent.data.auditUserUuid, userChangeEvent.id);
+    if (!shouldProcess) {
+      console.warn('Event already processed:', userChangeEvent.id);
+      return null;
     }
 
     const eventMessage = mapToUserEventMessage(
@@ -50,9 +52,11 @@ export function subscribeUserChangeEventsWs(
       autoClose: false,
     });
   };
+
   ws.onclose = () => {
     console.log('===== WebSocket connection closed =====');
   };
+
   ws.onerror = (error) => {
     console.error('===== WebSocket error =====', error);
   };
@@ -128,27 +132,11 @@ const mapToUserChangeEvent = (
   const data = JSON.parse(message.data);
   const auditUserUuid = data.auditUserUuid;
 
-  if (auditUserUuid === currentUserUuid) {
-    console.warn('Ignoring event from current user');
-    return null;
-  }
-
-  // Store notifications to prevent duplicate notifications
-  const savedUserEventsMap = getSavedUserEvents() || new Map<UUID, string[]>();
-  const events = savedUserEventsMap?.get(currentUserUuid) || [];
-
-  if (events.includes(message.id)) {
+  const shouldProcess = shouldProcessEvent(currentUserUuid, auditUserUuid, message.id);
+  if (!shouldProcess) {
     console.warn('Event already processed:', message.id);
     return null;
   }
-
-  const newEvents = [message.id, ...events];
-  // Clear old events
-  if (newEvents.length >= appConstant.MAX_USER_EVENTS_TO_STORE) {
-    newEvents.pop();
-  }
-  savedUserEventsMap.set(currentUserUuid, newEvents);
-  saveUserEvents(savedUserEventsMap);
 
   return {
     id: message.id,
@@ -159,6 +147,31 @@ const mapToUserChangeEvent = (
     },
   };
 };
+
+const shouldProcessEvent = (currentUserUuid: UUID, messageUserUuid: UUID, messageId: string): boolean => {
+  if (messageUserUuid === currentUserUuid) {
+    console.warn('Ignoring event from current user');
+    return false;
+  }
+
+  // Store notifications to prevent duplicate notifications
+  const savedUserEventsMap = getSavedUserEvents() || new Map<UUID, string[]>();
+  const events = savedUserEventsMap?.get(currentUserUuid) || [];
+
+  if (events.includes(messageId)) {
+    console.warn('Event already processed:', messageId);
+    return false;
+  }
+
+  const newEvents = [messageId, ...events];
+  // Clear old events
+  if (newEvents.length >= appConstant.MAX_USER_EVENTS_TO_STORE) {
+    newEvents.pop();
+  }
+  savedUserEventsMap.set(currentUserUuid, newEvents);
+  saveUserEvents(savedUserEventsMap);
+  return true;
+}
 
 const mapToUserEventMessage = (
   payload: UserEventPayload,

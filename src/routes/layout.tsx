@@ -10,9 +10,10 @@ import TopBarProgress from 'react-topbar-progress-indicator';
 import Navbar from '../components/Navbar';
 import { clearAuthentication } from '../lib/storage';
 import useUserStore from '../lib/user-store';
-import { subscribeUserChangeEvents, subscribeUserChangeEventsWs } from '../lib/user_events';
+import { subscribeUserChangeEventsWs } from '../lib/user_events';
 import { getCurrentUserFromStorage, isAdmin } from '../lib/utils';
 import { IAuthenticatedUser } from '../types/custom-types';
+import appConfig from '../config/config';
 
 export const loader: LoaderFunction<any> = async () => {
   try {
@@ -45,8 +46,8 @@ export default function Layout() {
 
     if (userIsAdmin) {
       console.log('===== Subscribing to user change events =====');
-      // TODO wss
-      ws = new WebSocket('ws://localhost:9002/api/v1/ws/events/users');
+      const wsUrl = `${appConfig.websocketBaseUrl}/api/v1/ws/events/users`;
+      ws = new WebSocket(wsUrl);
       subscribeUserChangeEventsWs(currentUserUuid, ws);
       // subscribeUserChangeEvents(currentUserUuid, userChangeEventAbortController);
     }
