@@ -16,7 +16,7 @@ import FormSelect from '../components/FormSelect';
 import { appMessages } from '../config/constant';
 import { createUser } from '../lib/api';
 import useMessageStore from '../lib/message-store';
-import { getCurrentUserFromStorage, isAdmin } from '../lib/utils';
+import { getCurrentUserFromStorage, isAdmin } from '../lib/user-utils';
 import { ValidationError } from '../types/custom-errors';
 
 export const loader: LoaderFunction<any> = async () => {

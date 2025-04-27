@@ -22,9 +22,9 @@ import { getUserByUuid, updateUser } from '../lib/api';
 import useMessageStore from '../lib/message-store';
 import {
   getCurrentUserFromStorage,
-  isAdmin,
-  validatePassword,
-} from '../lib/utils';
+  isAdmin
+} from '../lib/user-utils';
+import { validatePassword } from '../lib/utils';
 import { IUser } from '../types/custom-types';
 
 export const loader: LoaderFunction<any> = async ({

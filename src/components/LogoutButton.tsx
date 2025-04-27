@@ -1,4 +1,3 @@
-import { FacebookLoginClient } from '@greatsumini/react-facebook-login';
 import { googleLogout } from '@react-oauth/google';
 import { useEffect } from 'react';
 import { LoaderFunction, redirect, useFetcher } from 'react-router-dom';
@@ -14,9 +13,6 @@ export async function handleLogout() {
   useUserStore.getState().setUser(null);
   clearAuthentication();
   googleLogout();
-  FacebookLoginClient.logout(() => {
-    console.log('Logout completed!');
-  });
 }
 
 export const action: LoaderFunction<any> = async () => {

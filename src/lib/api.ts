@@ -8,10 +8,9 @@ import {
   LoginResponse,
   MessageResponse,
 } from '../types/custom-types';
-import { ProfileSuccessResponse } from '@greatsumini/react-facebook-login';
+import { getUserFromIdToken } from './jwt.utils';
 import { clearAuthentication, saveAuthentication } from './storage';
 import useUserStore from './user-store';
-import { getUserFromIdToken } from './jwt.utils';
 
 const BASE_URL = appConfig.baseUrl;
 const REFRESH_TOKEN_ENDPOINT = '/v1/refresh-token';
@@ -55,9 +54,15 @@ axiosInstance.interceptors.response.use(
     }
 
     try {
-      const { accessToken, accessTokenExpiresAt, refreshToken, idToken } = await postRefreshToken();
+      const { accessToken, accessTokenExpiresAt, refreshToken, idToken } =
+        await postRefreshToken();
 
-      saveAuthentication(accessToken, accessTokenExpiresAt, refreshToken, idToken);
+      saveAuthentication(
+        accessToken,
+        accessTokenExpiresAt,
+        refreshToken,
+        idToken
+      );
       const user = await getUserFromIdToken(idToken);
       if (user) {
         useUserStore.getState().setUser(user);
@@ -82,11 +87,10 @@ axiosInstance.interceptors.response.use(
 ////////////////////////////////////////////////////////////////
 // Refresh token API
 const postRefreshToken = async (): Promise<LoginResponse> => {
-  return await axiosPublicInstance.post(
-    REFRESH_TOKEN_ENDPOINT,
-    {},
-  ).then((response) => response.data);
-}
+  return await axiosPublicInstance
+    .post(REFRESH_TOKEN_ENDPOINT, {})
+    .then((response) => response.data);
+};
 
 ////////////////////////////////////////////////////////////////
 // Public APIs
@@ -110,14 +114,6 @@ export const login = async (
 export const googleLogin = async (token: string): Promise<LoginResponse> => {
   return axiosPublicInstance
     .post('/v1/oauth2/google', { token })
-    .then((response) => response.data);
-};
-
-export const facebookLogin = async (
-  profile: ProfileSuccessResponse
-): Promise<LoginResponse> => {
-  return axiosPublicInstance
-    .post('/v1/oauth2/facebook', profile)
     .then((response) => response.data);
 };
 
@@ -185,9 +181,7 @@ export const updateProfile = async (name: string): Promise<IUser> => {
 };
 
 export const deleteProfile = async (): Promise<IUser> => {
-  return axiosInstance
-    .delete('/v1/profile')
-    .then((response) => response.data);
+  return axiosInstance.delete('/v1/profile').then((response) => response.data);
 };
 
 export const updatePassword = async (

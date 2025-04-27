@@ -10,7 +10,6 @@ const appConfig: {
   reCaptchaKey: string;
   idTokenPublicKeyAsBase64: string;
   googleClientId: string;
-  facebookAppId: string;
   nodeEnv: string;
   domain: string;
   plausibleApiHost?: string;
@@ -26,7 +25,6 @@ const appConfig: {
   reCaptchaKey: import.meta.env.VITE_RECAPTCHA_SITE_KEY ?? '',
   idTokenPublicKeyAsBase64: import.meta.env.VITE_ID_TOKEN_PUBLIC_KEY_AS_BASE64 as string,
   googleClientId: import.meta.env.VITE_GOOGLE_CLIENT_ID as string,
-  facebookAppId: import.meta.env.VITE_FACEBOOK_APP_ID as string,
   nodeEnv: import.meta.env.NODE_ENV ?? '',
   domain: 'manumura.com',
   plausibleApiHost: 'https://plausible.manumura.com',

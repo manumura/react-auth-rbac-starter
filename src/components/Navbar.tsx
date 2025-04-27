@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { isAdmin } from '../lib/utils';
+import { isAdmin } from '../lib/user-utils';
 import { IAuthenticatedUser } from '../types/custom-types';
 import LoginButton from './LoginButton';
 import LogoutButton from './LogoutButton';

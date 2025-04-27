@@ -11,7 +11,7 @@ import Navbar from '../components/Navbar';
 import { clearAuthentication } from '../lib/storage';
 import useUserStore from '../lib/user-store';
 import { subscribeUserChangeEventsWs } from '../lib/user_events';
-import { getCurrentUserFromStorage, isAdmin } from '../lib/utils';
+import { getCurrentUserFromStorage, isAdmin } from '../lib/user-utils';
 import { IAuthenticatedUser } from '../types/custom-types';
 import appConfig from '../config/config';
 

@@ -1,8 +1,3 @@
-import {
-  FailResponse,
-  ProfileSuccessResponse,
-  SuccessResponse,
-} from '@greatsumini/react-facebook-login';
 import { CredentialResponse } from '@react-oauth/google';
 import { AxiosError } from 'axios';
 import { useEffect, useState } from 'react';
@@ -25,13 +20,14 @@ import FacebookLoginButton from '../components/FacebookLoginButton';
 import FormInput from '../components/FormInput';
 import GoogleLoginButton from '../components/GoogleLoginButton';
 import LoadingSpinner from '../components/LoadingSpinner';
+import appConfig from '../config/config';
 import { appConstant, appMessages, errorMessages } from '../config/constant';
 import { login, validateRecaptcha } from '../lib/api';
 import { getUserFromIdToken } from '../lib/jwt.utils';
 import useMessageStore from '../lib/message-store';
 import { saveAuthentication } from '../lib/storage';
 import useUserStore from '../lib/user-store';
-import { getCurrentUserFromStorage } from '../lib/utils';
+import { getCurrentUserFromStorage } from '../lib/user-utils';
 import { ValidationError } from '../types/custom-errors';
 
 export const loader: LoaderFunction<any> = async () => {
@@ -111,7 +107,7 @@ export const action: ActionFunction<any> = async ({
 
     useMessageStore.getState().setMessage({
       type: appMessages.LOGIN_SUCCESS.type,
-      text: appMessages.LOGIN_SUCCESS.text.replace("${name}", user.name),
+      text: appMessages.LOGIN_SUCCESS.text.replace('${name}', user.name),
       id: time,
     });
     return redirect('/');
@@ -281,32 +277,17 @@ export default function Login(): React.ReactElement {
     fetcher.submit(payload, { method: 'post', action: '/oauth/google' });
   };
 
-  const onFacebookLoginFailed = (error: FailResponse | null) => {
-    console.error('Login Failed!', error);
-    toast('Login failed', {
-      type: 'error',
-      position: 'bottom-right',
-    });
-  };
+  const onFacebookLoginClicked = () => {
+    const url = appConfig.baseUrl + '/api/v1/oauth2/facebook';
+    window.location.href = url;
 
-  const onFacebookLoginSuccess = (response: SuccessResponse | null) => {
-    console.log('Login Success!', response);
-  };
-
-  const onFacebookProfileSuccess = (
-    response: ProfileSuccessResponse | null
-  ) => {
-    if (!response) {
-      toast('Login failed', {
-        type: 'error',
-        position: 'bottom-right',
-      });
-      return;
-    }
-
-    const formData = new FormData();
-    formData.append('profile', JSON.stringify(response));
-    fetcher.submit(formData, { method: 'post', action: '/oauth/facebook' });
+    // Open the URL in a new window
+    // const width = 600;
+    // const height = 600;
+    // const left = window.screen.width / 2 - width / 2;
+    // const top = window.screen.height / 2 - height / 2;
+    // const features = `width=${width},height=${height},left=${left},top=${top},popup=yes`;
+    // window.open(url, 'facebookLoginWindow', features);
   };
 
   return (
@@ -356,11 +337,7 @@ export default function Login(): React.ReactElement {
                 onGoogleLoginSuccess={onGoogleLoginSuccess}
                 onGoogleLoginFailed={onGoogleLoginFailed}
               />
-              <FacebookLoginButton
-                onFacebookLoginFailed={onFacebookLoginFailed}
-                onFacebookLoginSuccess={onFacebookLoginSuccess}
-                onFacebookProfileSuccess={onFacebookProfileSuccess}
-              />
+              <FacebookLoginButton onClick={onFacebookLoginClicked} />
             </>
           )}
         </Form>

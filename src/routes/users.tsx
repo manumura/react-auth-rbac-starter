@@ -19,7 +19,7 @@ import { Pagination } from '../components/Pagination';
 import appConfig from '../config/config';
 import { deleteUser, getUsers } from '../lib/api';
 import useMessageStore from '../lib/message-store';
-import { getCurrentUserFromStorage, isAdmin } from '../lib/utils';
+import { getCurrentUserFromStorage, isAdmin } from '../lib/user-utils';
 import { ValidationError } from '../types/custom-errors';
 import {
   IOauthProvider,
@@ -130,6 +130,7 @@ export default function Users() {
       }
     }
 
+    // TODO duplicate message
     if (response?.user) {
       const time = response?.time;
       const toastId = `users-success-${time}`;
