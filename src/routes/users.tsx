@@ -103,13 +103,7 @@ export const action: ActionFunction<any> = async ({
 };
 
 export default function Users() {
-  const { users, totalElements, page, pageSize } = useLoaderData() as {
-    users: IUser[];
-    totalElements: number;
-    page: number;
-    pageSize: number;
-    role: string;
-  };
+  const { users, totalElements, page, pageSize } = useLoaderData();
   const response = useActionData() as DeleteUserResponse;
   const [selectedUser, setSelectedUser] = useState<IUser | null>(null);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
