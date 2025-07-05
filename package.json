@@ -14,8 +14,11 @@
   "dependencies": {
     "@microsoft/fetch-event-source": "^2.0.1",
     "@react-oauth/google": "^0.12.2",
-    "@tailwindcss/vite": "^4.1.10",
-    "axios": "^1.9.0",
+    "@tailwindcss/vite": "^4.1.11",
+    "@zxcvbn-ts/core": "^3.0.4",
+    "@zxcvbn-ts/language-common": "^3.0.4",
+    "@zxcvbn-ts/language-en": "^3.0.2",
+    "axios": "^1.10.0",
     "clsx": "^2.1.1",
     "jose": "^6.0.11",
     "moment": "^2.30.1",
@@ -24,28 +27,28 @@
     "react-dom": "^19.1.0",
     "react-dropzone": "^14.3.8",
     "react-google-recaptcha-v3": "^1.11.0",
-    "react-hook-form": "^7.57.0",
+    "react-hook-form": "^7.59.0",
     "react-icons": "^5.5.0",
-    "react-router-dom": "^7.6.2",
+    "react-router-dom": "^7.6.3",
     "react-toastify": "^11.0.5",
     "react-topbar-progress-indicator": "^4.1.1",
     "react-use": "^17.6.0",
-    "tailwindcss": "^4.1.10",
-    "zustand": "^5.0.5"
+    "tailwindcss": "^4.1.11",
+    "zustand": "^5.0.6"
   },
   "devDependencies": {
-    "@types/node": "^24.0.1",
+    "@types/node": "^24.0.10",
     "@types/react": "^19.1.8",
     "@types/react-dom": "^19.1.6",
     "@types/react-router-dom": "^5.3.3",
     "@typescript-eslint/eslint-plugin": "^7.15.0",
     "@typescript-eslint/parser": "^7.15.0",
-    "@vitejs/plugin-react": "^4.5.2",
+    "@vitejs/plugin-react": "^4.6.0",
     "daisyui": "^5.0.43",
     "eslint": "^8.57.0",
     "eslint-plugin-react-hooks": "^5.2.0",
     "eslint-plugin-react-refresh": "^0.4.20",
     "typescript": "^5.8.3",
-    "vite": "^6.3.5"
+    "vite": "^7.0.2"
   }
 }

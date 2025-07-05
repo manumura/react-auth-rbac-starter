@@ -1,3 +1,6 @@
+import { zxcvbn, zxcvbnOptions } from '@zxcvbn-ts/core';
+import * as zxcvbnCommonPackage from '@zxcvbn-ts/language-common';
+import * as zxcvbnEnPackage from '@zxcvbn-ts/language-en';
 import { AxiosError } from 'axios';
 import React, { useEffect, useState } from 'react';
 import { useGoogleReCaptcha } from 'react-google-recaptcha-v3';
@@ -18,6 +21,17 @@ import { register, validateRecaptcha } from '../lib/api';
 import useMessageStore from '../lib/message-store';
 import { validatePassword } from '../lib/utils';
 import { ValidationError } from '../types/custom-errors';
+
+// https://zxcvbn-ts.github.io/zxcvbn/guide/getting-started/
+const options = {
+  translations: zxcvbnEnPackage.translations,
+  graphs: zxcvbnCommonPackage.adjacencyGraphs,
+  dictionary: {
+    ...zxcvbnCommonPackage.dictionary,
+    ...zxcvbnEnPackage.dictionary,
+  },
+};
+zxcvbnOptions.setOptions(options);
 
 export const action = async ({
   request,
@@ -76,9 +90,7 @@ export const action = async ({
       text: appMessages.REGISTER_SUCCESS.text,
       id: time,
     });
-    return redirect(
-      '/login'
-    );
+    return redirect('/login');
   } catch (error) {
     // You cannot `useLoaderData` in an errorElemen
     console.error(error);
@@ -122,6 +134,18 @@ export default function Register(): React.ReactElement {
   const submit = useSubmit();
   const { executeRecaptcha } = useGoogleReCaptcha();
   const isLoading = navigation.state === 'submitting';
+  const [passwordScore, setPasswordScore] = useState(-1);
+
+  const calculatePasswordScore = (password: string): number => {
+    const res = zxcvbn(password);
+    setPasswordScore(res.score);
+     // 0 # too guessable: risky password. (guesses < 10^3)
+    // 1 # very guessable: protection from throttled online attacks. (guesses < 10^6)
+    // 2 # somewhat guessable: protection from unthrottled online attacks. (guesses < 10^8)
+    // 3 # safely unguessable: moderate protection from offline slow-hash scenario. (guesses < 10^10)
+    // 4 # very unguessable: strong protection from offline slow-hash scenario. (guesses >= 10^10)
+    return res.score;
+  };
 
   const iconEye = <IoEyeSharp size={24} className='cursor-pointer' />;
   const iconEyeOff = <IoEyeOffSharp size={24} className='cursor-pointer' />;
@@ -185,7 +209,7 @@ export default function Register(): React.ReactElement {
   const {
     clearErrors,
     getValues,
-    formState: { isValid },
+    formState: { isValid, errors },
     watch,
   } = methods;
 
@@ -214,6 +238,9 @@ export default function Register(): React.ReactElement {
       message: 'Password is max 70 characters',
     },
     validate: (value: string): string | undefined => {
+      // TODO: use zxcvbn to calculate password strength
+      const score = calculatePasswordScore(value);
+      console.log('zxcvbn score:', score);
       const { isValid, message } = validatePassword(value);
       if (!isValid) {
         return message || 'Password is invalid';
@@ -230,7 +257,9 @@ export default function Register(): React.ReactElement {
       if (watch('password') !== value) {
         return 'Passwords do no match';
       }
-      clearErrors('password');
+      if (errors.password?.message === 'Passwords do no match') {
+        clearErrors('password');
+      }
     },
   };
 
