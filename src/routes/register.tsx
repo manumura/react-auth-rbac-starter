@@ -139,11 +139,12 @@ export default function Register(): React.ReactElement {
   const calculatePasswordScore = (password: string): number => {
     const res = zxcvbn(password);
     setPasswordScore(res.score);
-     // 0 # too guessable: risky password. (guesses < 10^3)
-    // 1 # very guessable: protection from throttled online attacks. (guesses < 10^6)
-    // 2 # somewhat guessable: protection from unthrottled online attacks. (guesses < 10^8)
-    // 3 # safely unguessable: moderate protection from offline slow-hash scenario. (guesses < 10^10)
-    // 4 # very unguessable: strong protection from offline slow-hash scenario. (guesses >= 10^10)
+    console.log('zxcvbn score:', passwordScore);
+    // 0 Very weak # too guessable: risky password. (guesses < 10^3)
+    // 1 Weak # very guessable: protection from throttled online attacks. (guesses < 10^6)
+    // 2 Medium # somewhat guessable: protection from unthrottled online attacks. (guesses < 10^8)
+    // 3 Strong # safely unguessable: moderate protection from offline slow-hash scenario. (guesses < 10^10)
+    // 4 Very strong # very unguessable: strong protection from offline slow-hash scenario. (guesses >= 10^10)
     return res.score;
   };
 
