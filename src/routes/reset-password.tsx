@@ -78,8 +78,12 @@ export const action: ActionFunction<any> = async ({
       });
     }
 
-    const { isValid: isPasswordValid, message } = validatePassword(password);
+    const { isValid: isPasswordValid, errors } = validatePassword(password);
     if (!isPasswordValid) {
+      let message = '';
+      if (errors.length > 0) {
+        message = errors.join(' ');
+      }
       throw new ValidationError(message || 'Password is invalid.', {
         password,
       });
@@ -95,9 +99,7 @@ export const action: ActionFunction<any> = async ({
       text: appMessages.PASSWORD_RESET_SUCCESS.text,
       id: time,
     });
-    return redirect(
-      '/login'
-    );
+    return redirect('/login');
   } catch (error) {
     // You cannot `useLoaderData` in an errorElemen
     console.error(error);
@@ -225,8 +227,12 @@ export default function ResetPassword(): React.ReactElement {
       message: 'Password is max 70 characters',
     },
     validate: (value: string): string | undefined => {
-      const { isValid, message } = validatePassword(value);
+      const { isValid, errors } = validatePassword(value);
       if (!isValid) {
+        let message = '';
+        if (errors.length > 0) {
+          message = errors.join('\n');
+        }
         return message || 'Password is invalid';
       }
       if (watch('passwordConfirm') && watch('passwordConfirm') !== value) {

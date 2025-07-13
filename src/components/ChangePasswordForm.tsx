@@ -73,8 +73,12 @@ export default function ChangePasswordForm({
       message: 'Password is max 70 characters',
     },
     validate: (value: string): string | undefined => {
-      const { isValid, message } = validatePassword(value);
+      const { isValid, errors } = validatePassword(value);
       if (!isValid) {
+        let message = '';
+        if (errors.length > 0) {
+          message = errors.join('\n');
+        }
         return message || 'Password is invalid';
       }
       if (watch('newPasswordConfirm') && watch('newPasswordConfirm') !== value) {

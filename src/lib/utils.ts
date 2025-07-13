@@ -1,7 +1,6 @@
 import { redirect } from 'react-router-dom';
 
 export const sleep = async (ms: number): Promise<void> => {
-  // return new Promise((resolve, reject) => setTimeout(resolve, ms));
   return new Promise((resolve) => setTimeout(resolve, ms));
 };
 
@@ -16,41 +15,40 @@ export function redirectToPathFrom(path: string, request: Request): Response {
 export const passwordRules = {
   isLengthValid: {
     regex: /^.{8,70}$/,
-    message: 'Password must be minimum 8 and maximum 70 characters long.',
+    message: 'Minimum 8 and maximum 70 characters long.',
   },
   hasNumber: {
     regex: /\d/,
-    message: 'Password must contain at least 1 number.',
+    message: 'At least 1 number.',
   },
   hasLowercaseCharacter: {
     regex: /[a-z]/,
-    message: 'Password must contain 1 lowercase letter.',
+    message: 'At least 1 lowercase letter.',
   },
   hasUppercaseCharacter: {
     regex: /[A-Z]/,
-    message: 'Password must contain 1 uppercase letter.',
+    message: 'At least 1 uppercase letter.',
   },
   hasSpecialCharacter: {
     regex: /[^A-Za-z0-9]/,
-    message: 'Password must contain 1 special character.',
+    message: 'At least 1 special character.',
   },
 };
 
 export function validatePassword(password: string): {
   isValid: boolean;
-  message: string;
+  errors: string[];
 } {
-  let message: string = '';
+  const errors: string[] = [];
   let isValid: boolean = true;
-   // @ts-expect-error - skip variable usage check for now
+  // @ts-expect-error - skip variable usage check for now
   for (const [name, rule] of Object.entries(passwordRules)) {
     const valid = rule.regex.test(password);
     if (!valid) {
       isValid = false;
-      message += rule.message + ' ';
+      errors.push(rule.message);
     }
   }
-  message = message.trim();
 
-  return { message, isValid };
+  return { errors, isValid };
 }

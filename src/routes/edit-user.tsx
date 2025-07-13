@@ -20,10 +20,7 @@ import FormSelect from '../components/FormSelect';
 import { appMessages } from '../config/constant';
 import { getUserByUuid, updateUser } from '../lib/api';
 import useMessageStore from '../lib/message-store';
-import {
-  getCurrentUserFromStorage,
-  isAdmin
-} from '../lib/user-utils';
+import { getCurrentUserFromStorage, isAdmin } from '../lib/user-utils';
 import { validatePassword } from '../lib/utils';
 import { IUser } from '../types/custom-types';
 
@@ -94,8 +91,12 @@ export const action: ActionFunction<any> = async ({
   }
 
   if (password) {
-    const { isValid: isPasswordValid, message } = validatePassword(password);
+    const { isValid: isPasswordValid, errors } = validatePassword(password);
     if (!isPasswordValid) {
+      let message = '';
+      if (errors.length > 0) {
+        message = errors.join(' ');
+      }
       return { error: new Error(message || 'Password is invalid'), time };
     }
   }
@@ -111,9 +112,7 @@ export const action: ActionFunction<any> = async ({
       text: appMessages.USER_UPDATE_SUCCESS.text,
       id: time,
     });
-    return redirect(
-      '/users'
-    );
+    return redirect('/users');
   } catch (error) {
     // You cannot `useLoaderData` in an errorElemen
     console.error(error);
@@ -251,8 +250,12 @@ export default function EditUser(): React.ReactElement {
         return;
       }
 
-      const { isValid, message } = validatePassword(value);
+      const { isValid, errors } = validatePassword(value);
       if (!isValid) {
+        let message = '';
+        if (errors.length > 0) {
+          message = errors.join('\n');
+        }
         return message || 'Password is invalid';
       }
       if (watch('passwordConfirm') && watch('passwordConfirm') !== value) {
@@ -280,7 +283,8 @@ export default function EditUser(): React.ReactElement {
     { label: 'User', value: 'USER' },
   ];
 
-  const shouldShowChangePasswordForm = !user.providers || user.providers?.length <= 0;
+  const shouldShowChangePasswordForm =
+    !user.providers || user.providers?.length <= 0;
 
   const editUserForm = (
     <div className='w-full py-10'>

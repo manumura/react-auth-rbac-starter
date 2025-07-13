@@ -32,6 +32,8 @@ export default {
 ## Update dependencies
 
 `
+npm run dev -- --host
+
 ncu -u -x eslint -x @typescript-eslint/eslint-plugin -x @typescript-eslint/parser
 
 docker build -t manumura/nginx-react-auth-rbac-starter:latest .

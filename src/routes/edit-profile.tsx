@@ -56,9 +56,7 @@ export const action = async ({
         text: appMessages.PROFILE_UPDATE_SUCCESS.text,
         id: time,
       });
-      return redirect(
-        '/profile',
-      );
+      return redirect('/profile');
     } else if (intent === 'delete-profile') {
       const user = await removeProfile();
       if (!user) {
@@ -71,9 +69,7 @@ export const action = async ({
         text: appMessages.PROFILE_DELETE_SUCCESS.text,
         id: time,
       });
-      return redirect(
-        '/',
-      );
+      return redirect('/');
     } else if (intent === 'change-password') {
       const oldPassword = formData.get('oldPassword') as string;
       const newPassword = formData.get('newPassword') as string;
@@ -90,9 +86,7 @@ export const action = async ({
         text: appMessages.PASSWORD_CHANGE_SUCCESS.text,
         id: time,
       });
-      return redirect(
-        '/profile',
-      );
+      return redirect('/profile');
     }
 
     console.error('Invalid intent', intent);
@@ -120,8 +114,12 @@ async function changePassword(
     throw new Error('Invalid form data');
   }
 
-  const { isValid: isPasswordValid, message } = validatePassword(newPassword);
+  const { isValid: isPasswordValid, errors } = validatePassword(newPassword);
   if (!isPasswordValid) {
+    let message = '';
+    if (errors.length > 0) {
+      message = errors.join(' ');
+    }
     throw new Error(message || 'Password is invalid');
   }
 
@@ -309,7 +307,8 @@ export default function EditProfile(): React.ReactElement {
   } = changePasswordMethods;
   // ------------------------------------------------
 
-  const shouldShowChangePasswordForm = !user.providers || user.providers?.length <= 0;
+  const shouldShowChangePasswordForm =
+    !user.providers || user.providers?.length <= 0;
 
   return (
     <section className='min-h-screen bg-slate-200'>

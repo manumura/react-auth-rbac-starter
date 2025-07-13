@@ -21,6 +21,7 @@ import { register, validateRecaptcha } from '../lib/api';
 import useMessageStore from '../lib/message-store';
 import { validatePassword } from '../lib/utils';
 import { ValidationError } from '../types/custom-errors';
+import PasswordStrengthMeter from '../components/PasswordStrengthMeter';
 
 // https://zxcvbn-ts.github.io/zxcvbn/guide/getting-started/
 const options = {
@@ -70,8 +71,12 @@ export const action = async ({
       });
     }
 
-    const { isValid: isPasswordValid, message } = validatePassword(password);
+    const { isValid: isPasswordValid, errors } = validatePassword(password);
     if (!isPasswordValid) {
+      let message = '';
+      if (errors.length > 0) {
+        message = errors.join(' ');
+      }
       throw new ValidationError(message || 'Password is invalid.', {
         name,
         email,
@@ -139,12 +144,6 @@ export default function Register(): React.ReactElement {
   const calculatePasswordScore = (password: string): number => {
     const res = zxcvbn(password);
     setPasswordScore(res.score);
-    console.log('zxcvbn score:', passwordScore);
-    // 0 Very weak # too guessable: risky password. (guesses < 10^3)
-    // 1 Weak # very guessable: protection from throttled online attacks. (guesses < 10^6)
-    // 2 Medium # somewhat guessable: protection from unthrottled online attacks. (guesses < 10^8)
-    // 3 Strong # safely unguessable: moderate protection from offline slow-hash scenario. (guesses < 10^10)
-    // 4 Very strong # very unguessable: strong protection from offline slow-hash scenario. (guesses >= 10^10)
     return res.score;
   };
 
@@ -230,20 +229,22 @@ export default function Register(): React.ReactElement {
   };
   const passwordConstraints = {
     required: { value: true, message: 'Password is required' },
-    minLength: {
-      value: 8,
-      message: 'Password is min 8 characters',
-    },
-    maxLength: {
-      value: 70,
-      message: 'Password is max 70 characters',
-    },
+    // minLength: {
+    //   value: 8,
+    //   message: 'Password is min 8 characters',
+    // },
+    // maxLength: {
+    //   value: 70,
+    //   message: 'Password is max 70 characters',
+    // },
     validate: (value: string): string | undefined => {
-      // TODO: use zxcvbn to calculate password strength
-      const score = calculatePasswordScore(value);
-      console.log('zxcvbn score:', score);
-      const { isValid, message } = validatePassword(value);
+      calculatePasswordScore(value);
+      const { isValid, errors } = validatePassword(value);
       if (!isValid) {
+        let message = '';
+        if (errors.length > 0) {
+          message = errors.join('\n');
+        }
         return message || 'Password is invalid';
       }
       if (watch('passwordConfirm') && watch('passwordConfirm') !== value) {
@@ -295,6 +296,9 @@ export default function Register(): React.ReactElement {
             iconEnd={icon}
             onClickIconEnd={onPasswordToggle}
           />
+          {passwordScore >= 0 && (
+            <PasswordStrengthMeter passwordScore={passwordScore} />
+          )}
           <FormInput
             label='Confirm Password'
             name='passwordConfirm'
