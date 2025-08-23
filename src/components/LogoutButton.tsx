@@ -26,6 +26,7 @@ export const action: LoaderFunction<any> = async () => {
     });
     return redirect('/');
   } catch (error) {
+    console.error('Logout failed', error);
     return 'failed';
   }
 };
@@ -52,7 +53,7 @@ const LogoutButton = ({ id }: { id: string }) => {
     </fetcher.Form>
   );
   const btnLoading = (
-    <button id={id} className='btn-outline btn'>
+    <button id={id} className='btn btn-disabled btn-outline'>
       <span className='loading loading-spinner'></span>
       Logout
     </button>
