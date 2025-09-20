@@ -19,12 +19,12 @@ export const loader: LoaderFunction<any> = async ({
   const refreshToken = searchParams.get('refresh_token');
 
   if (!idToken || !accessToken || !refreshToken) {
-    throw new Error('Invalid response');
+    throw new Error('Login failed. Please try again.');
   }
 
   const user = await getUserFromIdToken(idToken);
   if (!user) {
-    throw new Error('Invalid user');
+    throw new Error('Login failed. Please try again.');
   }
 
   saveAuthentication(accessToken, accessTokenExpiresAt, refreshToken, idToken);
