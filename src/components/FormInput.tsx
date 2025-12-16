@@ -61,12 +61,12 @@ const FormInput = ({
         <input
           type={type}
           placeholder={placeholder}
-          className='input w-full rounded-2xl appearance-none focus:outline-hidden py-2 px-4'
+          className={`input w-full rounded-2xl appearance-none focus:outline-hidden py-2 px-4 ${iconEnd ? 'pr-12' : ''}`}
           {...register(name, constraints)}
         />
         {iconEnd && (
           <span className='flex items-center' onClick={onClickIconEnd}>
-            <span className='-ml-10 absolute'>{iconEnd}</span>
+            <span className='-ml-10 absolute z-10 cursor-pointer'>{iconEnd}</span>
           </span>
         )}
       </div>
