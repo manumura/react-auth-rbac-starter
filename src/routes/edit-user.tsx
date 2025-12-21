@@ -1,8 +1,8 @@
-import { AxiosError } from 'axios';
-import { UUID } from 'crypto';
-import { useEffect, useState } from 'react';
-import { FormProvider, useForm } from 'react-hook-form';
-import { IoEyeOffSharp, IoEyeSharp } from 'react-icons/io5';
+import { AxiosError } from "axios";
+import { UUID } from "crypto";
+import { useEffect, useState } from "react";
+import { FormProvider, useForm } from "react-hook-form";
+import { IoEyeOffSharp, IoEyeSharp } from "react-icons/io5";
 import {
   ActionFunction,
   Form,
@@ -13,16 +13,17 @@ import {
   useLoaderData,
   useNavigate,
   useNavigation,
-} from 'react-router-dom';
-import { toast } from 'react-toastify';
-import FormInput from '../components/FormInput';
-import FormSelect from '../components/FormSelect';
-import { appMessages } from '../config/constant';
-import { getUserByUuid, updateUser } from '../lib/api';
-import useMessageStore from '../lib/message-store';
-import { getCurrentUserFromStorage, isAdmin } from '../lib/user-utils';
-import { validatePassword } from '../lib/utils';
-import { IUser } from '../types/custom-types';
+} from "react-router-dom";
+import { toast } from "react-toastify";
+import FormInput from "../components/FormInput";
+import FormSelect from "../components/FormSelect";
+import { appMessages } from "../config/constant";
+import { getProfile, getUserByUuid, updateUser } from "../lib/api";
+import useMessageStore from "../lib/message-store";
+import useUserStore from "../lib/user-store";
+import { isAdmin } from "../lib/user-utils";
+import { validatePassword } from "../lib/utils";
+import { IUser } from "../types/custom-types";
 
 export const loader: LoaderFunction<any> = async ({
   params,
@@ -31,28 +32,35 @@ export const loader: LoaderFunction<any> = async ({
   params: Params;
 }) => {
   try {
-    const currentUser = await getCurrentUserFromStorage();
+    let currentUser = useUserStore.getState().user;
+    if (!currentUser) {
+      currentUser = await getProfile();
+      useUserStore.getState().setUser(currentUser);
+    }
+    console.log(
+      `===== Current user from loader: ${JSON.stringify(currentUser)} =====`
+    );
     if (!currentUser || !isAdmin(currentUser)) {
-      console.error('No logged in ADMIN user');
-      return redirect('/');
+      console.error("No logged in ADMIN user");
+      return redirect("/");
     }
 
     const userUuid = params.userUuid as UUID;
     if (!userUuid) {
-      console.error('No user UUID found');
-      return redirect('/');
+      console.error("No user UUID found");
+      return redirect("/");
     }
 
     const user = await getUserByUuid(userUuid);
     if (!user) {
-      console.error('Invalid user UUID');
-      return redirect('/');
+      console.error("Invalid user UUID");
+      return redirect("/");
     }
 
     return { user };
   } catch (error) {
     console.error(error);
-    return redirect('/');
+    return redirect("/");
   }
 };
 
@@ -70,41 +78,41 @@ export const action: ActionFunction<any> = async ({
     }
 > => {
   const formData = await request.formData();
-  const email = formData.get('email') as string;
-  const name = formData.get('name') as string;
-  const role = formData.get('role') as string;
-  const password = formData.get('password') as string;
-  const passwordConfirm = formData.get('passwordConfirm') as string;
+  const email = formData.get("email") as string;
+  const name = formData.get("name") as string;
+  const role = formData.get("role") as string;
+  const password = formData.get("password") as string;
+  const passwordConfirm = formData.get("passwordConfirm") as string;
   const time = new Date().getTime();
 
   const userUuid = params.userUuid as UUID;
   if (!userUuid) {
-    return { error: new Error('Invalid user UUID'), time };
+    return { error: new Error("Invalid user UUID"), time };
   }
 
   if (!name || !role) {
-    return { error: new Error('Invalid form data'), time };
+    return { error: new Error("Invalid form data"), time };
   }
 
   if (password !== passwordConfirm) {
-    return { error: new Error('Passwords do not match'), time };
+    return { error: new Error("Passwords do not match"), time };
   }
 
   if (password) {
     const { isValid: isPasswordValid, errors } = validatePassword(password);
     if (!isPasswordValid) {
-      let message = '';
+      let message = "";
       if (errors.length > 0) {
-        message = errors.join(' ');
+        message = errors.join(" ");
       }
-      return { error: new Error(message || 'Password is invalid'), time };
+      return { error: new Error(message || "Password is invalid"), time };
     }
   }
 
   try {
     const user = await updateUser(userUuid, name, email, role, password);
     if (!user) {
-      throw new Error('Update user failed');
+      throw new Error("Update user failed");
     }
 
     useMessageStore.getState().setMessage({
@@ -112,11 +120,11 @@ export const action: ActionFunction<any> = async ({
       text: appMessages.USER_UPDATE_SUCCESS.text,
       id: time,
     });
-    return redirect('/users');
+    return redirect("/users");
   } catch (error) {
     // You cannot `useLoaderData` in an errorElemen
     console.error(error);
-    let message = 'Unknown error';
+    let message = "Unknown error";
     if (error instanceof AxiosError && error.response?.data.message) {
       message = error.response.data.message;
     } else if (error instanceof Error) {
@@ -134,13 +142,13 @@ function SubmitButton({
   isValid: boolean;
   isLoading: boolean;
 }): React.ReactElement {
-  const btn = <button className='btn btn-primary mx-1'>Save</button>;
+  const btn = <button className="btn btn-primary mx-1">Save</button>;
   const btnDisabled = (
-    <button className='btn btn-disabled btn-primary mx-1'>Save</button>
+    <button className="btn btn-disabled btn-primary mx-1">Save</button>
   );
   const btnLoading = (
-    <button className='btn btn-disabled btn-primary mx-1'>
-      <span className='loading loading-spinner'></span>
+    <button className="btn btn-disabled btn-primary mx-1">
+      <span className="loading loading-spinner"></span>
       Save
     </button>
   );
@@ -150,7 +158,7 @@ function SubmitButton({
 
 export default function EditUser(): React.ReactElement {
   const navigation = useNavigation();
-  const isLoading = navigation.state === 'submitting';
+  const isLoading = navigation.state === "submitting";
   const navigate = useNavigate();
   const { user } = useLoaderData() as { user: IUser };
   const response = useActionData() as {
@@ -158,28 +166,28 @@ export default function EditUser(): React.ReactElement {
     time: number | undefined;
   };
 
-  const iconEye = <IoEyeSharp size={24} className='cursor-pointer' />;
-  const iconEyeOff = <IoEyeOffSharp size={24} className='cursor-pointer' />;
-  const [type, setType] = useState('password');
+  const iconEye = <IoEyeSharp size={24} className="cursor-pointer" />;
+  const iconEyeOff = <IoEyeOffSharp size={24} className="cursor-pointer" />;
+  const [type, setType] = useState("password");
   const [icon, setIcon] = useState(iconEyeOff);
   const onPasswordToggle = () => {
-    if (type === 'password') {
+    if (type === "password") {
       setIcon(iconEye);
-      setType('text');
+      setType("text");
     } else {
       setIcon(iconEyeOff);
-      setType('password');
+      setType("password");
     }
   };
-  const [typeConfirm, setTypeConfirm] = useState('password');
+  const [typeConfirm, setTypeConfirm] = useState("password");
   const [iconConfirm, setIconConfirm] = useState(iconEyeOff);
   const onPasswordConfirmToggle = () => {
-    if (typeConfirm === 'password') {
+    if (typeConfirm === "password") {
       setIconConfirm(iconEye);
-      setTypeConfirm('text');
+      setTypeConfirm("text");
     } else {
       setIconConfirm(iconEyeOff);
-      setTypeConfirm('password');
+      setTypeConfirm("password");
     }
   };
 
@@ -191,8 +199,8 @@ export default function EditUser(): React.ReactElement {
 
       if (message && !toast.isActive(toastId)) {
         toast(message, {
-          type: 'error',
-          position: 'bottom-right',
+          type: "error",
+          position: "bottom-right",
           toastId,
         });
       }
@@ -203,11 +211,11 @@ export default function EditUser(): React.ReactElement {
     defaultValues: {
       name: user.name,
       email: user.email,
-      password: '',
-      passwordConfirm: '',
+      password: "",
+      passwordConfirm: "",
       role: user.role,
     },
-    mode: 'all',
+    mode: "all",
   });
 
   const {
@@ -222,28 +230,28 @@ export default function EditUser(): React.ReactElement {
   };
 
   const nameConstraints = {
-    required: { value: true, message: 'Full Name is required' },
+    required: { value: true, message: "Full Name is required" },
     minLength: {
       value: 5,
-      message: 'Full Name is min 5 characters',
+      message: "Full Name is min 5 characters",
     },
   };
   const emailConstraints = {
-    required: { value: true, message: 'Email is required' },
+    required: { value: true, message: "Email is required" },
     pattern: {
       value: /^[a-zA-Z0-9._-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,4}$/,
-      message: 'Email address is invalid',
+      message: "Email address is invalid",
     },
   };
   const passwordConstraints = {
     // required: { value: true, message: 'Password is required' },
     minLength: {
       value: 8,
-      message: 'Password is min 8 characters',
+      message: "Password is min 8 characters",
     },
     maxLength: {
       value: 70,
-      message: 'Password is max 70 characters',
+      message: "Password is max 70 characters",
     },
     validate: (value: string): string | undefined => {
       if (!value) {
@@ -252,73 +260,73 @@ export default function EditUser(): React.ReactElement {
 
       const { isValid, errors } = validatePassword(value);
       if (!isValid) {
-        let message = '';
+        let message = "";
         if (errors.length > 0) {
-          message = errors.join('\n');
+          message = errors.join("\n");
         }
-        return message || 'Password is invalid';
+        return message || "Password is invalid";
       }
-      if (watch('passwordConfirm') && watch('passwordConfirm') !== value) {
-        return 'Passwords do no match';
+      if (watch("passwordConfirm") && watch("passwordConfirm") !== value) {
+        return "Passwords do no match";
       }
-      clearErrors('passwordConfirm');
+      clearErrors("passwordConfirm");
     },
   };
   const passwordConfirmConstraints = {
     // required: { value: true, message: 'Confirm Password is required' },
     validate: (value: string): string | undefined => {
-      if (watch('password') !== value) {
-        return 'Passwords do no match';
+      if (watch("password") !== value) {
+        return "Passwords do no match";
       }
-      clearErrors('password');
+      clearErrors("password");
     },
   };
   const roleConstraints = {
-    required: { value: true, message: 'Role is required' },
+    required: { value: true, message: "Role is required" },
   };
 
   const roles = [
-    { label: '--- Please select a role ---', value: '' },
-    { label: 'Admin', value: 'ADMIN' },
-    { label: 'User', value: 'USER' },
+    { label: "--- Please select a role ---", value: "" },
+    { label: "Admin", value: "ADMIN" },
+    { label: "User", value: "USER" },
   ];
 
   const shouldShowChangePasswordForm =
     !user.providers || user.providers?.length <= 0;
 
   const editUserForm = (
-    <div className='w-full py-10'>
+    <div className="w-full py-10">
       <FormProvider {...methods}>
         <Form
-          method='post'
-          id='edit-user-form'
-          className='mx-auto w-full max-w-md space-y-5 overflow-hidden rounded-2xl bg-slate-50 p-8 shadow-lg'
+          method="post"
+          id="edit-user-form"
+          className="mx-auto w-full max-w-md space-y-5 overflow-hidden rounded-2xl bg-slate-50 p-8 shadow-lg"
         >
-          <h2 className='mb-4 text-center text-2xl font-[600]'>Edit user</h2>
+          <h2 className="mb-4 text-center text-2xl font-[600]">Edit user</h2>
           <FormInput
-            label='Full Name'
-            name='name'
+            label="Full Name"
+            name="name"
             constraints={nameConstraints}
           />
           {shouldShowChangePasswordForm && (
             <>
               <FormInput
-                label='Email'
-                name='email'
-                type='email'
+                label="Email"
+                name="email"
+                type="email"
                 constraints={emailConstraints}
               />
               <FormInput
-                label='Password'
-                name='password'
+                label="Password"
+                name="password"
                 type={type}
                 constraints={passwordConstraints}
                 iconEnd={icon}
                 onClickIconEnd={onPasswordToggle}
               />
               <FormInput
-                label='Confirm Password'
-                name='passwordConfirm'
+                label="Confirm Password"
+                name="passwordConfirm"
                 type={typeConfirm}
                 constraints={passwordConfirmConstraints}
                 iconEnd={iconConfirm}
@@ -327,18 +335,18 @@ export default function EditUser(): React.ReactElement {
             </>
           )}
           <FormSelect
-            label='Role'
-            name='role'
+            label="Role"
+            name="role"
             options={roles}
             constraints={roleConstraints}
           />
-          <div className='flex justify-center space-x-5'>
+          <div className="flex justify-center space-x-5">
             <SubmitButton isValid={isValid} isLoading={isLoading} />
             <button
-              type='button'
-              id='btn-cancel'
+              type="button"
+              id="btn-cancel"
               className={`btn btn-outline mx-1 ${
-                isLoading ? 'btn-disabled' : ''
+                isLoading ? "btn-disabled" : ""
               }`}
               onClick={onCancel}
             >
@@ -350,5 +358,5 @@ export default function EditUser(): React.ReactElement {
     </div>
   );
 
-  return <section className='h-section bg-slate-200'>{editUserForm}</section>;
+  return <section className="h-section bg-slate-200">{editUserForm}</section>;
 }

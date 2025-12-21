@@ -1,30 +1,38 @@
-import { useEffect } from 'react';
-import { FaFacebook } from 'react-icons/fa';
-import { FcGoogle } from 'react-icons/fc';
+import { useEffect } from "react";
+import { FaFacebook } from "react-icons/fa";
+import { FcGoogle } from "react-icons/fc";
 import {
   LoaderFunction,
   redirect,
   useLoaderData,
   useNavigate,
-} from 'react-router-dom';
-import { toast } from 'react-toastify';
-import { getProfile } from '../lib/api';
-import useMessageStore from '../lib/message-store';
-import { IOauthProvider, IUser } from '../types/custom-types';
-import { OauthProvider } from '../types/provider.model';
+} from "react-router-dom";
+import { toast } from "react-toastify";
+import { getProfile } from "../lib/api";
+import useMessageStore from "../lib/message-store";
+import useUserStore from "../lib/user-store";
+import { IOauthProvider, IUser } from "../types/custom-types";
+import { OauthProvider } from "../types/provider.model";
 
 export const loader: LoaderFunction<any> = async () => {
   try {
-    const user = await getProfile();
-    if (!user) {
-      console.error('Invalid user');
-      return redirect('/');
+    let currentUser = useUserStore.getState().user;
+    if (!currentUser) {
+      currentUser = await getProfile();
+      useUserStore.getState().setUser(currentUser);
+    }
+    console.log(
+      `===== Current user from loader: ${JSON.stringify(currentUser)} =====`
+    );
+    if (!currentUser) {
+      console.error("No logged in user");
+      return redirect("/");
     }
 
-    return { user };
+    return { user: currentUser };
   } catch (error) {
     console.error(error);
-    return redirect('/');
+    return redirect("/");
   }
 };
 
@@ -41,8 +49,8 @@ export default function Profile(): React.ReactElement {
 
       if (!toast.isActive(toastId)) {
         toast(msg, {
-          type: 'success',
-          position: 'bottom-right',
+          type: "success",
+          position: "bottom-right",
           toastId,
         });
       }
@@ -50,19 +58,19 @@ export default function Profile(): React.ReactElement {
   }, [message]);
 
   const handleEdit = (): void => {
-    navigate('/edit-profile');
+    navigate("/edit-profile");
   };
 
   const avatar = user?.imageUrl ? (
-    <div className='avatar'>
-      <div className='w-24 rounded-full ring-3 ring-primary ring-offset-base-100 ring-offset-2 relative'>
-        <img alt='my avatar' src={user.imageUrl} className='rounded-full' />
+    <div className="avatar">
+      <div className="w-24 rounded-full ring-3 ring-primary ring-offset-base-100 ring-offset-2 relative">
+        <img alt="my avatar" src={user.imageUrl} className="rounded-full" />
       </div>
     </div>
   ) : (
-    <div className='avatar placeholder'>
-      <div className='w-24 rounded-full bg-neutral-focus text-neutral-content ring-3 ring-primary ring-offset-base-100 ring-offset-2'>
-        <span className='text-3xl'>
+    <div className="avatar placeholder">
+      <div className="w-24 rounded-full bg-neutral-focus text-neutral-content ring-3 ring-primary ring-offset-base-100 ring-offset-2">
+        <span className="text-3xl">
           {user?.name?.substring(0, 2).toUpperCase()}
         </span>
       </div>
@@ -72,19 +80,19 @@ export default function Profile(): React.ReactElement {
   const providers = user.providers?.map((oauthProvider: IOauthProvider) => {
     let icon;
     if (oauthProvider.provider === OauthProvider.Facebook) {
-      icon = <FaFacebook className='text-2xl' />;
+      icon = <FaFacebook className="text-2xl" />;
     } else if (oauthProvider.provider === OauthProvider.Google) {
-      icon = <FcGoogle className='text-2xl' />;
+      icon = <FcGoogle className="text-2xl" />;
     }
 
     return (
       <>
-        <div className='text-right'>Authentication Provider:</div>
+        <div className="text-right">Authentication Provider:</div>
         <div
-          className='col-span-4 flex items-center'
+          className="col-span-4 flex items-center"
           key={oauthProvider.externalUserId}
         >
-          {icon && <div className='pr-2'>{icon}</div>}
+          {icon && <div className="pr-2">{icon}</div>}
           <div>
             {oauthProvider.email} (ID {oauthProvider.externalUserId})
           </div>
@@ -94,40 +102,40 @@ export default function Profile(): React.ReactElement {
   });
 
   return (
-    <section className='h-section bg-slate-200'>
-      <div className='flex flex-col items-center pt-10'>
-        <div className='card w-3/4 max-w-(--breakpoint-lg) bg-slate-50 shadow-xl'>
-          <div className='card-body'>
-            <div className='card-title'>
+    <section className="h-section bg-slate-200">
+      <div className="flex flex-col items-center pt-10">
+        <div className="card w-3/4 max-w-(--breakpoint-lg) bg-slate-50 shadow-xl">
+          <div className="card-body">
+            <div className="card-title">
               <h1>My Profile</h1>
             </div>
-            <div className='grid auto-cols-auto grid-cols-5 gap-4'>
-              <div className='text-right'>
+            <div className="grid auto-cols-auto grid-cols-5 gap-4">
+              <div className="text-right">
                 <h2>Image:</h2>
               </div>
-              <div className='col-span-4'>{avatar}</div>
-              <div className='text-right'>
+              <div className="col-span-4">{avatar}</div>
+              <div className="text-right">
                 <h2>Full Name:</h2>
               </div>
-              <div className='col-span-4'>
+              <div className="col-span-4">
                 <h2>{user.name}</h2>
               </div>
               {user?.email && (
                 <>
-                  <div className='text-right'>Email:</div>
-                  <div className='col-span-4'>{user.email}</div>
+                  <div className="text-right">Email:</div>
+                  <div className="col-span-4">{user.email}</div>
                 </>
               )}
               {providers?.length > 0 && providers}
-              <div className='text-right'>
+              <div className="text-right">
                 <h3>Role:</h3>
               </div>
-              <div className='col-span-4'>
+              <div className="col-span-4">
                 <h3>{user.role}</h3>
               </div>
             </div>
-            <div className='card-actions justify-end'>
-              <button className='btn' onClick={handleEdit}>
+            <div className="card-actions justify-end">
+              <button className="btn" onClick={handleEdit}>
                 Edit
               </button>
             </div>

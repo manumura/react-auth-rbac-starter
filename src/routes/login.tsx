@@ -32,7 +32,11 @@ import { ValidationError } from '../types/custom-errors';
 
 export const loader: LoaderFunction<any> = async () => {
   try {
-    const currentUser = await getCurrentUserFromStorage();
+    let currentUser = useUserStore.getState().user;
+    if (!currentUser) {
+      currentUser = await getCurrentUserFromStorage();
+      useUserStore.getState().setUser(currentUser);
+    }
     if (currentUser) {
       console.error('User already logged in');
       return redirect('/');
