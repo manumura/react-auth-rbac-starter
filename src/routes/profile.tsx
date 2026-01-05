@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import React, { useEffect } from "react";
 import { FaFacebook } from "react-icons/fa";
 import { FcGoogle } from "react-icons/fc";
 import {
@@ -10,26 +10,21 @@ import {
 import { toast } from "react-toastify";
 import { getProfile } from "../lib/api";
 import useMessageStore from "../lib/message-store";
-import useUserStore from "../lib/user-store";
 import { IOauthProvider, IUser } from "../types/custom-types";
 import { OauthProvider } from "../types/provider.model";
 
 export const loader: LoaderFunction<any> = async () => {
   try {
-    let currentUser = useUserStore.getState().user;
-    if (!currentUser) {
-      currentUser = await getProfile();
-      useUserStore.getState().setUser(currentUser);
-    }
+    const profile = await getProfile();
     console.log(
-      `===== Current user from loader: ${JSON.stringify(currentUser)} =====`
+      `===== Current user from loader: ${JSON.stringify(profile)} =====`
     );
-    if (!currentUser) {
+    if (!profile) {
       console.error("No logged in user");
       return redirect("/");
     }
 
-    return { user: currentUser };
+    return { user: profile };
   } catch (error) {
     console.error(error);
     return redirect("/");
@@ -39,6 +34,7 @@ export const loader: LoaderFunction<any> = async () => {
 export default function Profile(): React.ReactElement {
   const navigate = useNavigate();
   const { user } = useLoaderData() as { user: IUser };
+  console.log(`===== Loaded user: ${JSON.stringify(user)} =====`);
   const message = useMessageStore().message;
 
   useEffect(() => {
@@ -86,7 +82,7 @@ export default function Profile(): React.ReactElement {
     }
 
     return (
-      <>
+      <React.Fragment key={oauthProvider.externalUserId}>
         <div className="text-right">Authentication Provider:</div>
         <div
           className="col-span-4 flex items-center"
@@ -97,7 +93,7 @@ export default function Profile(): React.ReactElement {
             {oauthProvider.email} (ID {oauthProvider.externalUserId})
           </div>
         </div>
-      </>
+      </React.Fragment>
     );
   });
 
@@ -121,10 +117,10 @@ export default function Profile(): React.ReactElement {
                 <h2>{user.name}</h2>
               </div>
               {user?.email && (
-                <>
+                <React.Fragment key="email">
                   <div className="text-right">Email:</div>
                   <div className="col-span-4">{user.email}</div>
-                </>
+                </React.Fragment>
               )}
               {providers?.length > 0 && providers}
               <div className="text-right">

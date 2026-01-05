@@ -199,7 +199,7 @@ export default function Users() {
   const isUserListEmpty = !usersToDisplay || usersToDisplay.length <= 0;
   const noUserRow = (
     <tr>
-      <td colSpan={5} className="text-center font-bold">
+      <td colSpan={6} className="text-center font-bold">
         No Users found
       </td>
     </tr>
