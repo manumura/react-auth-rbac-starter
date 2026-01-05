@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import { isAdmin } from '../lib/user-utils';
 import { IAuthenticatedUser } from '../types/custom-types';
@@ -32,7 +32,12 @@ export default function Navbar({
 }: {
   readonly user: IAuthenticatedUser | null;
 }): React.ReactElement {
-  const [navItems, setNavItems] = useState<React.JSX.Element[]>([]);
+  const navItems = useMemo(() => {
+    if (user) {
+      return isAdmin(user) ? adminNavItems : authenticatedNavItems;
+    }
+    return unauthenticatedNavItems;
+  }, [user]);
 
   const closeDrawer = (): void => {
     const elem = document.activeElement as HTMLElement;
@@ -40,16 +45,6 @@ export default function Navbar({
       elem?.blur();
     }
   };
-
-  useEffect(() => {
-    let navItems;
-    if (user) {
-      navItems = isAdmin(user) ? adminNavItems : authenticatedNavItems;
-    } else {
-      navItems = unauthenticatedNavItems;
-    }
-    setNavItems(navItems);
-  }, [user]);
 
   const navItemsList = navItems.map((item: React.JSX.Element) => {
     return <li key={item.props.id}>{item}</li>;
