@@ -13,7 +13,7 @@ import useMessageStore from "../lib/message-store";
 import { IOauthProvider, IUser } from "../types/custom-types";
 import { OauthProvider } from "../types/provider.model";
 
-export const loader: LoaderFunction<any> = async () => {
+export const loader: LoaderFunction = async () => {
   try {
     const profile = await getProfile();
     console.log(

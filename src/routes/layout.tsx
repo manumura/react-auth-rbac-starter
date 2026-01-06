@@ -15,7 +15,7 @@ import { getCurrentUserFromStorage, isAdmin } from '../lib/user-utils';
 import { IAuthenticatedUser } from '../types/custom-types';
 import appConfig from '../config/config';
 
-export const loader: LoaderFunction<any> = async () => {
+export const loader: LoaderFunction = async () => {
   try {
     const currentUser = await getCurrentUserFromStorage();
     console.log(`===== Current user from loader: ${JSON.stringify(currentUser)} =====`);

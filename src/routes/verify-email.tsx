@@ -10,7 +10,7 @@ import { verifyEmail } from "../lib/api";
 import useUserStore from "../lib/user-store";
 import { getCurrentUserFromStorage } from "../lib/user-utils";
 
-export const loader: LoaderFunction<any> = async ({
+export const loader: LoaderFunction = async ({
   request,
 }: {
   request: Request;

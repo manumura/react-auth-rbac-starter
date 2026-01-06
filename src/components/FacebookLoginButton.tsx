@@ -6,7 +6,7 @@ import useMessageStore from '../lib/message-store';
 import { saveAuthentication } from '../lib/storage';
 import useUserStore from '../lib/user-store';
 
-export const loader: LoaderFunction<any> = async ({
+export const loader: LoaderFunction = async ({
   request,
 }: {
   request: Request;

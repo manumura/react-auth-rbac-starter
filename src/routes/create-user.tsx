@@ -20,7 +20,7 @@ import useUserStore from "../lib/user-store";
 import { isAdmin } from "../lib/user-utils";
 import { ValidationError } from "../types/custom-errors";
 
-export const loader: LoaderFunction<any> = async () => {
+export const loader: LoaderFunction = async () => {
   try {
     let currentUser = useUserStore.getState().user;
     if (!currentUser) {
@@ -42,7 +42,7 @@ export const loader: LoaderFunction<any> = async () => {
   }
 };
 
-export const action: ActionFunction<any> = async ({
+export const action: ActionFunction = async ({
   request,
 }: {
   request: Request;

@@ -25,7 +25,7 @@ import { isAdmin } from "../lib/user-utils";
 import { validatePassword } from "../lib/utils";
 import { IUser } from "../types/custom-types";
 
-export const loader: LoaderFunction<any> = async ({
+export const loader: LoaderFunction = async ({
   params,
 }: {
   request: Request;
@@ -64,7 +64,7 @@ export const loader: LoaderFunction<any> = async ({
   }
 };
 
-export const action: ActionFunction<any> = async ({
+export const action: ActionFunction = async ({
   request,
   params,
 }: {

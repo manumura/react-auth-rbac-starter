@@ -24,7 +24,7 @@ import { getCurrentUserFromStorage } from "../lib/user-utils";
 import { validatePassword } from "../lib/utils";
 import { ValidationError } from "../types/custom-errors";
 
-export const loader: LoaderFunction<any> = async ({
+export const loader: LoaderFunction = async ({
   request,
 }: {
   request: Request;
@@ -66,7 +66,7 @@ type ResetPasswordResponse = {
   time: number | undefined;
 };
 
-export const action: ActionFunction<any> = async ({
+export const action: ActionFunction = async ({
   request,
 }: {
   request: Request;

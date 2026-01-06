@@ -15,7 +15,7 @@ export async function handleLogout() {
   googleLogout();
 }
 
-export const action: LoaderFunction<any> = async () => {
+export const action: LoaderFunction = async () => {
   try {
     await handleLogout();
     const time = new Date().getTime();

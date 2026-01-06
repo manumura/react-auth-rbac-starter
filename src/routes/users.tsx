@@ -25,7 +25,7 @@ import { IOauthProvider, IUser } from "../types/custom-types";
 import { OauthProvider } from "../types/provider.model";
 import useUserStore from "../lib/user-store";
 
-export const loader: LoaderFunction<any> = async ({
+export const loader: LoaderFunction = async ({
   request,
 }: {
   request: Request;
@@ -73,7 +73,7 @@ type DeleteUserResponse = {
   time: number | undefined;
 };
 
-export const action: ActionFunction<any> = async ({
+export const action: ActionFunction = async ({
   request,
 }: {
   request: Request;

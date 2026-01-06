@@ -7,7 +7,7 @@ import useMessageStore from "../lib/message-store";
 import { saveAuthentication } from "../lib/storage";
 import { IAuthenticatedUser } from "../types/custom-types";
 
-export const action: ActionFunction<any> = async ({
+export const action: ActionFunction = async ({
   request,
 }: {
   request: Request;
