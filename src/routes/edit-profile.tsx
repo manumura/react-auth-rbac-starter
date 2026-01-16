@@ -39,7 +39,7 @@ export const action = async ({
 > => {
   const formData = await request.formData();
   const intent = formData.get('intent');
-  const time = new Date().getTime();
+  const time = Date.now();
 
   try {
     if (intent === 'edit-profile') {
@@ -101,7 +101,7 @@ export const action = async ({
       message = error.message;
     }
 
-    const time = new Date().getTime();
+    const time = Date.now();
     return { error: new Error(message), time };
   }
 };
@@ -232,7 +232,7 @@ export default function EditProfile(): React.ReactElement {
 
   useEffect(() => {
     if (response?.error) {
-      const time = response.time ?? new Date().getTime();
+      const time = response.time ?? Date.now();
       const message = response.error?.message;
       const toastId = `${message}-${time}`;
 

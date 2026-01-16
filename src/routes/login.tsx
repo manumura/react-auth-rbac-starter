@@ -107,7 +107,7 @@ export const action: ActionFunction = async ({
       idToken
     );
     useUserStore.getState().setUser(user);
-    const time = new Date().getTime();
+    const time = Date.now();
 
     useMessageStore.getState().setMessage({
       type: appMessages.LOGIN_SUCCESS.type,

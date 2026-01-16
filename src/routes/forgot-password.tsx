@@ -30,7 +30,7 @@ export const action = async ({
   const formData = await request.formData();
   const email = formData.get('email') as string;
   const token = formData.get('token') as string;
-  const time = new Date().getTime();
+  const time = Date.now();
 
   try {
     if (!email) {

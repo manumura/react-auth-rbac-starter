@@ -75,7 +75,7 @@ export const action: ActionFunction = async ({
   const password = formData.get("password") as string;
   const token = formData.get("token") as string;
   const recaptchaToken = formData.get("recaptchaToken") as string;
-  const time = new Date().getTime();
+  const time = Date.now();
 
   try {
     if (!recaptchaToken) {

@@ -83,7 +83,7 @@ export const action: ActionFunction = async ({
   const role = formData.get("role") as string;
   const password = formData.get("password") as string;
   const passwordConfirm = formData.get("passwordConfirm") as string;
-  const time = new Date().getTime();
+  const time = Date.now();
 
   const userUuid = params.userUuid as UUID;
   if (!userUuid) {
@@ -193,7 +193,7 @@ export default function EditUser(): React.ReactElement {
 
   useEffect(() => {
     if (response?.error) {
-      const time = response.time ?? new Date().getTime();
+      const time = response.time ?? Date.now();
       const message = response.error?.message;
       const toastId = `${message}-${time}`;
 

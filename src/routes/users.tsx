@@ -17,13 +17,14 @@ import { toast } from "react-toastify";
 import DeleteUserModal from "../components/DeleteUserModal";
 import { Pagination } from "../components/Pagination";
 import appConfig from "../config/config";
+import { appMessages, errorMessages } from "../config/constant";
 import { deleteUser, getProfile, getUsers } from "../lib/api";
 import useMessageStore from "../lib/message-store";
+import useUserStore from "../lib/user-store";
 import { isAdmin } from "../lib/user-utils";
 import { ValidationError } from "../types/custom-errors";
 import { IOauthProvider, IUser } from "../types/custom-types";
 import { OauthProvider } from "../types/provider.model";
-import useUserStore from "../lib/user-store";
 
 export const loader: LoaderFunction = async ({
   request,
@@ -80,7 +81,6 @@ export const action: ActionFunction = async ({
 }): Promise<DeleteUserResponse> => {
   const formData = await request.formData();
   const userUuid = formData.get("userUuid") as UUID;
-  const time = new Date().getTime();
 
   try {
     if (!userUuid) {
@@ -92,6 +92,13 @@ export const action: ActionFunction = async ({
       throw new ValidationError(`Invalid user: ${userUuid}`, { userUuid });
     }
 
+    const time = Date.now();
+    useMessageStore.getState().setMessage({
+      type: appMessages.USER_DELETE_SUCCESS.type,
+      text: appMessages.USER_DELETE_SUCCESS.text,
+      id: time,
+    });
+
     return { user, error: undefined, time };
   } catch (error) {
     // You cannot `useLoaderData` in an errorElemen
@@ -102,6 +109,13 @@ export const action: ActionFunction = async ({
     } else if (error instanceof Error) {
       message = error.message;
     }
+
+    const time = Date.now();
+    useMessageStore.getState().setMessage({
+      type: errorMessages.USER_DELETE_FAILED.code,
+      text: message,
+      id: time,
+    });
 
     return { user: undefined, error: new Error(message), time };
   }
@@ -118,28 +132,7 @@ export default function Users() {
   const message = useMessageStore().message;
 
   useEffect(() => {
-    if (response?.error) {
-      const time = response?.time;
-      const toastId = `users-error-${time}`;
-      if (!toast.isActive(toastId)) {
-        toast(response.error?.message, {
-          type: "error",
-          position: "bottom-right",
-        });
-      }
-    }
-
-    // TODO duplicate message
-    if (response?.user) {
-      const time = response?.time;
-      const toastId = `users-success-${time}`;
-      if (!toast.isActive(toastId)) {
-        toast(`User deleted successfully ${response.user.email}`, {
-          type: "success",
-          position: "bottom-right",
-        });
-      }
-    }
+    console.log(`===== Action response: ${JSON.stringify(response)} =====`);
   }, [response]);
 
   useEffect(() => {
@@ -171,11 +164,14 @@ export default function Users() {
     setIsDeleteModalOpen(true);
   };
 
-  const onCloseDeleteModal = async (confirmed: boolean): Promise<void> => {
-    setIsDeleteModalOpen(false);
-    if (confirmed) {
+  const onCloseDeleteModal = async (
+    isProceedToDelete: boolean
+  ): Promise<void> => {
+    if (isProceedToDelete) {
       submit({ userUuid: selectedUser?.uuid }, { method: "delete" });
     }
+    setSelectedUser(null);
+    setIsDeleteModalOpen(false);
   };
 
   const onEditUser = (userUuid: UUID): void => {

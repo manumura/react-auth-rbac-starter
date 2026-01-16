@@ -18,6 +18,7 @@ const DeleteUserModal = ({
 
   const onDelete = async (): Promise<void> => {
     if (!user?.uuid) {
+      console.error('No user uuid provided for deletion');
       return;
     }
     onClose(true);

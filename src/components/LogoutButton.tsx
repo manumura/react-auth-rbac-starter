@@ -18,7 +18,7 @@ export async function handleLogout() {
 export const action: LoaderFunction = async () => {
   try {
     await handleLogout();
-    const time = new Date().getTime();
+    const time = Date.now();
     useMessageStore.getState().setMessage({
       type: appMessages.LOGOUT_SUCCESS.type,
       text: appMessages.LOGOUT_SUCCESS.text,

@@ -19,6 +19,14 @@ export const errorMessages = {
     code: 'invalid_email_or_password',
     text: 'Invalid email or password.',
   },
+  INVALID_EMAIL: {
+    code: 'invalid_email',
+    text: 'Invalid email address.',
+  },
+  USER_DELETE_FAILED: {
+    code: 'user_delete_failed',
+    text: 'Failed to delete user.',
+  },
 };
 
 export const appMessages = {
@@ -45,6 +53,10 @@ export const appMessages = {
   USER_UPDATE_SUCCESS: {
     type: 'USER_UPDATE_SUCCESS',
     text: 'User successfully updated!',
+  },
+  USER_DELETE_SUCCESS: {
+    type: 'USER_DELETE_SUCCESS',
+    text: 'User successfully deleted!',
   },
   LOGIN_SUCCESS: {
     type: 'LOGIN_SUCCESS',

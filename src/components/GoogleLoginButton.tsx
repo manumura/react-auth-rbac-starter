@@ -29,7 +29,7 @@ export const action: ActionFunction = async ({
     return { error: new Error("Invalid user") };
   }
 
-  const time = new Date().getTime();
+  const time = Date.now();
   useMessageStore.getState().setMessage({
     type: appMessages.LOGIN_SUCCESS.type,
     text: appMessages.LOGIN_SUCCESS.text.replace("${name}", user.name),

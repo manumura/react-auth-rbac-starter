@@ -1,25 +1,26 @@
-import axios, { AxiosError, AxiosProgressEvent, AxiosResponse } from 'axios';
-import { UUID } from 'node:crypto';
-import appConfig from '../config/config';
+import axios, { AxiosError, AxiosProgressEvent, AxiosResponse } from "axios";
+import { UUID } from "node:crypto";
+import appConfig from "../config/config";
 import {
   IGetUsersResponse,
   InfoResponse,
   IUser,
   LoginResponse,
   MessageResponse,
-} from '../types/custom-types';
-import { getUserFromIdToken } from './jwt.utils';
-import { clearAuthentication, saveAuthentication } from './storage';
-import useUserStore from './user-store';
+} from "../types/custom-types";
+import useCsrfTokenStore from "./csrf-token-store";
+import { getUserFromIdToken } from "./jwt.utils";
+import { clearAuthentication, saveAuthentication } from "./storage";
+import useUserStore from "./user-store";
 
 const BASE_URL = appConfig.baseUrl;
-const REFRESH_TOKEN_ENDPOINT = '/v1/refresh-token';
+const REFRESH_TOKEN_ENDPOINT = "/v1/refresh-token";
 
 // No interceptor for refresh token
 const axiosPublicInstance = axios.create({
   baseURL: `${BASE_URL}/api`,
   headers: {
-    'Content-Type': 'application/json',
+    "Content-Type": "application/json",
   },
   withCredentials: true,
 });
@@ -27,10 +28,10 @@ const axiosPublicInstance = axios.create({
 export const axiosInstance = axios.create({
   baseURL: `${BASE_URL}/api`,
   headers: {
-    'Content-Type': 'application/json',
-    'Cache-Control': 'no-cache',
-    Pragma: 'no-cache',
-    Expires: '0',
+    "Content-Type": "application/json",
+    "Cache-Control": "no-cache",
+    Pragma: "no-cache",
+    Expires: "0",
   },
   withCredentials: true, // for cookies
 });
@@ -39,11 +40,11 @@ axiosInstance.interceptors.response.use(
   (response: AxiosResponse) => response,
   async (error: AxiosError) => {
     if (!error?.config) {
-      return Promise.reject(new Error('Unknown error'));
+      return Promise.reject(new Error("Unknown error"));
     }
 
     if (error.response?.status !== 401) {
-      console.error('Axios interceptor error: ', error?.response?.data);
+      console.error("Axios interceptor error: ", error?.response?.data);
       return Promise.reject(error);
     }
 
@@ -72,7 +73,7 @@ axiosInstance.interceptors.response.use(
     } catch (error) {
       const err = error as AxiosError;
       console.error(
-        'Axios interceptor unexpected error: ',
+        "Axios interceptor unexpected error: ",
         err?.response?.data
       );
       if (err?.status === 401) {
@@ -88,18 +89,35 @@ axiosInstance.interceptors.response.use(
 // Refresh token API
 const postRefreshToken = async (): Promise<LoginResponse> => {
   return await axiosPublicInstance
-    .post(REFRESH_TOKEN_ENDPOINT, {})
-    .then((response) => response.data);
+    .post(
+      REFRESH_TOKEN_ENDPOINT,
+      {},
+      {
+        headers: {
+          "X-CSRF-Token": useCsrfTokenStore.getState().csrfToken,
+        },
+      }
+    )
+    .then((response) => {
+      const headers = response?.headers;
+      const csrfToken = headers["x-csrf-token"];
+      if (csrfToken) {
+        useCsrfTokenStore.getState().setCsrfToken(csrfToken);
+      } else {
+        console.error("No CSRF token in refresh token response");
+      }
+      return response.data;
+    });
 };
 
 ////////////////////////////////////////////////////////////////
 // Public APIs
 export const info = async (): Promise<InfoResponse> => {
-  return axiosPublicInstance.get('/v1/info').then((response) => response.data);
+  return axiosPublicInstance.get("/v1/info").then((response) => response.data);
 };
 
 export const welcome = async (): Promise<MessageResponse> => {
-  return axiosPublicInstance.get('/v1/index').then((response) => response.data);
+  return axiosPublicInstance.get("/v1/index").then((response) => response.data);
 };
 
 export const login = async (
@@ -107,13 +125,22 @@ export const login = async (
   password: string
 ): Promise<LoginResponse> => {
   return axiosPublicInstance
-    .post('/v1/login', { email, password })
-    .then((response) => response.data);
+    .post("/v1/login", { email, password })
+    .then((response) => {
+      const headers = response?.headers;
+      const csrfToken = headers["x-csrf-token"];
+      if (csrfToken) {
+        useCsrfTokenStore.getState().setCsrfToken(csrfToken);
+      } else {
+        console.error("No CSRF token in login response");
+      }
+      return response.data;
+    });
 };
 
 export const googleLogin = async (token: string): Promise<LoginResponse> => {
   return axiosPublicInstance
-    .post('/v1/oauth2/google', { token })
+    .post("/v1/oauth2/google", { token })
     .then((response) => response.data);
 };
 
@@ -123,7 +150,7 @@ export const register = async (
   name: string
 ): Promise<IUser> => {
   return axiosPublicInstance
-    .post('/v1/register', { email, password, name })
+    .post("/v1/register", { email, password, name })
     .then((response) => response.data);
 };
 
@@ -131,7 +158,7 @@ export const forgotPassword = async (
   email: string
 ): Promise<MessageResponse> => {
   return axiosPublicInstance
-    .post('/v1/forgot-password', { email })
+    .post("/v1/forgot-password", { email })
     .then((response) => response.data);
 };
 
@@ -140,7 +167,7 @@ export const resetPassword = async (
   token: string
 ): Promise<IUser> => {
   return axiosPublicInstance
-    .post('/v1/new-password', { password, token })
+    .post("/v1/new-password", { password, token })
     .then((response) => response.data);
 };
 
@@ -152,36 +179,69 @@ export const getUserFromToken = async (token: string): Promise<IUser> => {
 
 export const verifyEmail = async (token: string): Promise<IUser> => {
   return axiosPublicInstance
-    .post('/v1/verify-email', { token })
+    .post("/v1/verify-email", { token })
     .then((response) => response.data);
 };
 
 export const validateRecaptcha = async (token: string): Promise<boolean> => {
   return axiosPublicInstance
-    .post('/v1/recaptcha', { token })
+    .post("/v1/recaptcha", { token })
     .then((response) => response.data);
 };
 
 ////////////////////////////////////////////////////////////////
 // Authenticated-only APIs
 export const logout = async (): Promise<IUser> => {
-  return axiosInstance.post('/v1/logout').then((response) => response.data);
+  return axiosInstance
+    .post(
+      "/v1/logout",
+      {},
+      {
+        headers: {
+          "X-CSRF-Token": useCsrfTokenStore.getState().csrfToken,
+        },
+      }
+    )
+    .then((response) => response.data);
 };
 
 export const getProfile = async (): Promise<IUser> => {
-  return axiosInstance.get('/v1/profile').then((response) => response.data);
+  return axiosInstance.get("/v1/profile").then((response) => {
+    const headers = response?.headers;
+    const csrfToken = headers["x-csrf-token"];
+    if (csrfToken) {
+      useCsrfTokenStore.getState().setCsrfToken(csrfToken);
+    } else {
+      console.error("No CSRF token in profile response");
+    }
+    return response.data;
+  });
 };
 
 export const updateProfile = async (name: string): Promise<IUser> => {
   return axiosInstance
-    .put('/v1/profile', {
-      name,
-    })
+    .put(
+      "/v1/profile",
+      {
+        name,
+      },
+      {
+        headers: {
+          "X-CSRF-Token": useCsrfTokenStore.getState().csrfToken,
+        },
+      }
+    )
     .then((response) => response.data);
 };
 
 export const deleteProfile = async (): Promise<IUser> => {
-  return axiosInstance.delete('/v1/profile').then((response) => response.data);
+  return axiosInstance
+    .delete("/v1/profile", {
+      headers: {
+        "X-CSRF-Token": useCsrfTokenStore.getState().csrfToken,
+      },
+    })
+    .then((response) => response.data);
 };
 
 export const updatePassword = async (
@@ -189,10 +249,18 @@ export const updatePassword = async (
   newPassword: string
 ): Promise<IUser> => {
   return axiosInstance
-    .put('/v1/profile/password', {
-      oldPassword,
-      newPassword,
-    })
+    .put(
+      "/v1/profile/password",
+      {
+        oldPassword,
+        newPassword,
+      },
+      {
+        headers: {
+          "X-CSRF-Token": useCsrfTokenStore.getState().csrfToken,
+        },
+      }
+    )
     .then((response) => response.data);
 };
 
@@ -201,9 +269,10 @@ export const updateProfileImage = async (
   onUploadProgress: (progressEvent: AxiosProgressEvent) => void
 ): Promise<IUser> => {
   return axiosInstance
-    .put('/v1/profile/image', image, {
+    .put("/v1/profile/image", image, {
       headers: {
-        'Content-Type': 'multipart/form-data',
+        "Content-Type": "multipart/form-data",
+        "X-CSRF-Token": useCsrfTokenStore.getState().csrfToken,
       },
       onUploadProgress,
     })
@@ -217,13 +286,13 @@ export const getUsers = async (
 ): Promise<IGetUsersResponse> => {
   const p: string[][] = [];
   if (page) {
-    p.push(['page', page.toString()]);
+    p.push(["page", page.toString()]);
   }
   if (pageSize) {
-    p.push(['pageSize', pageSize.toString()]);
+    p.push(["pageSize", pageSize.toString()]);
   }
   if (role) {
-    p.push(['role', role]);
+    p.push(["role", role]);
   }
 
   const params = new URLSearchParams(p);
@@ -244,7 +313,15 @@ export const createUser = async (
   role: string
 ): Promise<IUser> => {
   return axiosInstance
-    .post('/v1/users', { email, name, role })
+    .post(
+      "/v1/users",
+      { email, name, role },
+      {
+        headers: {
+          "X-CSRF-Token": useCsrfTokenStore.getState().csrfToken,
+        },
+      }
+    )
     .then((response) => response.data);
 };
 
@@ -256,17 +333,29 @@ export const updateUser = async (
   password?: string
 ): Promise<IUser> => {
   return axiosInstance
-    .put(`/v1/users/${uuid}`, {
-      name,
-      email,
-      role,
-      ...(password ? { password } : {}),
-    })
+    .put(
+      `/v1/users/${uuid}`,
+      {
+        name,
+        email,
+        role,
+        ...(password ? { password } : {}),
+      },
+      {
+        headers: {
+          "X-CSRF-Token": useCsrfTokenStore.getState().csrfToken,
+        },
+      }
+    )
     .then((response) => response.data);
 };
 
 export const deleteUser = async (userUuid: UUID): Promise<IUser> => {
   return axiosInstance
-    .delete(`/v1/users/${userUuid}`)
+    .delete(`/v1/users/${userUuid}`, {
+      headers: {
+        "X-CSRF-Token": useCsrfTokenStore.getState().csrfToken,
+      },
+    })
     .then((response) => response.data);
 };

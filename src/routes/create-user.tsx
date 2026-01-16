@@ -57,7 +57,7 @@ export const action: ActionFunction = async ({
   const email = formData.get("email") as string;
   const name = formData.get("name") as string;
   const role = formData.get("role") as string;
-  const time = new Date().getTime();
+  const time = Date.now();
 
   try {
     if (!name || !email || !role) {
@@ -129,7 +129,7 @@ export default function CreateUser(): React.ReactElement {
 
   useEffect(() => {
     if (response?.error) {
-      const time = response.time ?? new Date().getTime();
+      const time = response.time ?? Date.now();
       const message = response.error?.message;
       const toastId = `${message}-${time}`;
 

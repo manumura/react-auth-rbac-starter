@@ -89,7 +89,7 @@ export const action = async ({
       throw new ValidationError('Invalid response', { name, email, password });
     }
 
-    const time = new Date().getTime();
+    const time = Date.now();
     useMessageStore.getState().setMessage({
       type: appMessages.REGISTER_SUCCESS.type,
       text: appMessages.REGISTER_SUCCESS.text,
