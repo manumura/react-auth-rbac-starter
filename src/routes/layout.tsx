@@ -8,12 +8,12 @@ import {
 } from 'react-router-dom';
 import TopBarProgress from 'react-topbar-progress-indicator';
 import Navbar from '../components/Navbar';
-import { clearAuthentication } from '../lib/storage';
-import useUserStore from '../lib/user-store';
-import { subscribeUserChangeEventsWs } from '../lib/user_events';
-import { getCurrentUserFromStorage, isAdmin } from '../lib/user-utils';
-import { IAuthenticatedUser } from '../types/custom-types';
 import appConfig from '../config/config';
+import { clearStorage } from '../lib/storage';
+import useUserStore from '../lib/user-store';
+import { getCurrentUserFromStorage, isAdmin } from '../lib/user-utils';
+import { subscribeUserChangeEventsWs } from '../lib/user_events';
+import { IAuthenticatedUser } from '../types/custom-types';
 
 export const loader: LoaderFunction = async () => {
   try {
@@ -22,7 +22,7 @@ export const loader: LoaderFunction = async () => {
     useUserStore.getState().setUser(currentUser);
 
     if (!currentUser) {
-      clearAuthentication();
+      clearStorage();
       return null;
     }
     return currentUser;

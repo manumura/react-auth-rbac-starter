@@ -1,4 +1,9 @@
-import axios, { AxiosError, AxiosProgressEvent, AxiosResponse } from "axios";
+import axios, {
+  AxiosError,
+  AxiosProgressEvent,
+  AxiosResponse,
+  InternalAxiosRequestConfig,
+} from "axios";
 import { UUID } from "node:crypto";
 import appConfig from "../config/config";
 import {
@@ -10,7 +15,7 @@ import {
 } from "../types/custom-types";
 import useCsrfTokenStore from "./csrf-token-store";
 import { getUserFromIdToken } from "./jwt.utils";
-import { clearAuthentication, saveAuthentication } from "./storage";
+import { clearStorage, saveAuthentication } from "./storage";
 import useUserStore from "./user-store";
 
 const BASE_URL = appConfig.baseUrl;
@@ -40,18 +45,18 @@ axiosInstance.interceptors.response.use(
   (response: AxiosResponse) => response,
   async (error: AxiosError) => {
     if (!error?.config) {
-      return Promise.reject(new Error("Unknown error"));
+      throw new Error("Unknown error");
     }
 
     if (error.response?.status !== 401) {
       console.error("Axios interceptor error: ", error?.response?.data);
-      return Promise.reject(error);
+      throw error;
     }
 
     const config = error.config;
     // Avoid infinite loop
     if (config.url?.includes(`${REFRESH_TOKEN_ENDPOINT}`)) {
-      return Promise.reject(error);
+      throw error;
     }
 
     try {
@@ -62,11 +67,17 @@ axiosInstance.interceptors.response.use(
         accessToken,
         accessTokenExpiresAt,
         refreshToken,
-        idToken
+        idToken,
       );
       const user = await getUserFromIdToken(idToken);
       if (user) {
         useUserStore.getState().setUser(user);
+      }
+
+      // Update the CSRF token in the retry request headers
+      const newCsrfToken = useCsrfTokenStore.getState().csrfToken;
+      if (newCsrfToken && config.headers) {
+        config.headers["X-CSRF-Token"] = newCsrfToken;
       }
 
       return axiosInstance(config);
@@ -74,16 +85,31 @@ axiosInstance.interceptors.response.use(
       const err = error as AxiosError;
       console.error(
         "Axios interceptor unexpected error: ",
-        err?.response?.data
+        err?.response?.data,
       );
       if (err?.status === 401) {
         useUserStore.getState().setUser(null);
-        clearAuthentication();
+        clearStorage();
       }
-      return Promise.reject(err);
+      throw err;
+    }
+  },
+);
+
+// Add CSRF token interceptor
+axiosInstance.interceptors.request.use((config: InternalAxiosRequestConfig) => {
+  // Only add for non-GET requests
+  if (
+    config.method &&
+    !["GET", "HEAD", "OPTIONS"].includes(config.method.toUpperCase())
+  ) {
+    const token = useCsrfTokenStore.getState().csrfToken;
+    if (token && config.headers) {
+      config.headers["X-CSRF-Token"] = token;
     }
   }
-);
+  return config;
+});
 
 ////////////////////////////////////////////////////////////////
 // Refresh token API
@@ -96,7 +122,7 @@ const postRefreshToken = async (): Promise<LoginResponse> => {
         headers: {
           "X-CSRF-Token": useCsrfTokenStore.getState().csrfToken,
         },
-      }
+      },
     )
     .then((response) => {
       const headers = response?.headers;
@@ -122,7 +148,7 @@ export const welcome = async (): Promise<MessageResponse> => {
 
 export const login = async (
   email: string,
-  password: string
+  password: string,
 ): Promise<LoginResponse> => {
   return axiosPublicInstance
     .post("/v1/login", { email, password })
@@ -147,7 +173,7 @@ export const googleLogin = async (token: string): Promise<LoginResponse> => {
 export const register = async (
   email: string,
   password: string,
-  name: string
+  name: string,
 ): Promise<IUser> => {
   return axiosPublicInstance
     .post("/v1/register", { email, password, name })
@@ -155,7 +181,7 @@ export const register = async (
 };
 
 export const forgotPassword = async (
-  email: string
+  email: string,
 ): Promise<MessageResponse> => {
   return axiosPublicInstance
     .post("/v1/forgot-password", { email })
@@ -164,7 +190,7 @@ export const forgotPassword = async (
 
 export const resetPassword = async (
   password: string,
-  token: string
+  token: string,
 ): Promise<IUser> => {
   return axiosPublicInstance
     .post("/v1/new-password", { password, token })
@@ -196,26 +222,12 @@ export const logout = async (): Promise<IUser> => {
     .post(
       "/v1/logout",
       {},
-      {
-        headers: {
-          "X-CSRF-Token": useCsrfTokenStore.getState().csrfToken,
-        },
-      }
     )
     .then((response) => response.data);
 };
 
 export const getProfile = async (): Promise<IUser> => {
-  return axiosInstance.get("/v1/profile").then((response) => {
-    const headers = response?.headers;
-    const csrfToken = headers["x-csrf-token"];
-    if (csrfToken) {
-      useCsrfTokenStore.getState().setCsrfToken(csrfToken);
-    } else {
-      console.error("No CSRF token in profile response");
-    }
-    return response.data;
-  });
+  return axiosInstance.get("/v1/profile").then((response) => response.data);
 };
 
 export const updateProfile = async (name: string): Promise<IUser> => {
@@ -225,28 +237,19 @@ export const updateProfile = async (name: string): Promise<IUser> => {
       {
         name,
       },
-      {
-        headers: {
-          "X-CSRF-Token": useCsrfTokenStore.getState().csrfToken,
-        },
-      }
     )
     .then((response) => response.data);
 };
 
 export const deleteProfile = async (): Promise<IUser> => {
   return axiosInstance
-    .delete("/v1/profile", {
-      headers: {
-        "X-CSRF-Token": useCsrfTokenStore.getState().csrfToken,
-      },
-    })
+    .delete("/v1/profile")
     .then((response) => response.data);
 };
 
 export const updatePassword = async (
   oldPassword: string,
-  newPassword: string
+  newPassword: string,
 ): Promise<IUser> => {
   return axiosInstance
     .put(
@@ -255,24 +258,18 @@ export const updatePassword = async (
         oldPassword,
         newPassword,
       },
-      {
-        headers: {
-          "X-CSRF-Token": useCsrfTokenStore.getState().csrfToken,
-        },
-      }
     )
     .then((response) => response.data);
 };
 
 export const updateProfileImage = async (
   image: FormData,
-  onUploadProgress: (progressEvent: AxiosProgressEvent) => void
+  onUploadProgress: (progressEvent: AxiosProgressEvent) => void,
 ): Promise<IUser> => {
   return axiosInstance
     .put("/v1/profile/image", image, {
       headers: {
         "Content-Type": "multipart/form-data",
-        "X-CSRF-Token": useCsrfTokenStore.getState().csrfToken,
       },
       onUploadProgress,
     })
@@ -282,7 +279,7 @@ export const updateProfileImage = async (
 export const getUsers = async (
   page: number | undefined,
   pageSize: number | undefined,
-  role: string | undefined
+  role: string | undefined,
 ): Promise<IGetUsersResponse> => {
   const p: string[][] = [];
   if (page) {
@@ -310,17 +307,12 @@ export const getUserByUuid = async (uuid: UUID): Promise<IUser> => {
 export const createUser = async (
   email: string,
   name: string,
-  role: string
+  role: string,
 ): Promise<IUser> => {
   return axiosInstance
     .post(
       "/v1/users",
       { email, name, role },
-      {
-        headers: {
-          "X-CSRF-Token": useCsrfTokenStore.getState().csrfToken,
-        },
-      }
     )
     .then((response) => response.data);
 };
@@ -330,7 +322,7 @@ export const updateUser = async (
   name: string,
   email: string,
   role: string,
-  password?: string
+  password?: string,
 ): Promise<IUser> => {
   return axiosInstance
     .put(
@@ -341,21 +333,12 @@ export const updateUser = async (
         role,
         ...(password ? { password } : {}),
       },
-      {
-        headers: {
-          "X-CSRF-Token": useCsrfTokenStore.getState().csrfToken,
-        },
-      }
     )
     .then((response) => response.data);
 };
 
 export const deleteUser = async (userUuid: UUID): Promise<IUser> => {
   return axiosInstance
-    .delete(`/v1/users/${userUuid}`, {
-      headers: {
-        "X-CSRF-Token": useCsrfTokenStore.getState().csrfToken,
-      },
-    })
+    .delete(`/v1/users/${userUuid}`)
     .then((response) => response.data);
 };
