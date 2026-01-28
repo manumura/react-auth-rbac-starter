@@ -105,6 +105,7 @@ axiosInstance.interceptors.request.use((config: InternalAxiosRequestConfig) => {
     !["GET", "HEAD", "OPTIONS"].includes(config.method.toUpperCase())
   ) {
     const csrfToken = getCookie(appConstant.CSRF_COOKIE_NAME);
+    console.log("Adding CSRF token to request:", csrfToken);
     if (csrfToken && config.headers) {
       config.headers["X-CSRF-Token"] = csrfToken;
     }
