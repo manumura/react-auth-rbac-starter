@@ -1,43 +1,94 @@
-# compiled output
-/dist
-/node_modules
+# Dependencies
+node_modules
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.npm
+.yarn
+yarn.lock
+
+# Testing
+coverage
+.nyc_output
+**/__tests__/**
+**/__mocks__/**
+**/*.test.ts
+**/*.test.tsx
+**/*.test.js
+**/*.test.jsx
+**/*.spec.ts
+**/*.spec.tsx
+**/*.spec.js
+**/*.spec.jsx
+
+# Development files
+.git
+.gitignore
+.github
+.vscode
+.idea
+*.md
+!README.md
+.env.local
+.env.development
+.env.test
+.env*.local
+.env.prod
+
+# Build artifacts (exclude to force clean builds)
+build
+dist
+.cache
+
+# Documentation
+docs
+*.md
+LICENSE
+CONTRIBUTING.md
+NOTES.md
+eslint-cleanup.md
+
+# CI/CD
+.github
+Jenkinsfile*
+pipeline-config.yml
+sonar-project.properties
+.gitlab-ci.yml
+.travis.yml
+
+# OpenShift/Kubernetes configs
+openshift
+gcp
+k8s
+kubernetes
+
+# Linting and formatting
+.eslintrc*
+.prettierrc*
+.editorconfig
+tslint.json
+lint-configs
+
+# Docker files
+docker/Dockerfile
+docker/server.js
+docker/package.json
+Dockerfile_oldd
+# Keep docker/docker-entrypoint.sh - it's needed for the build
+
+# Scripts
+bin/assemble.sh
+scripts
+
+# Config files not needed in runtime
+# But keep tsconfig.json and config-overrides.js - needed for build
+# tsconfig.json
+# config-overrides.js
 
 # Logs
 logs
 *.log
-npm-debug.log*
-yarn-debug.log*
-yarn-error.log*
-lerna-debug.log*
 
-# OS
+# OS files
 .DS_Store
-
-# Tests
-/coverage
-/.nyc_output
-
-# IDEs and editors
-/.idea
-.project
-.classpath
-.c9/
-*.launch
-.settings/
-*.sublime-workspace
-
-# IDE - VSCode
-.vscode/*
-!.vscode/settings.json
-!.vscode/tasks.json
-!.vscode/launch.json
-!.vscode/extensions.json
-
-.eslint*
-.prettier*
-.editorconfig
-
-.history/
-
-*.env*
-!.env.production
+Thumbs.d
