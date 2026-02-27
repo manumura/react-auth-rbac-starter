@@ -16,7 +16,7 @@ import {
 } from "../types/custom-types";
 import { getCookie } from "./cookies.utils";
 import { getUserFromIdToken } from "./jwt.utils";
-import { clearStorage, saveAuthentication } from "./storage";
+import { clearStorage, saveIdToken } from "./storage";
 import useUserStore from "./user-store";
 
 const BASE_URL = appConfig.baseUrl;
@@ -61,20 +61,18 @@ axiosInstance.interceptors.response.use(
     }
 
     try {
-      const { accessToken, accessTokenExpiresAt, refreshToken, idToken } =
-        await postRefreshToken();
-
-      saveAuthentication(
-        accessToken,
-        accessTokenExpiresAt,
-        refreshToken,
-        idToken,
-      );
-      const user = await getUserFromIdToken(idToken);
-      if (user) {
-        useUserStore.getState().setUser(user);
+      const { idToken } = await postRefreshToken();
+      if (!idToken) {
+        throw new Error("Failed to refresh token");
       }
 
+      saveIdToken(idToken);
+      const user = await getUserFromIdToken(idToken);
+      if (!user) {
+        throw new Error("Failed to get user from token");
+      }
+
+      useUserStore.getState().setUser(user);
       // Update the CSRF token in the retry request headers
       const newCsrfToken = getCookie(appConstant.CSRF_COOKIE_NAME);
       if (newCsrfToken && config.headers) {

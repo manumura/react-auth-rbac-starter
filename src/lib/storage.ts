@@ -139,11 +139,8 @@ export const getRefreshToken = (): string | null => {
 };
 
 export const saveAuthentication = (
-  // @ts-expect-error - skip param check for now
   accessToken: string,
-   // @ts-expect-error - skip param check for now
   accessTokenExpiresAt: Date,
-   // @ts-expect-error - skip param check for now
   refreshToken: string,
   idToken: string
 ): void => {
@@ -151,10 +148,10 @@ export const saveAuthentication = (
     console.error('window is undefined');
     return;
   }
-  // Not neccersary as we use cookies in this project
-  // saveAccessToken(accessToken);
-  // saveAccessTokenExpiresAt(accessTokenExpiresAt);
-  // saveRefreshToken(refreshToken);
+
+  saveAccessToken(accessToken);
+  saveAccessTokenExpiresAt(accessTokenExpiresAt);
+  saveRefreshToken(refreshToken);
   saveIdToken(idToken);
 };
 

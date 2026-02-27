@@ -4,7 +4,7 @@ import { appMessages } from "../config/constant";
 import { googleLogin } from "../lib/api";
 import { getUserFromIdToken } from "../lib/jwt.utils";
 import useMessageStore from "../lib/message-store";
-import { saveAuthentication } from "../lib/storage";
+import { saveIdToken } from "../lib/storage";
 import { IAuthenticatedUser } from "../types/custom-types";
 
 export const action: ActionFunction = async ({
@@ -49,9 +49,8 @@ const getUser = async (token: string): Promise<IAuthenticatedUser | null> => {
       return null;
     }
 
-    const { accessToken, accessTokenExpiresAt, refreshToken, idToken } =
-      response;
-    if (!idToken || !accessToken || !refreshToken) {
+    const { idToken } = response;
+    if (!idToken) {
       return null;
     }
 
@@ -60,12 +59,7 @@ const getUser = async (token: string): Promise<IAuthenticatedUser | null> => {
       return null;
     }
 
-    saveAuthentication(
-      accessToken,
-      accessTokenExpiresAt,
-      refreshToken,
-      idToken
-    );
+    saveIdToken(idToken);
     return user;
   } catch (error) {
     console.error(error);
@@ -78,7 +72,7 @@ export default function GoogleLoginButton({
   onGoogleLoginFailed,
 }: {
   readonly onGoogleLoginSuccess: (
-    credentialResponse: CredentialResponse | null
+    credentialResponse: CredentialResponse | null,
   ) => void;
   readonly onGoogleLoginFailed: () => void;
 }): React.ReactElement {
