@@ -1,6 +1,6 @@
 import clsx from 'clsx';
 import { JSX, useRef } from 'react';
-import useClickAway from 'react-use/lib/useClickAway';
+import { useClickAway } from 'react-use';
 
 const Modal = ({
   title,
