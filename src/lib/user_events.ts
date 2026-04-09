@@ -1,5 +1,5 @@
 import { EventSourceMessage } from '@microsoft/fetch-event-source';
-import { UUID } from 'crypto';
+import type { UUID } from "node:crypto";
 import { toast } from 'react-toastify';
 import appConfig from '../config/config';
 import { appConstant } from '../config/constant';

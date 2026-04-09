@@ -1,4 +1,4 @@
-import { UUID } from 'crypto';
+import type { UUID } from "node:crypto";
 
 const KEY = {
   ACCESS_TOKEN: 'accessToken',

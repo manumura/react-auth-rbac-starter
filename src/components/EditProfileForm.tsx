@@ -20,10 +20,8 @@ export default function EditProfileForm({
   readonly onDrop: (acceptedFiles: Blob[]) => void;
   readonly onCancel: () => void;
 }): React.ReactElement {
-   // @ts-expect-error - skip variable usage check for now
   const [uploadProgress, setUploadProgress] = useState(0);
-
-  // const onUploadProgress = (progressEvent: AxiosProgressEvent): void => {
+  // const onUploadProgress = (progressEvent): void => {
   //   const { loaded, total } = progressEvent;
   //   if (total && progressEvent.bytes) {
   //     const progress = Math.round((loaded / total) * 100);
@@ -70,7 +68,7 @@ export default function EditProfileForm({
 
   const uploadProgressStyle = {
     '--size': '3.2rem',
-    '--value': uploadProgress,
+    '--value': 0, //uploadProgress,
   } as React.CSSProperties;
 
   return (

@@ -1,5 +1,5 @@
 import { AxiosError } from "axios";
-import { UUID } from "crypto";
+import type { UUID } from "crypto";
 import { useEffect, useState } from "react";
 import { FormProvider, useForm } from "react-hook-form";
 import { IoEyeOffSharp, IoEyeSharp } from "react-icons/io5";

@@ -3,7 +3,7 @@ import {
   EventStreamContentType,
   fetchEventSource,
 } from '@microsoft/fetch-event-source';
-import { UUID } from 'crypto';
+import type { UUID } from "node:crypto";
 import { FatalError, RetriableError } from '../types/custom-errors';
 
 const maxRetries = 10;

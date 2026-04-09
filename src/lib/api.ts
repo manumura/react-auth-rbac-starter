@@ -4,7 +4,7 @@ import axios, {
   AxiosResponse,
   InternalAxiosRequestConfig,
 } from "axios";
-import { UUID } from "node:crypto";
+import type { UUID } from "node:crypto";
 import appConfig from "../config/config";
 import { appConstant } from "../config/constant";
 import {
