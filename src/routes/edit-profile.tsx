@@ -1,4 +1,4 @@
-import { AxiosError, AxiosProgressEvent } from 'axios';
+import { HTTPError } from 'ky';
 import { useCallback, useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import {
@@ -95,8 +95,9 @@ export const action = async ({
     // You cannot `useLoaderData` in an errorElemen
     console.error(error);
     let message = 'Unknown error';
-    if (error instanceof AxiosError && error.response?.data) {
-      message = error.response.data.message;
+    if (error instanceof HTTPError) {
+      const data = await error.response.json();
+      message = data.message ?? message;
     } else if (error instanceof Error) {
       message = error.message;
     }
@@ -149,16 +150,7 @@ async function editProfile(name: string, image: Blob | null): Promise<IUser> {
   const formData = new FormData();
   formData.append('image', image);
 
-  const onUploadProgress = (progressEvent: AxiosProgressEvent): void => {
-    const { loaded, total } = progressEvent;
-    if (total && progressEvent.bytes) {
-      const progress = Math.round((loaded / total) * 100);
-      // setUploadProgress(progress);
-      console.log('Upload progress:', progress);
-    }
-  };
-
-  const userUpdated = await updateProfileImage(formData, onUploadProgress);
+  const userUpdated = await updateProfileImage(formData);
   if (!userUpdated) {
     throw new Error('Profile update failed');
   }

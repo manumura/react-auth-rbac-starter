@@ -1,4 +1,4 @@
-import { AxiosError } from "axios";
+import { HTTPError } from "ky";
 import { UUID } from "crypto";
 import { useEffect, useState } from "react";
 import { FaFacebook, FaUserAltSlash } from "react-icons/fa";
@@ -104,8 +104,9 @@ export const action: ActionFunction = async ({
     // You cannot `useLoaderData` in an errorElemen
     console.error(error);
     let message = "Unknown error";
-    if (error instanceof AxiosError && error.response?.data.message) {
-      message = error.response.data.message;
+    if (error instanceof HTTPError) {
+      const data = await error.response.json();
+      message = data.message ?? message;
     } else if (error instanceof Error) {
       message = error.message;
     }

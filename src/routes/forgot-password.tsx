@@ -1,4 +1,4 @@
-import { AxiosError } from 'axios';
+import { HTTPError } from 'ky';
 import { useEffect } from 'react';
 import { useGoogleReCaptcha } from 'react-google-recaptcha-v3';
 import { FormProvider, useForm } from 'react-hook-form';
@@ -55,8 +55,9 @@ export const action = async ({
     // You cannot `useLoaderData` in an errorElemen
     console.error(error);
     let message = 'Unknown error';
-    if (error instanceof AxiosError && error.response?.data.message) {
-      message = error.response.data.message;
+    if (error instanceof HTTPError) {
+      const data = await error.response.json();
+      message = data.message ?? message;
     } else if (error instanceof Error) {
       message = error.message;
     }

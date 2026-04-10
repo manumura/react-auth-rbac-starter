@@ -1,9 +1,4 @@
-import axios, {
-  AxiosError,
-  AxiosProgressEvent,
-  AxiosResponse,
-  InternalAxiosRequestConfig,
-} from "axios";
+import ky, { BeforeRequestState, HTTPError, KyInstance } from "ky";
 import type { UUID } from "node:crypto";
 import appConfig from "../config/config";
 import { appConstant } from "../config/constant";
@@ -20,136 +15,125 @@ import { clearStorage, saveIdToken } from "./storage";
 import useUserStore from "./user-store";
 
 const BASE_URL = appConfig.baseUrl;
-const REFRESH_TOKEN_ENDPOINT = "/v1/refresh-token";
+const REFRESH_TOKEN_ENDPOINT = "v1/refresh-token";
 
-// No interceptor for refresh token
-const axiosPublicInstance = axios.create({
-  baseURL: `${BASE_URL}/api`,
+// No retry/refresh logic for public endpoints
+const httpClientPublicInstance: KyInstance = ky.create({
+  prefix: `${BASE_URL}/api`,
   headers: {
     "Content-Type": "application/json",
   },
-  withCredentials: true,
+  credentials: "include",
 });
 
-export const axiosInstance = axios.create({
-  baseURL: `${BASE_URL}/api`,
+export const httpClientInstance: KyInstance = ky.create({
+  prefix: `${BASE_URL}/api`,
   headers: {
-    "Content-Type": "application/json",
+    // "Content-Type": "application/json",
     "Cache-Control": "no-cache",
     Pragma: "no-cache",
     Expires: "0",
   },
-  withCredentials: true, // for cookies
-});
+  credentials: "include",
+  hooks: {
+    beforeRequest: [
+      (beforeRequestState: BeforeRequestState) => {
+        const method = beforeRequestState.request.method.toUpperCase();
+        if (!["GET", "HEAD", "OPTIONS"].includes(method)) {
+          const csrfToken = getCookie(appConstant.CSRF_COOKIE_NAME);
+          if (csrfToken) {
+            beforeRequestState.request.headers.set("X-CSRF-Token", csrfToken);
+          }
+        }
+      },
+    ],
+    afterResponse: [
+      async ({ request, response }) => {
+        if (response.status !== 401) {
+          return;
+        }
 
-axiosInstance.interceptors.response.use(
-  (response: AxiosResponse) => response,
-  async (error: AxiosError) => {
-    if (!error?.config) {
-      throw new Error("Unknown error");
-    }
+        // Avoid infinite loop on refresh token endpoint
+        if (request.url.includes(REFRESH_TOKEN_ENDPOINT)) {
+          useUserStore.getState().setUser(null);
+          clearStorage();
+          return;
+        }
 
-    if (error.response?.status !== 401) {
-      console.error("Axios interceptor error: ", error?.response?.data);
-      throw error;
-    }
-
-    const config = error.config;
-    // Avoid infinite loop
-    if (config.url?.includes(`${REFRESH_TOKEN_ENDPOINT}`)) {
-      throw error;
-    }
-
-    try {
-      const { idToken } = await postRefreshToken();
-      if (!idToken) {
-        throw new Error("Failed to refresh token");
-      }
-
-      saveIdToken(idToken);
-      const user = await getUserFromIdToken(idToken);
-      if (!user) {
-        throw new Error("Failed to get user from token");
-      }
-
-      useUserStore.getState().setUser(user);
-      // Update the CSRF token in the retry request headers
-      const newCsrfToken = getCookie(appConstant.CSRF_COOKIE_NAME);
-      if (newCsrfToken && config.headers) {
-        config.headers["X-CSRF-Token"] = newCsrfToken;
-      }
-
-      return axiosInstance(config);
-    } catch (error) {
-      const err = error as AxiosError;
-      console.error(
-        "Axios interceptor unexpected error: ",
-        err?.response?.data,
-      );
-      if (err?.status === 401) {
-        useUserStore.getState().setUser(null);
-        clearStorage();
-      }
-      throw err;
-    }
+        try {
+          const { idToken } = await postRefreshToken();
+          if (!idToken) {
+            throw new Error("Failed to refresh token");
+          }
+          console.log('Token refreshed successfully');
+          saveIdToken(idToken);
+          const user = await getUserFromIdToken(idToken);
+          if (!user) {
+            throw new Error("Failed to get user from token");
+          }
+          useUserStore.getState().setUser(user);
+          const newCsrfToken = getCookie(appConstant.CSRF_COOKIE_NAME);
+          // Retry original request with updated CSRF token
+          const retryRequest = request.clone();
+          if (newCsrfToken) {
+            request.headers.set("X-CSRF-Token", newCsrfToken);
+          }
+          console.log(
+            'Retrying original request after token refresh:',
+            retryRequest.method,
+            retryRequest.url,
+          );
+          return httpClientInstance(retryRequest);
+        } catch (error) {
+          const err = error as HTTPError;
+          console.error("retry hook error:", err);
+          if (err?.response?.status === 401) {
+            useUserStore.getState().setUser(null);
+            clearStorage();
+          }
+          throw err;
+        }
+      },
+    ],
   },
-);
-
-// Interceptor to add CSRF token in request headers
-axiosInstance.interceptors.request.use((config: InternalAxiosRequestConfig) => {
-  // Only add for non-GET requests
-  if (
-    config.method &&
-    !["GET", "HEAD", "OPTIONS"].includes(config.method.toUpperCase())
-  ) {
-    const csrfToken = getCookie(appConstant.CSRF_COOKIE_NAME);
-    if (csrfToken && config.headers) {
-      config.headers["X-CSRF-Token"] = csrfToken;
-    }
-  }
-  return config;
 });
 
 ////////////////////////////////////////////////////////////////
 // Refresh token API
 const postRefreshToken = async (): Promise<LoginResponse> => {
   const csrfToken = getCookie(appConstant.CSRF_COOKIE_NAME);
-  return await axiosPublicInstance
-    .post(
-      REFRESH_TOKEN_ENDPOINT,
-      {},
-      {
-        headers: {
-          "X-CSRF-Token": csrfToken,
-        },
-      },
-    )
-    .then((response) => response.data);
+  const headers: Record<string, string> = {};
+  if (csrfToken) {
+    headers["X-CSRF-Token"] = csrfToken;
+  }
+  return httpClientPublicInstance
+    .post(REFRESH_TOKEN_ENDPOINT, { json: {}, headers })
+    .json<LoginResponse>();
 };
 
 ////////////////////////////////////////////////////////////////
 // Public APIs
 export const info = async (): Promise<InfoResponse> => {
-  return axiosPublicInstance.get("/v1/info").then((response) => response.data);
+  return httpClientPublicInstance.get("v1/info").json<InfoResponse>();
 };
 
 export const welcome = async (): Promise<MessageResponse> => {
-  return axiosPublicInstance.get("/v1/index").then((response) => response.data);
+  return httpClientPublicInstance.get("v1/index").json<MessageResponse>();
 };
 
 export const login = async (
   email: string,
   password: string,
 ): Promise<LoginResponse> => {
-  return axiosPublicInstance
-    .post("/v1/login", { email, password })
-    .then((response) => response.data);
+  return httpClientPublicInstance
+    .post("v1/login", { json: { email, password } })
+    .json<LoginResponse>();
 };
 
 export const googleLogin = async (token: string): Promise<LoginResponse> => {
-  return axiosPublicInstance
-    .post("/v1/oauth2/google", { token })
-    .then((response) => response.data);
+  return httpClientPublicInstance
+    .post("v1/oauth2/google", { json: { token } })
+    .json<LoginResponse>();
 };
 
 export const register = async (
@@ -157,92 +141,78 @@ export const register = async (
   password: string,
   name: string,
 ): Promise<IUser> => {
-  return axiosPublicInstance
-    .post("/v1/register", { email, password, name })
-    .then((response) => response.data);
+  return httpClientPublicInstance
+    .post("v1/register", { json: { email, password, name } })
+    .json<IUser>();
 };
 
 export const forgotPassword = async (
   email: string,
 ): Promise<MessageResponse> => {
-  return axiosPublicInstance
-    .post("/v1/forgot-password", { email })
-    .then((response) => response.data);
+  return httpClientPublicInstance
+    .post("v1/forgot-password", { json: { email } })
+    .json<MessageResponse>();
 };
 
 export const resetPassword = async (
   password: string,
   token: string,
 ): Promise<IUser> => {
-  return axiosPublicInstance
-    .post("/v1/new-password", { password, token })
-    .then((response) => response.data);
+  return httpClientPublicInstance
+    .post("v1/new-password", { json: { password, token } })
+    .json<IUser>();
 };
 
 export const getUserFromToken = async (token: string): Promise<IUser> => {
-  return axiosPublicInstance
-    .get(`/v1/token/${token}`)
-    .then((response) => response.data);
+  return httpClientPublicInstance.get(`v1/token/${token}`).json<IUser>();
 };
 
 export const verifyEmail = async (token: string): Promise<IUser> => {
-  return axiosPublicInstance
-    .post("/v1/verify-email", { token })
-    .then((response) => response.data);
+  return httpClientPublicInstance
+    .post("v1/verify-email", { json: { token } })
+    .json<IUser>();
 };
 
 export const validateRecaptcha = async (token: string): Promise<boolean> => {
-  return axiosPublicInstance
-    .post("/v1/recaptcha", { token })
-    .then((response) => response.data);
+  return httpClientPublicInstance
+    .post("v1/recaptcha", { json: { token } })
+    .json<boolean>();
 };
 
 ////////////////////////////////////////////////////////////////
 // Authenticated-only APIs
-export const logout = async (): Promise<IUser> => {
-  return axiosInstance.post("/v1/logout", {}).then((response) => response.data);
+export const logout = async (): Promise<void> => {
+  await httpClientInstance.post("v1/logout", { json: {} });
 };
 
 export const getProfile = async (): Promise<IUser> => {
-  return axiosInstance.get("/v1/profile").then((response) => response.data);
+  return httpClientInstance.get("v1/profile").json<IUser>();
 };
 
 export const updateProfile = async (name: string): Promise<IUser> => {
-  return axiosInstance
-    .put("/v1/profile", {
-      name,
-    })
-    .then((response) => response.data);
+  return httpClientInstance.put("v1/profile", { json: { name } }).json<IUser>();
 };
 
 export const deleteProfile = async (): Promise<IUser> => {
-  return axiosInstance.delete("/v1/profile").then((response) => response.data);
+  return httpClientInstance.delete("v1/profile").json<IUser>();
 };
 
 export const updatePassword = async (
   oldPassword: string,
   newPassword: string,
 ): Promise<IUser> => {
-  return axiosInstance
-    .put("/v1/profile/password", {
-      oldPassword,
-      newPassword,
-    })
-    .then((response) => response.data);
+  return httpClientInstance
+    .put("v1/profile/password", { json: { oldPassword, newPassword } })
+    .json<IUser>();
 };
 
-export const updateProfileImage = async (
-  image: FormData,
-  onUploadProgress: (progressEvent: AxiosProgressEvent) => void,
-): Promise<IUser> => {
-  return axiosInstance
-    .put("/v1/profile/image", image, {
-      headers: {
-        "Content-Type": "multipart/form-data",
-      },
-      onUploadProgress,
+export const updateProfileImage = async (image: FormData): Promise<IUser> => {
+  return httpClientInstance
+    .put("v1/profile/image", {
+      body: image,
+      // headers: { "Content-Type": undefined },
     })
-    .then((response) => response.data);
+    .json<IUser>();
 };
 
 export const getUsers = async (
@@ -262,15 +232,11 @@ export const getUsers = async (
   }
 
   const params = new URLSearchParams(p);
-  return axiosInstance
-    .get(`/v1/users?${params}`)
-    .then((response) => response.data);
+  return httpClientInstance.get(`v1/users?${params}`).json<IGetUsersResponse>();
 };
 
 export const getUserByUuid = async (uuid: UUID): Promise<IUser> => {
-  return axiosInstance
-    .get(`/v1/users/${uuid}`)
-    .then((response) => response.data);
+  return httpClientInstance.get(`v1/users/${uuid}`).json<IUser>();
 };
 
 export const createUser = async (
@@ -278,9 +244,9 @@ export const createUser = async (
   name: string,
   role: string,
 ): Promise<IUser> => {
-  return axiosInstance
-    .post("/v1/users", { email, name, role })
-    .then((response) => response.data);
+  return httpClientInstance
+    .post("v1/users", { json: { email, name, role } })
+    .json<IUser>();
 };
 
 export const updateUser = async (
@@ -290,18 +256,18 @@ export const updateUser = async (
   role: string,
   password?: string,
 ): Promise<IUser> => {
-  return axiosInstance
-    .put(`/v1/users/${uuid}`, {
-      name,
-      email,
-      role,
-      ...(password ? { password } : {}),
+  return httpClientInstance
+    .put(`v1/users/${uuid}`, {
+      json: {
+        name,
+        email,
+        role,
+        ...(password ? { password } : {}),
+      },
     })
-    .then((response) => response.data);
+    .json<IUser>();
 };
 
 export const deleteUser = async (userUuid: UUID): Promise<IUser> => {
-  return axiosInstance
-    .delete(`/v1/users/${userUuid}`)
-    .then((response) => response.data);
+  return httpClientInstance.delete(`v1/users/${userUuid}`).json<IUser>();
 };

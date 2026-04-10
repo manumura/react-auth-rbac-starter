@@ -1,5 +1,5 @@
 import { CredentialResponse } from "@react-oauth/google";
-import { AxiosError } from "axios";
+import { HTTPError } from "ky";
 import { useEffect, useState } from "react";
 import { useGoogleReCaptcha } from "react-google-recaptcha-v3";
 import { FormProvider, useForm } from "react-hook-form";
@@ -113,13 +113,14 @@ export const action: ActionFunction = async ({
     // You cannot `useLoaderData` in an errorElement
     console.error(error);
     let message = "Unknown error";
-    if (error instanceof AxiosError && error.response?.data) {
-      const msg = error.response.data.message;
+    if (error instanceof HTTPError) {
+      const data = await error.response.json();
+      const msg = data.message;
       if (msg === errorMessages.INVALID_EMAIL_OR_PASSWORD.code) {
         message = errorMessages.INVALID_EMAIL_OR_PASSWORD.text;
       } else if (msg === errorMessages.EMAIL_NOT_VERIFIED.code) {
         message = errorMessages.EMAIL_NOT_VERIFIED.text;
-      } else {
+      } else if (msg) {
         message = msg;
       }
     } else if (error instanceof Error) {
