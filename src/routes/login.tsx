@@ -114,8 +114,7 @@ export const action: ActionFunction = async ({
     console.error(error);
     let message = "Unknown error";
     if (error instanceof HTTPError) {
-      const data = await error.response.json();
-      const msg = data.message;
+      const msg = error.data?.message;
       if (msg === errorMessages.INVALID_EMAIL_OR_PASSWORD.code) {
         message = errorMessages.INVALID_EMAIL_OR_PASSWORD.text;
       } else if (msg === errorMessages.EMAIL_NOT_VERIFIED.code) {

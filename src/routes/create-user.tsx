@@ -80,8 +80,7 @@ export const action: ActionFunction = async ({
     console.error(error);
     let message = "Unknown error";
     if (error instanceof HTTPError) {
-      const data = await error.response.json();
-      message = data.message ?? message;
+      message = error.data?.message ?? message;
     } else if (error instanceof Error) {
       message = error.message;
     }
