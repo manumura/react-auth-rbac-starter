@@ -11,7 +11,6 @@ export const loader: LoaderFunction = async ({
 }: {
   request: Request;
 }) => {
-  // TODO do we need this ?
   const url = new URL(request.url);
   const searchParams = url.searchParams;
   const idToken = searchParams.get("id_token");
@@ -27,8 +26,8 @@ export const loader: LoaderFunction = async ({
 
   saveIdToken(idToken);
   useUserStore.getState().setUser(user);
-  const time = Date.now();
 
+  const time = Date.now();
   useMessageStore.getState().setMessage({
     type: appMessages.LOGIN_SUCCESS.type,
     text: appMessages.LOGIN_SUCCESS.text.replace("${name}", user.name),

@@ -1,55 +1,56 @@
-import Plausible from 'plausible-tracker';
-import React from 'react';
-import { createBrowserRouter, RouterProvider } from 'react-router-dom';
-import './App.css';
-import { loader as facebookLoginCallbackLoader } from './components/FacebookLoginButton';
-import { action as googleLoginAction } from './components/GoogleLoginButton';
-import LoadingOverlay from './components/LoadingOverlay';
-import { action as logoutAction } from './components/LogoutButton';
-import { Providers } from './components/Providers';
-import appConfig from './config/config';
-import ErrorPage from './error-page';
-import Home, { loader as homeLoader } from './routes';
+import Plausible from "plausible-tracker";
+import React from "react";
+import { createBrowserRouter, RouterProvider } from "react-router-dom";
+import "./App.css";
+import { loader as facebookLoginCallbackLoader } from "./components/FacebookLoginButton";
+import { action as googleLoginAction } from "./components/GoogleLoginButton";
+import LoadingOverlay from "./components/LoadingOverlay";
+import { action as logoutAction } from "./components/LogoutButton";
+import { Providers } from "./components/Providers";
+import appConfig from "./config/config";
+import ErrorPage from "./error-page";
+import ErrorPageWithHeader from "./error-page-with-header";
+import Home, { loader as homeLoader } from "./routes";
 import CreateUser, {
   action as createUserAction,
   loader as createUserLoader,
-} from './routes/create-user';
+} from "./routes/create-user";
 import EditProfile, {
   action as editProfileAction,
-} from './routes/edit-profile';
+} from "./routes/edit-profile";
 import EditUser, {
   action as editUserAction,
   loader as userLoader,
-} from './routes/edit-user';
+} from "./routes/edit-user";
 import ForgotPassword, {
   action as forgotPasswordAction,
-} from './routes/forgot-password';
-import Layout, { loader as rootLoader } from './routes/layout';
+} from "./routes/forgot-password";
+import Layout, { loader as rootLoader } from "./routes/layout";
 import Login, {
   action as loginAction,
   loader as loginLoader,
-} from './routes/login';
-import Profile, { loader as profileLoader } from './routes/profile';
-import Register, { action as registerAction } from './routes/register';
+} from "./routes/login";
+import Profile, { loader as profileLoader } from "./routes/profile";
+import Register, { action as registerAction } from "./routes/register";
 import ResetPassword, {
   action as resetPasswordAction,
   loader as resetPasswordLoader,
-} from './routes/reset-password';
+} from "./routes/reset-password";
 import Users, {
   action as deleteUserAction,
   loader as usersLoader,
-} from './routes/users';
+} from "./routes/users";
 import VerifyEmail, {
   loader as verifyEmailLoader,
-} from './routes/verify-email';
+} from "./routes/verify-email";
 
 const router = createBrowserRouter([
   {
-    path: '/',
-    id: 'root',
+    path: "/",
+    id: "root",
     element: <Layout />,
     errorElement: <ErrorPage />,
-    hydrateFallbackElement: <LoadingOverlay label='Loading...' />,
+    hydrateFallbackElement: <LoadingOverlay label="Loading..." />,
     loader: rootLoader,
     children: [
       {
@@ -57,68 +58,68 @@ const router = createBrowserRouter([
         children: [
           { index: true, element: <Home />, loader: homeLoader },
           {
-            path: 'login',
+            path: "login",
             element: <Login />,
             errorElement: <Login />,
             loader: loginLoader,
             action: loginAction,
           },
           {
-            path: 'register',
+            path: "register",
             element: <Register />,
             errorElement: <Register />,
             loader: loginLoader,
             action: registerAction,
           },
           {
-            path: 'forgot-password',
+            path: "forgot-password",
             element: <ForgotPassword />,
             errorElement: <ForgotPassword />,
             loader: loginLoader,
             action: forgotPasswordAction,
           },
           {
-            path: 'reset-password',
+            path: "reset-password",
             element: <ResetPassword />,
             errorElement: <ResetPassword />,
             loader: resetPasswordLoader,
             action: resetPasswordAction,
           },
           {
-            path: 'verify-email',
+            path: "verify-email",
             element: <VerifyEmail />,
             errorElement: <VerifyEmail />,
             loader: verifyEmailLoader,
           },
           {
-            path: 'profile',
+            path: "profile",
             element: <Profile />,
             errorElement: <Profile />,
             loader: profileLoader,
           },
           {
-            path: 'edit-profile',
+            path: "edit-profile",
             element: <EditProfile />,
             errorElement: <EditProfile />,
             loader: profileLoader,
             action: editProfileAction,
           },
           {
-            path: 'users',
+            path: "users",
             element: <Users />,
             errorElement: <Users />,
             loader: usersLoader,
             action: deleteUserAction,
           },
           {
-            path: 'create-user',
+            path: "create-user",
             element: <CreateUser />,
             errorElement: <CreateUser />,
             loader: createUserLoader,
             action: createUserAction,
           },
           {
-            path: 'users/:userUuid',
+            path: "users/:userUuid",
             element: <EditUser />,
             loader: userLoader,
             action: editUserAction,
@@ -128,18 +129,18 @@ const router = createBrowserRouter([
     ],
   },
   {
-    path: '/oauth/facebook/callback',
-    errorElement: <ErrorPage />,
+    path: "/oauth/facebook/callback",
+    errorElement: <ErrorPageWithHeader />,
     loader: facebookLoginCallbackLoader,
   },
   {
-    path: '/oauth/google',
-    errorElement: <ErrorPage />,
+    path: "/oauth/google",
+    errorElement: <ErrorPageWithHeader />,
     action: googleLoginAction,
   },
   {
-    path: '/logout',
-    errorElement: <ErrorPage />,
+    path: "/logout",
+    errorElement: <ErrorPageWithHeader />,
     action: logoutAction,
   },
 ]);

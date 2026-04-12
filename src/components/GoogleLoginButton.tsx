@@ -17,6 +17,7 @@ export const action: ActionFunction = async ({
       error: Error | undefined;
     }
 > => {
+  console.log("===== Google login action called =====");
   const formData = await request.formData();
   const token = formData.get("token") as string;
 

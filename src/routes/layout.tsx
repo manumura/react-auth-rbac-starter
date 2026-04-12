@@ -15,6 +15,7 @@ import { getCurrentUserFromStorage, isAdmin } from '../lib/user-utils';
 import { subscribeUserChangeEventsWs } from '../lib/user_events';
 import { IAuthenticatedUser } from '../types/custom-types';
 
+// Root loader to fetch current user and set in global state on app load
 export const loader: LoaderFunction = async () => {
   try {
     const currentUser = await getCurrentUserFromStorage();

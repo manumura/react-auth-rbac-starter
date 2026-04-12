@@ -24,6 +24,7 @@ const httpClientPublicInstance: KyInstance = ky.create({
     "Content-Type": "application/json",
   },
   credentials: "include",
+  retry: 0,
 });
 
 export const httpClientInstance: KyInstance = ky.create({
@@ -35,6 +36,7 @@ export const httpClientInstance: KyInstance = ky.create({
     Expires: "0",
   },
   credentials: "include",
+  retry: 0,
   hooks: {
     beforeRequest: [
       (beforeRequestState: BeforeRequestState) => {
