@@ -3,7 +3,7 @@ import { getUserFromIdToken } from './jwt.utils';
 import { getSavedIdToken } from './storage';
 
 export const isAdmin = (user: IAuthenticatedUser): boolean => {
-  return user && user.role === 'ADMIN';
+  return user?.role === 'ADMIN';
 };
 
 export const getCurrentUserFromStorage =

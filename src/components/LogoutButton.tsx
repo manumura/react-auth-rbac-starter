@@ -1,6 +1,6 @@
 import { googleLogout } from "@react-oauth/google";
 import { useEffect } from "react";
-import { LoaderFunction, redirect, useFetcher } from "react-router-dom";
+import { LoaderFunction, useFetcher } from "react-router-dom";
 import { toast } from "react-toastify";
 import { appMessages } from "../config/constant";
 import { logout } from "../lib/api";
@@ -24,7 +24,8 @@ export const action: LoaderFunction = async () => {
       text: appMessages.LOGOUT_SUCCESS.text,
       id: time,
     });
-    return redirect("/");
+    // Redirect to home page after logout is done in Navbar component's useEffect when user state changes to null
+    // return redirect("/");
   } catch (error) {
     console.error("Logout failed", error);
     return "failed";

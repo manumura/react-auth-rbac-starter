@@ -78,7 +78,7 @@ export default function Layout() {
     <TopBarProgress />
   ) : (
     <>
-      <Navbar user={currentUser} />
+      <Navbar />
       <Outlet />
     </>
   );
