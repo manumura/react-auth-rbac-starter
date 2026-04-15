@@ -1,4 +1,4 @@
-import ky, { BeforeRequestState, HTTPError, KyInstance } from "ky";
+import ky, { HTTPError, KyInstance } from "ky";
 import type { UUID } from "node:crypto";
 import appConfig from "../config/config";
 import { appConstant } from "../config/constant";
@@ -20,22 +20,22 @@ const REFRESH_TOKEN_ENDPOINT = "v1/refresh-token";
 // No retry/refresh logic for public endpoints
 const httpClientPublicInstance: KyInstance = ky.create({
   prefix: `${BASE_URL}/api`,
+  credentials: "include",
   // headers: {
   //   "Content-Type": "application/json",
   // },
-  credentials: "include",
   retry: 0,
 });
 
 export const httpClientInstance: KyInstance = ky.create({
   prefix: `${BASE_URL}/api`,
+  credentials: "include",
   headers: {
     // "Content-Type": "application/json",
     "Cache-Control": "no-cache",
     Pragma: "no-cache",
     Expires: "0",
   },
-  credentials: "include",
   retry: {
     limit: 1,
     statusCodes: [401],
@@ -43,12 +43,12 @@ export const httpClientInstance: KyInstance = ky.create({
   },
   hooks: {
     beforeRequest: [
-      (beforeRequestState: BeforeRequestState) => {
-        const method = beforeRequestState.request.method.toUpperCase();
+      ({ request }) => {
+        const method = request.method.toUpperCase();
         if (!["GET", "HEAD", "OPTIONS"].includes(method)) {
           const csrfToken = getCookie(appConstant.CSRF_COOKIE_NAME);
           if (csrfToken) {
-            beforeRequestState.request.headers.set("X-CSRF-Token", csrfToken);
+            request.headers.set("X-CSRF-Token", csrfToken);
           }
         }
       },
