@@ -21,9 +21,6 @@ const REFRESH_TOKEN_ENDPOINT = "v1/refresh-token";
 const httpClientPublicInstance: KyInstance = ky.create({
   prefix: `${BASE_URL}/api`,
   credentials: "include",
-  // headers: {
-  //   "Content-Type": "application/json",
-  // },
   retry: 0,
 });
 
@@ -31,7 +28,6 @@ export const httpClientInstance: KyInstance = ky.create({
   prefix: `${BASE_URL}/api`,
   credentials: "include",
   headers: {
-    // "Content-Type": "application/json",
     "Cache-Control": "no-cache",
     Pragma: "no-cache",
     Expires: "0",
