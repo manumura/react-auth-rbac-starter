@@ -20,9 +20,9 @@ const REFRESH_TOKEN_ENDPOINT = "v1/refresh-token";
 // No retry/refresh logic for public endpoints
 const httpClientPublicInstance: KyInstance = ky.create({
   prefix: `${BASE_URL}/api`,
-  headers: {
-    "Content-Type": "application/json",
-  },
+  // headers: {
+  //   "Content-Type": "application/json",
+  // },
   credentials: "include",
   retry: 0,
 });
@@ -36,7 +36,11 @@ export const httpClientInstance: KyInstance = ky.create({
     Expires: "0",
   },
   credentials: "include",
-  retry: 0,
+  retry: {
+    limit: 1,
+    statusCodes: [401],
+    methods: ["get", "post", "put", "delete", "patch", "head"],
+  },
   hooks: {
     beforeRequest: [
       (beforeRequestState: BeforeRequestState) => {
@@ -49,9 +53,11 @@ export const httpClientInstance: KyInstance = ky.create({
         }
       },
     ],
-    afterResponse: [
-      async ({ request, response }) => {
-        if (response.status !== 401) {
+    beforeRetry: [
+      async ({ request, retryCount }) => {
+        console.log(`Request failed with 401, retry attempt ${retryCount}`);
+        if (retryCount !== 1) {
+          console.error(`Unexpected retry count ${retryCount}, expected 1. Not retrying request.`);
           return;
         }
 
@@ -68,7 +74,6 @@ export const httpClientInstance: KyInstance = ky.create({
           if (!idToken) {
             throw new Error("Failed to refresh token");
           }
-          console.log("Token refreshed successfully");
           saveIdToken(idToken);
           const user = await getUserFromIdToken(idToken);
           if (!user) {
@@ -76,20 +81,12 @@ export const httpClientInstance: KyInstance = ky.create({
           }
           useUserStore.getState().setUser(user);
           const newCsrfToken = getCookie(appConstant.CSRF_COOKIE_NAME);
-          // Retry original request with updated CSRF token
-          const retryRequest = request.clone();
           if (newCsrfToken) {
             request.headers.set("X-CSRF-Token", newCsrfToken);
           }
-          console.log(
-            "Retrying original request after token refresh:",
-            retryRequest.method,
-            retryRequest.url,
-          );
-          return httpClientInstance(retryRequest);
         } catch (error) {
           const err = error as HTTPError;
-          console.error("after response hook error:", err);
+          console.error("beforeRetry hook error:", err);
           if (err?.response?.status === 401) {
             useUserStore.getState().setUser(null);
             clearStorage();
