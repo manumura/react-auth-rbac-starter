@@ -57,13 +57,17 @@ export const httpClientInstance: KyInstance = ky.create({
       async ({ request, retryCount }) => {
         console.log(`Request failed with 401, retry attempt ${retryCount}`);
         if (retryCount !== 1) {
-          console.error(`Unexpected retry count ${retryCount}, expected 1. Not retrying request.`);
+          console.error(
+            `Unexpected retry count ${retryCount}, expected 1. Not retrying request.`,
+          );
           return;
         }
 
         // Avoid infinite loop on refresh token endpoint
         if (request.url.includes(REFRESH_TOKEN_ENDPOINT)) {
-          console.error("Refresh token request failed with 401, logging out user");
+          console.error(
+            "Refresh token request failed with 401, logging out user",
+          );
           useUserStore.getState().setUser(null);
           clearStorage();
           return;
@@ -74,6 +78,9 @@ export const httpClientInstance: KyInstance = ky.create({
           if (!idToken) {
             throw new Error("Failed to refresh token");
           }
+          console.log(
+            "Token successfully refreshed. Retrying original request...",
+          );
           saveIdToken(idToken);
           const user = await getUserFromIdToken(idToken);
           if (!user) {
@@ -81,9 +88,15 @@ export const httpClientInstance: KyInstance = ky.create({
           }
           useUserStore.getState().setUser(user);
           const newCsrfToken = getCookie(appConstant.CSRF_COOKIE_NAME);
+          // Retry original request with updated CSRF token
           if (newCsrfToken) {
             request.headers.set("X-CSRF-Token", newCsrfToken);
           }
+          console.log(
+            "Retrying original request after token refresh:",
+            request.method,
+            request.url,
+          );
         } catch (error) {
           const err = error as HTTPError;
           console.error("beforeRetry hook error:", err);
