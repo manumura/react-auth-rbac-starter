@@ -1,6 +1,6 @@
-import { HTTPError } from 'ky';
-import { useCallback, useEffect, useState } from 'react';
-import { useForm } from 'react-hook-form';
+import { HTTPError } from "ky";
+import { useCallback, useEffect, useState } from "react";
+import { useForm } from "react-hook-form";
 import {
   redirect,
   useActionData,
@@ -8,23 +8,23 @@ import {
   useNavigate,
   useNavigation,
   useSubmit,
-} from 'react-router-dom';
-import { toast } from 'react-toastify';
-import ChangePasswordForm from '../components/ChangePasswordForm';
-import DeleteProfileForm from '../components/DeleteProfileForm';
-import EditProfileForm from '../components/EditProfileForm';
-import { handleLogout } from '../components/LogoutButton';
-import { appMessages } from '../config/constant';
+} from "react-router-dom";
+import { toast } from "react-toastify";
+import ChangePasswordForm from "../components/ChangePasswordForm";
+import DeleteProfileForm from "../components/DeleteProfileForm";
+import EditProfileForm from "../components/EditProfileForm";
+import { handleLogout } from "../components/LogoutButton";
+import { appMessages } from "../config/constant";
 import {
   deleteProfile,
   updatePassword,
   updateProfile,
-  updateProfileImage,
-} from '../lib/api';
-import useMessageStore from '../lib/message-store';
-import { validatePassword } from '../lib/utils';
-import { ValidationError } from '../types/custom-errors';
-import { IUser } from '../types/custom-types';
+  updateProfileImage
+} from "../lib/api";
+import useMessageStore from "../lib/message-store";
+import { validatePassword } from "../lib/utils";
+import { ValidationError } from "../types/custom-errors";
+import { IUser } from "../types/custom-types";
 
 export const action = async ({
   request,
@@ -38,17 +38,17 @@ export const action = async ({
     }
 > => {
   const formData = await request.formData();
-  const intent = formData.get('intent');
+  const intent = formData.get("intent");
   const time = Date.now();
 
   try {
-    if (intent === 'edit-profile') {
-      const name = formData.get('name') as string;
-      const image = formData.get('image') as Blob;
+    if (intent === "edit-profile") {
+      const name = formData.get("name") as string;
+      const image = formData.get("image") as Blob;
       const user = await editProfile(name, image);
       // if (Object.hasOwn(response, 'error')) {
       if (!user) {
-        throw new ValidationError('Profile update failed', { name, image });
+        throw new ValidationError("Profile update failed", { name, image });
       }
 
       useMessageStore.getState().setMessage({
@@ -56,11 +56,11 @@ export const action = async ({
         text: appMessages.PROFILE_UPDATE_SUCCESS.text,
         id: time,
       });
-      return redirect('/profile');
-    } else if (intent === 'delete-profile') {
+      return redirect("/profile");
+    } else if (intent === "delete-profile") {
       const user = await removeProfile();
       if (!user) {
-        throw new ValidationError('Profile delete failed', {});
+        throw new ValidationError("Profile delete failed", {});
       }
       await handleLogout();
 
@@ -69,13 +69,13 @@ export const action = async ({
         text: appMessages.PROFILE_DELETE_SUCCESS.text,
         id: time,
       });
-      return redirect('/');
-    } else if (intent === 'change-password') {
-      const oldPassword = formData.get('oldPassword') as string;
-      const newPassword = formData.get('newPassword') as string;
+      return redirect("/");
+    } else if (intent === "change-password") {
+      const oldPassword = formData.get("oldPassword") as string;
+      const newPassword = formData.get("newPassword") as string;
       const user = await changePassword(oldPassword, newPassword);
       if (!user) {
-        throw new ValidationError('Change password failed', {
+        throw new ValidationError("Change password failed", {
           oldPassword,
           newPassword,
         });
@@ -86,15 +86,15 @@ export const action = async ({
         text: appMessages.PASSWORD_CHANGE_SUCCESS.text,
         id: time,
       });
-      return redirect('/profile');
+      return redirect("/profile");
     }
 
-    console.error('Invalid intent', intent);
-    return redirect('/');
+    console.error("Invalid intent", intent);
+    return redirect("/");
   } catch (error) {
     // You cannot `useLoaderData` in an errorElemen
     console.error(error);
-    let message = 'Unknown error';
+    let message = "Unknown error";
     if (error instanceof HTTPError) {
       message = error.data?.message ?? message;
     } else if (error instanceof Error) {
@@ -108,58 +108,81 @@ export const action = async ({
 
 async function changePassword(
   oldPassword: string,
-  newPassword: string
+  newPassword: string,
 ): Promise<IUser> {
   if (!oldPassword || !newPassword) {
-    throw new Error('Invalid form data');
+    throw new Error("Invalid form data");
   }
 
   const { isValid: isPasswordValid, errors } = validatePassword(newPassword);
   if (!isPasswordValid) {
-    let message = '';
+    let message = "";
     if (errors.length > 0) {
-      message = errors.join(' ');
+      message = errors.join(" ");
     }
-    throw new Error(message || 'Password is invalid');
+    throw new Error(message || "Password is invalid");
   }
 
   const user = await updatePassword(oldPassword, newPassword);
   if (!user) {
-    throw new Error('Change password failed');
+    throw new Error("Change password failed");
   }
   return user;
 }
 
 async function editProfile(name: string, image: Blob | null): Promise<IUser> {
   if (!name) {
-    throw new Error('Invalid form data');
+    throw new Error("Invalid form data");
+  }
+
+  if (image) {
+    await updateProfileImageOnly(image);
   }
 
   const user = await updateProfile(name);
   if (!user) {
-    throw new Error('Profile update failed');
+    throw new Error("Profile update failed");
   }
 
-  if (!image) {
-    return user;
-  }
+  return user;
+}
 
+async function updateProfileImageOnly(image: Blob): Promise<void> {
   // Upload profile image
-  console.log('Uploading image');
+  console.log("Uploading image");
   const formData = new FormData();
-  formData.append('image', image);
+  formData.append("image", image);
 
   const userUpdated = await updateProfileImage(formData);
   if (!userUpdated) {
-    throw new Error('Profile update failed');
+    throw new Error("Profile image upload failed");
   }
-  return user;
+
+  // Upload image using presigned URL (alternative approach)
+  // const presignedPostRequest = await generateUploadPresignedURL(formData);
+  // console.log("Presigned post request", presignedPostRequest);
+
+  // const uploadForm = new FormData();
+  // Object.entries(presignedPostRequest.fields).forEach(([field, value]) => {
+  //   uploadForm.append(field, value);
+  // });
+  // uploadForm.append("file", image);
+  // const response = await fetch(presignedPostRequest.url, {
+  //   method: "POST",
+  //   body: uploadForm,
+  // });
+  // console.log("Upload response", response);
+  // if (!response.ok) {
+  //   throw new Error("Profile image upload failed");
+  // }
+
+  console.log("Image uploaded successfully");
 }
 
 async function removeProfile(): Promise<IUser> {
   const user = await deleteProfile();
   if (!user) {
-    throw new Error('Change password failed');
+    throw new Error("Profile delete failed");
   }
   return user;
 }
@@ -174,27 +197,27 @@ export default function EditProfile(): React.ReactElement {
     error: Error | undefined;
     time: number | undefined;
   };
-  const isLoading = navigation.state === 'submitting';
+  const isLoading = navigation.state === "submitting";
 
   const onPasswordChanged = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     const { intent, oldPassword, newPassword } = getChangePasswordValues();
 
     if (!oldPassword || !newPassword) {
-      setChangePasswordError('oldPassword', {
-        message: 'Please enter current and new password',
+      setChangePasswordError("oldPassword", {
+        message: "Please enter current and new password",
       });
-      setChangePasswordError('newPassword', {
-        message: 'Please enter current and new password',
+      setChangePasswordError("newPassword", {
+        message: "Please enter current and new password",
       });
       return;
     }
 
     const formData = new FormData();
-    formData.append('intent', intent);
-    formData.append('oldPassword', oldPassword);
-    formData.append('newPassword', newPassword);
-    submit(formData, { method: 'post' });
+    formData.append("intent", intent);
+    formData.append("oldPassword", oldPassword);
+    formData.append("newPassword", newPassword);
+    submit(formData, { method: "post" });
   };
 
   const onEditProfile = async (event: React.FormEvent<HTMLFormElement>) => {
@@ -202,23 +225,23 @@ export default function EditProfile(): React.ReactElement {
     const { intent, name } = getEditProfileValues();
 
     if (!name && images.length <= 0) {
-      setEditProfileError('name', { message: 'Please edit at least 1 field' });
+      setEditProfileError("name", { message: "Please edit at least 1 field" });
       return;
     }
 
     const formData = new FormData();
-    formData.append('intent', intent);
-    formData.append('name', name);
+    formData.append("intent", intent);
+    formData.append("name", name);
     if (images.length > 0) {
-      formData.append('image', images[0]);
+      formData.append("image", images[0]);
     }
-    submit(formData, { method: 'post', encType: 'multipart/form-data' });
+    submit(formData, { method: "post", encType: "multipart/form-data" });
   };
 
   const onDeleteProfile = async () => {
     const formData = new FormData();
-    formData.append('intent', 'delete-profile');
-    submit(formData, { method: 'post' });
+    formData.append("intent", "delete-profile");
+    submit(formData, { method: "post" });
   };
 
   useEffect(() => {
@@ -229,8 +252,8 @@ export default function EditProfile(): React.ReactElement {
 
       if (message && !toast.isActive(toastId)) {
         toast(message, {
-          type: 'error',
-          position: 'bottom-right',
+          type: "error",
+          position: "bottom-right",
           toastId,
         });
       }
@@ -240,11 +263,11 @@ export default function EditProfile(): React.ReactElement {
   const onDrop = useCallback(
     (acceptedFiles: Blob[]) => {
       acceptedFiles.forEach((file: Blob, index: number) => {
-        console.log('File index', index);
+        console.log("File index", index);
         const reader = new FileReader();
 
-        reader.onabort = (): void => console.log('file reading was aborted');
-        reader.onerror = (): void => console.error('file reading has failed');
+        reader.onabort = (): void => console.log("file reading was aborted");
+        reader.onerror = (): void => console.error("file reading has failed");
         // reader.onprogress = (e) => console.log('file reading in progress ', e);
         reader.onload = (): void => {
           // Do whatever you want with the file contents
@@ -257,7 +280,7 @@ export default function EditProfile(): React.ReactElement {
         return file;
       });
     },
-    [images]
+    [images],
   );
 
   const handleCancel = (): void => {
@@ -267,10 +290,10 @@ export default function EditProfile(): React.ReactElement {
   //----------------- Edit Profile -------------------
   const editProfileMethods = useForm({
     defaultValues: {
-      intent: 'edit-profile',
+      intent: "edit-profile",
       name: user.name,
     },
-    mode: 'all',
+    mode: "all",
   });
 
   const {
@@ -283,12 +306,12 @@ export default function EditProfile(): React.ReactElement {
   //----------------- Change Password -------------------
   const changePasswordMethods = useForm({
     defaultValues: {
-      intent: 'change-password',
-      oldPassword: '',
-      newPassword: '',
-      newPasswordConfirm: '',
+      intent: "change-password",
+      oldPassword: "",
+      newPassword: "",
+      newPasswordConfirm: "",
     },
-    mode: 'all',
+    mode: "all",
   });
 
   const {
@@ -302,7 +325,7 @@ export default function EditProfile(): React.ReactElement {
     !user.providers || user.providers?.length <= 0;
 
   return (
-    <section className='min-h-screen bg-slate-200'>
+    <section className="min-h-screen bg-slate-200">
       <EditProfileForm
         user={user}
         onEditProfile={onEditProfile}

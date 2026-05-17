@@ -69,3 +69,10 @@ export type IMessage = {
   type: string;
   text: string;
 };
+
+export type PresignedPostRequest = {
+  url: string;
+  fields: {
+    [key: string]: string;
+  };
+};

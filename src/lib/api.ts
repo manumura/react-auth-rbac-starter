@@ -8,6 +8,7 @@ import {
   IUser,
   LoginResponse,
   MessageResponse,
+  PresignedPostRequest,
 } from "../types/custom-types";
 import { getCookie } from "./cookies.utils";
 import { getUserFromIdToken } from "./jwt.utils";
@@ -222,6 +223,15 @@ export const updateProfileImage = async (image: FormData): Promise<IUser> => {
       // headers: { "Content-Type": undefined },
     })
     .json<IUser>();
+};
+
+export const generateUploadPresignedURL = async (image: FormData): Promise<PresignedPostRequest> => {
+  return httpClientInstance
+    .post("v1/profile/image-presigned-url", {
+      body: image,
+      // headers: { "Content-Type": undefined },
+    })
+    .json<PresignedPostRequest>();
 };
 
 export const getUsers = async (
