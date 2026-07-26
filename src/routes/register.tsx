@@ -1,4 +1,4 @@
-import { zxcvbn, zxcvbnOptions } from '@zxcvbn-ts/core';
+import { ZxcvbnFactory } from '@zxcvbn-ts/core';
 import * as zxcvbnCommonPackage from '@zxcvbn-ts/language-common';
 import * as zxcvbnEnPackage from '@zxcvbn-ts/language-en';
 import { HTTPError } from 'ky';
@@ -32,7 +32,7 @@ const options = {
     ...zxcvbnEnPackage.dictionary,
   },
 };
-zxcvbnOptions.setOptions(options);
+const zxcvbn = new ZxcvbnFactory(options);
 
 export const action = async ({
   request,
@@ -142,7 +142,7 @@ export default function Register(): React.ReactElement {
   const [passwordScore, setPasswordScore] = useState(-1);
 
   const calculatePasswordScore = (password: string): number => {
-    const res = zxcvbn(password);
+    const res = zxcvbn.check(password);
     setPasswordScore(res.score);
     return res.score;
   };

@@ -239,6 +239,8 @@ export default function ResetPassword(): React.ReactElement {
       message: "Password is max 70 characters",
     },
     validate: (value: string): string | undefined => {
+      // TODO see register.tsx for password validation logic
+      // calculatePasswordScore(value);
       const { isValid, errors } = validatePassword(value);
       if (!isValid) {
         let message = "";
